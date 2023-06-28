@@ -13,5 +13,6 @@ Then answer the prompts. It will loop until you either type `exit` at any point,
 -implement other fuel types?
 -output the specific wet mass required for the delta-v, so that you know exactly how heavy the rocket needs to be for the desired delta-v?
 -add support for radial tanks and engines?
+-add costs and factor them in once part costs are added to the game?
 -fix the FuelStack initialization to use a function instead of manually adding the configs so that it could:
 -support more than 2 full-sized fuel tanks in the FuelStack configs
