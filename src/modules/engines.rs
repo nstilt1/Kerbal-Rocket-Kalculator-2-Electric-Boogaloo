@@ -1,8 +1,5 @@
 use super::{size::Size, fuel_type::{FuelType}};
 
-
-
-
 #[derive(Debug, PartialEq, Clone)]
 pub struct Engine {
     pub name: String,

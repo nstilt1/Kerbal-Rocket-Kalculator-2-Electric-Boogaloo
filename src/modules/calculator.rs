@@ -2,9 +2,6 @@ use crate::G;
 
 use super::{tanks::{Tank, self, FuelStack}, engines::Engine, rocket_config::Rocket, size::Size};
 
-
-
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct Calculator {
     size: Size,

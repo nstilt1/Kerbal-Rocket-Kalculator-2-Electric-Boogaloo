@@ -1,8 +1,5 @@
 use super::{tanks::FuelStack, engines::Engine};
 
-
-
-
 #[derive(Debug, Clone)]
 pub struct Rocket {
     fuel_config: FuelStack,

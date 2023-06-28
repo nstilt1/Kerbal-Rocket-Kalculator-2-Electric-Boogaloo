@@ -1,10 +1,5 @@
 use super::{size::Size, fuel_type::{FuelType, self}};
 
-
-
-
-
-
 #[derive(Debug, PartialEq, Clone)]
 pub struct Tank {
     pub name: String,
@@ -129,7 +124,7 @@ impl Tank {
         h_tanks.push(Tank::new("HFT-T-375", 9.0, 1.0, Size::Lg, 0, FuelType::Hydrogen));
         h_tanks.push(Tank::new("HFT-S-500", 11.25, 1.25, Size::Xl, 0, FuelType::Hydrogen));
         h_tanks.push(Tank::new("HFT-T-500", 22.5, 2.5, Size::Xl, 0, FuelType::Hydrogen));
-        
+
 
 
         return result;
