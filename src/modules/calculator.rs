@@ -1,6 +1,6 @@
 use crate::G;
 
-use super::{tanks::{Tank, self, FuelStack}, engines::Engine, rocket_config::Rocket, size::Size};
+use super::{tanks::{Tank, self, FuelStack}, engines::Engine, rocket_config::Rocket, size::Size, fuel_type::FuelType};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Calculator {
@@ -58,11 +58,9 @@ impl Calculator {
             // the ratio (wetMass/dryMass) required to reach the delta-v
             // derived from:
             // deltaV = ln(wetMass/dryMass)*g*isp
-            // deltaV/(g*engine.isp)
-            // deltaV/g * (1 / engine.isp)
+            // deltaV/g/isp = ln(wetMass/dryMass)
+            // wetMass/dryMass = e^(deltaV/g/engine.isp)
             let target_ratio = f64::exp(self.target_dv / G / if self.in_vacuum {engine.isp_vac}else{engine.isp_asl});
-
-            // central stack
 
             for num_engines in 1..=9 {
                 if num_engines == 2 || num_engines == 6 || num_engines == 8 {
@@ -76,8 +74,6 @@ impl Calculator {
                     let fuel_stack = self.tanks[fuel_stack_index].to_owned();
                     
                     let thrust: f64 = if self.in_vacuum {engine.thrust_vac}else{engine.thrust_asl} * num_engines as f64;
-
-                    
 
                     let wet_mass = num_engines as f64 * fuel_stack.get_wet_mass() + partial_mass;
                     let dry_mass = num_engines as f64 * fuel_stack.get_dry_mass() + partial_mass;
@@ -98,7 +94,7 @@ impl Calculator {
     }
 
     /**
-     * Get min/max indices of self.engines and self.tanks
+     * Get min/max indices of self.engines and self.tanks with the same size
      */
     pub fn get_indices(&self) -> ((usize, usize), (usize, usize)) {
         let mut i1 = -1;
@@ -108,12 +104,13 @@ impl Calculator {
         let mut t = 0;
         for e in self.engines.iter() {
             if i1 == -1 {
-                if e.size == self.size {
+                if e.size == self.size && e.fuel_type == FuelType::Methalox {
                     i1 = t;
                 }
             }else if i2 == -1 {
-                if e.size != self.size {
+                if e.size != self.size && e.fuel_type == FuelType::Methalox {
                     i2 = t;
+                    break;
                 }
             }
             t += 1;
@@ -128,11 +125,11 @@ impl Calculator {
         t = 0;
         for tank in self.tanks.iter() {
             if j1 == -1 {
-                if tank.size == self.size {
+                if tank.size == self.size && tank.fuel_type == FuelType::Methalox {
                     j1 = t;
                 }
             }else if j2 == -1 {
-                if tank.size != self.size {
+                if tank.size != self.size && tank.fuel_type == FuelType::Methalox {
                     j2 = t;
                 }
             }

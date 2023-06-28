@@ -13,12 +13,14 @@ pub struct Tank {
 #[derive(Debug, PartialEq, Clone)]
 pub struct FuelStack {
     pub tanks: Vec<Tank>,
-    pub size: Size
+    pub size: Size,
+    pub fuel_type: FuelType
 }
 impl FuelStack {
     pub fn new(tanks: Vec<Tank>) -> Self {
-        let size = tanks[0].size.clone();
-        FuelStack {tanks, size}
+        let t = tanks[0].to_owned();
+        let size = t.size;
+        FuelStack {tanks, size, fuel_type: t.fuel_type}
     }
 
     pub fn multiple(tank: &Tank, count: u8) -> Self {
@@ -44,9 +46,6 @@ impl Tank {
     
     pub fn init_tanks() -> Vec<FuelStack> {
         let mut tanks: Vec<Tank> = Vec::new();
-
-        
-
 
         tanks.push(Tank::new("FL-T100", 0.56, 0.06, Size::Sm, 0, FuelType::Methalox));
         tanks.push(Tank::new("FL-T200", 1.13, 0.13, Size::Sm, 0, FuelType::Methalox));
@@ -100,6 +99,7 @@ impl Tank {
             result.push(FuelStack::new(vec![tanks[size + 3].to_owned(), tanks[size + 3].to_owned()]));
             
 
+            // original attempt at programmatically adding these FuelStacks
             /*
             for j in 0..4 {
                 // append addition of previous elements, then j
@@ -124,8 +124,6 @@ impl Tank {
         h_tanks.push(Tank::new("HFT-T-375", 9.0, 1.0, Size::Lg, 0, FuelType::Hydrogen));
         h_tanks.push(Tank::new("HFT-S-500", 11.25, 1.25, Size::Xl, 0, FuelType::Hydrogen));
         h_tanks.push(Tank::new("HFT-T-500", 22.5, 2.5, Size::Xl, 0, FuelType::Hydrogen));
-
-
 
         return result;
     }

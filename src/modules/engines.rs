@@ -57,7 +57,6 @@ impl Engine {
             Engine::new("S3 KS-100 \"Mammoth-II\"", 3701.6, 4250.0, 0.0, 270.0, 310.0, 15.0, true, Size::Lg, FuelType::Methalox),
             Engine::new("SC-TT \"Labradoodle\"", 341.1, 650.0, 0.0, 180.0, 343.0, 5.25, true, Size::Lg, FuelType::Methalox),
 
-
             // FuelType::Hydrogen
             // Size::Sm
             Engine::new("LV-N \"Nerv\"", 20.8, 75.0, 0.0, 250.0, 900.0, 3.0, false, Size::Sm, FuelType::Hydrogen),
