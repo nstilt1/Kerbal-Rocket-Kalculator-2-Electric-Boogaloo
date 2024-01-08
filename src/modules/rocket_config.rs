@@ -5,7 +5,7 @@ pub struct Rocket {
     fuel_config: FuelStack,
     engine: Engine,
     num_engines: u8,
-    mass: f64,
+    pub(crate) mass: f64,
     twr: f64
 }
 

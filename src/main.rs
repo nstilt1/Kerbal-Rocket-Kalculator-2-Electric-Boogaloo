@@ -1,7 +1,6 @@
 use std::io::{self, Write};
 
-use crate::modules::{size::Size, calculator::Calculator};
-
+use crate::modules::{size::Size, calculator::Calculator, rocket_config::Rocket};
 
 mod modules;
 
@@ -17,16 +16,22 @@ fn read(text: &str) -> String {
 }
 
 const SIZES: [Size; 5] = [Size::Xs, Size::Sm, Size::Md, Size::Lg, Size::Xl];
+const SIZE_STRS: [&str; 5] = ["xs", "sm", "md", "lg", "xl"];
 fn main() {
     println!("Kerbal Kalculator 2: Electric Boogaloo! is at your service");
     let mut calculator = Calculator::new();
+    let mut continue_building: Option<f64> = None;
     loop {
-
-        let mass = read("Enter the mass of your payload in tonnes > ");
-        if &mass == "exit" {
-            break;
-        }
-        let mass: f64 = mass.parse().expect("Failed to parse mass");
+        // get the mass from the user, or continue with the mass of the last rocket being built
+        let mass: f64 = if continue_building.as_ref().is_none() {
+            let m = read("Enter the mass of your payload in tonnes > ");
+            if &m == "exit" {
+                break;
+            }
+            m.parse().expect("Failed to parse mass")
+        } else {
+            continue_building.unwrap()
+        };
 
         let target_delta_v = read("Enter the target delta-v in m/s > ");
         if &target_delta_v == "exit" {
@@ -40,30 +45,51 @@ fn main() {
         }
         let minimum_twr: f64 = minimum_twr.parse().expect("Failed to parse minimum_twr");
 
-        let is_vacuum = read("Is this stage in a vacuum? (y/n)");
+        let is_vacuum = read("Is this stage in a vacuum? (y/n) > ");
         let is_vacuum = match is_vacuum.as_str() {
             "y" => true,
             "n" => false,
             _ => break
         };
 
-        let needs_gimballing = match read("Do you want gimballing? (y/n) ").as_str() {
+        let needs_gimballing = match read("Do you want gimballing? (y/n) > ").as_str() {
             "y" => true,
             "n" => false,
             _ => break
         };
 
-        for (size, str) in SIZES.iter().zip(["xs", "sm", "md", "lg", "xl"].iter()) {
+        let mut outputs: Vec<Option<Rocket>> = Vec::new();
+        for (size, str) in SIZES.iter().zip(SIZE_STRS.iter()) {
             calculator.init(mass, target_delta_v, minimum_twr, needs_gimballing, is_vacuum, *size);
             let mut output = calculator.calculate();
             output.sort_by(|a, b| a.partial_cmp(b).unwrap());
-            println!("Checking size: {}", str);
+
             if output.len() == 0 {
-                println!("No results found\n");
+                outputs.push(None);
             }else{
-                output[0].print();
-                println!("\n");
+                outputs.push(Some(output[0].clone()));
             }
         }
+
+        println!("\n\nStarting mass: {}", mass);
+        println!("Target dv: {}", target_delta_v);
+        println!("Minimum TWR: {}", minimum_twr);
+        println!("Available rockets:");
+        for (o, size) in outputs.iter().zip(SIZE_STRS.iter()) {
+            if o.is_some() {
+                println!("\nSize: {}", size);
+                o.as_ref().unwrap().print();
+            }
+        }
+        
+        continue_building = match read("Select a rocket to use by typing the corresponding size, or type 'new' to try again > ").as_str() {
+            "xs" => Some(outputs[0].as_ref().unwrap().mass),
+            "sm" => Some(outputs[1].as_ref().unwrap().mass),
+            "md" => Some(outputs[2].as_ref().unwrap().mass),
+            "lg" => Some(outputs[3].as_ref().unwrap().mass),
+            "xl" => Some(outputs[4].as_ref().unwrap().mass),
+            "new" => None,
+            _ => break
+        };
     }
 }

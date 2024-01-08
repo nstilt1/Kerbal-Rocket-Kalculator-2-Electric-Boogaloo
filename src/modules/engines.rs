@@ -2,7 +2,7 @@ use super::{size::Size, fuel_type::FuelType};
 
 pub const ENGINES: [Engine; 20] = Engine::init_engines();
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Engine {
     pub name: &'static str,
     pub thrust_asl: f64,
