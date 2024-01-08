@@ -9,7 +9,7 @@ cargo run
 ```
 Then answer the prompts. It will loop until you either type `exit` at any point, or if you `Ctrl+C`.
 
-# To do:
+# To do?:
 -implement other fuel types?
 -output the specific wet mass required for the delta-v, so that you know exactly how heavy the rocket needs to be for the desired delta-v?
 -add support for radial tanks and engines?

@@ -16,10 +16,10 @@ fn read(text: &str) -> String {
     return input.trim().to_owned();
 }
 
-
+const SIZES: [Size; 5] = [Size::Xs, Size::Sm, Size::Md, Size::Lg, Size::Xl];
 fn main() {
-    println!("Kerbal Kalculator at your service");
-    let mut calc = Calculator::new();
+    println!("Kerbal Kalculator 2: Electric Boogaloo! is at your service");
+    let mut calculator = Calculator::new();
     loop {
 
         let mass = read("Enter the mass of your payload in tonnes > ");
@@ -53,25 +53,17 @@ fn main() {
             _ => break
         };
 
-        let size = match read("What size diameter do you desire? (xs/sm/md/lg) > ").as_str() {
-            "xs" => Size::Xs,
-            "sm" => Size::Sm,
-            "md" => Size::Md,
-            "lg" => Size::Lg,
-            _ => break
-        };
-
-        calc.init(mass, target_delta_v, minimum_twr, needs_gimballing, is_vacuum, size);
-
-        let mut output = calc.calculate();
-        output.sort_by(|a, b| a.partial_cmp(b).unwrap());
-        if output.len() == 0 {
-            println!("No results found");
-        }else{
-            output[0].print();
+        for (size, str) in SIZES.iter().zip(["xs", "sm", "md", "lg", "xl"].iter()) {
+            calculator.init(mass, target_delta_v, minimum_twr, needs_gimballing, is_vacuum, *size);
+            let mut output = calculator.calculate();
+            output.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            println!("Checking size: {}", str);
+            if output.len() == 0 {
+                println!("No results found\n");
+            }else{
+                output[0].print();
+                println!("\n");
+            }
         }
-
-
     }
-    
 }

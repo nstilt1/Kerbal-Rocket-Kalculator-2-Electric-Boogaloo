@@ -1,4 +1,4 @@
-use super::{size::Size, fuel_type::{FuelType, self}};
+use super::{size::Size, fuel_type::FuelType};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Tank {
@@ -44,6 +44,7 @@ impl Tank {
         };
     }
     
+    /// Define the tank configurations we will consider in our calculations. It seems very difficult to make this a const
     pub fn init_tanks() -> Vec<FuelStack> {
         let mut tanks: Vec<Tank> = Vec::new();
 
@@ -79,6 +80,7 @@ impl Tank {
             result.push(FuelStack::multiple(&oscar, i));
         }
         
+        // Add all of the different combinations of tanks
         for i in 0..tanks.len()/4 {
             let size = i *4;
             result.push(FuelStack::new(vec![tanks[size].to_owned()]));
@@ -97,22 +99,6 @@ impl Tank {
             result.push(FuelStack::new(vec![tanks[size + 1].to_owned(), tanks[size + 2].to_owned(), tanks[size + 3].to_owned()]));
             result.push(FuelStack::new(vec![tanks[size].to_owned(), tanks[size + 1].to_owned(), tanks[size + 2].to_owned(), tanks[size + 3].to_owned()]));
             result.push(FuelStack::new(vec![tanks[size + 3].to_owned(), tanks[size + 3].to_owned()]));
-            
-
-            // original attempt at programmatically adding these FuelStacks
-            /*
-            for j in 0..4 {
-                // append addition of previous elements, then j
-                result.push(Config::new(vec![tanks[i * 4 + j]]));
-                for k in 0..j {
-                    let mut subset: Vec<Tank> = Vec::new();
-                    for l in 0..k {
-                        subset.push(tanks[i*4 + l]);
-                    }
-                    result.push(Config::new(subset));
-                }
-            }
-            */
         }
 
         let mut h_tanks: Vec<Tank> = Vec::new();

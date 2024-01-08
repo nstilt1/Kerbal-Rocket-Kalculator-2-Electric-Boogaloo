@@ -1,8 +1,10 @@
-use super::{size::Size, fuel_type::{FuelType}};
+use super::{size::Size, fuel_type::FuelType};
+
+pub const ENGINES: [Engine; 20] = Engine::init_engines();
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Engine {
-    pub name: String,
+    pub name: &'static str,
     pub thrust_asl: f64,
     pub thrust_vac: f64,
     pub min_thrust: f64,
@@ -15,9 +17,9 @@ pub struct Engine {
 }
 
 impl Engine {
-    fn new(name: &str, thrust_asl: f64, thrust_vac: f64, min_thrust: f64, isp_asl: f64, isp_vac: f64, mass: f64, has_gimbal: bool, size: Size, fuel_type: FuelType) -> Self {
+    const fn new(name: &'static str, thrust_asl: f64, thrust_vac: f64, min_thrust: f64, isp_asl: f64, isp_vac: f64, mass: f64, has_gimbal: bool, size: Size, fuel_type: FuelType) -> Self {
         Engine {
-            name: name.to_owned(),
+            name,
             thrust_asl,
             thrust_vac,
             min_thrust,
@@ -30,10 +32,9 @@ impl Engine {
         }
     }
 
-    pub fn init_engines() -> Vec<Engine> {
-        //let mut result: Vec<Engine> = Vec::new();
-
-        vec![
+    /// Defines all of the engines that we will consider in our calculations
+    pub const fn init_engines() -> [Engine; 20] {
+        [
             // Size::Xs
             Engine::new("48-7S \"Spark\"", 17.1, 20.0, 0.0, 270.0, 315.0, 0.130, true, Size::Xs, FuelType::Methalox),
             Engine::new("LV-1 \"Ant\"", 0.5, 2.0, 0.0, 80.0, 330.0, 0.02, true, Size::Xs, FuelType::Methalox),

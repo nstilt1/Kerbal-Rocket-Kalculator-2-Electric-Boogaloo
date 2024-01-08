@@ -1,6 +1,6 @@
 use crate::G;
 
-use super::{tanks::{Tank, self, FuelStack}, engines::Engine, rocket_config::Rocket, size::Size, fuel_type::FuelType};
+use super::{tanks::{Tank, FuelStack}, engines::ENGINES, rocket_config::Rocket, size::Size, fuel_type::FuelType};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Calculator {
@@ -10,7 +10,6 @@ pub struct Calculator {
     minimum_twr: f64,
     needs_gimballing: bool,
     in_vacuum: bool,
-    pub engines: Vec<Engine>,
     pub tanks: Vec<FuelStack>
 }
 
@@ -23,10 +22,11 @@ impl Calculator {
             minimum_twr: 0.0, 
             needs_gimballing: false, 
             in_vacuum: false, 
-            engines: Engine::init_engines(), 
             tanks: Tank::init_tanks()
         }
     }
+
+    /// Set the calculator's variables
     pub fn init(
         &mut self, 
         mass: f64, 
@@ -50,7 +50,7 @@ impl Calculator {
         let (engine_indices, tank_indices) = self.get_indices();
 
         for eng in engine_indices.0..engine_indices.1 {
-            let engine = self.engines[eng].to_owned();
+            let engine = ENGINES[eng].to_owned();
             if self.needs_gimballing && !engine.has_gimbal {
                 continue;
             }
@@ -102,7 +102,7 @@ impl Calculator {
         let mut j1 = -1;
         let mut j2 = -1;
         let mut t = 0;
-        for e in self.engines.iter() {
+        for e in ENGINES.iter() {
             if i1 == -1 {
                 if e.size == self.size && e.fuel_type == FuelType::Methalox {
                     i1 = t;
@@ -119,7 +119,7 @@ impl Calculator {
             println!("Engine size not found in list");
             return ((0,0),(0,0));
         }else if i2 == -1 {
-            i2 = self.engines.len() as i32;
+            i2 = ENGINES.len() as i32;
         }
 
         t = 0;
