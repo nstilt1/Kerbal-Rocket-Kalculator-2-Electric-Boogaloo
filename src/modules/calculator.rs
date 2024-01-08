@@ -102,13 +102,13 @@ impl Calculator {
         let mut j1 = -1;
         let mut j2 = -1;
         let mut t = 0;
-        for e in ENGINES.iter() {
+        for engine in ENGINES.iter() {
             if i1 == -1 {
-                if e.size == self.size && e.fuel_type == FuelType::Methalox {
+                if engine.size == self.size && engine.fuel_type == FuelType::Methalox {
                     i1 = t;
                 }
             }else if i2 == -1 {
-                if e.size != self.size && e.fuel_type == FuelType::Methalox {
+                if engine.size != self.size && engine.fuel_type == FuelType::Methalox {
                     i2 = t;
                     break;
                 }

@@ -26,6 +26,7 @@ impl Rocket {
     }
 
     pub fn print(&self) {
+        println!("Mass: {}\nThrust to weight ratio: {}", self.mass, self.twr);
         println!("{}x {}\n{}x stacks with {}", self.num_engines, self.engine.name, self.num_engines, self.fuel_config.get_name());
     }
 }

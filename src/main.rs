@@ -30,7 +30,9 @@ fn main() {
             }
             m.parse().expect("Failed to parse mass")
         } else {
-            continue_building.unwrap()
+            let m = continue_building.unwrap();
+            println!("Starting mass: {}", m);
+            m
         };
 
         let target_delta_v = read("Enter the target delta-v in m/s > ");
@@ -59,7 +61,7 @@ fn main() {
         };
 
         let mut outputs: Vec<Option<Rocket>> = Vec::new();
-        for (size, str) in SIZES.iter().zip(SIZE_STRS.iter()) {
+        for size in SIZES.iter() {
             calculator.init(mass, target_delta_v, minimum_twr, needs_gimballing, is_vacuum, *size);
             let mut output = calculator.calculate();
             output.sort_by(|a, b| a.partial_cmp(b).unwrap());
