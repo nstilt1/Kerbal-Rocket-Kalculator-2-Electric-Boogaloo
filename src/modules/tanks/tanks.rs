@@ -1,4 +1,4 @@
-use super::{size::Size, fuel_type::FuelType};
+use super::super::{size::Size, fuel_type::FuelType};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Tank {
@@ -7,7 +7,24 @@ pub struct Tank {
     pub dry_mass: f64,
     pub size: Size,
     pub cost: i64,
-    pub fuel_type: FuelType
+    pub fuel_type: FuelType,
+    tank_type: TankType,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum TankType {
+    NoseTank,
+    CylindricalTank,
+    RadialTank,
+}
+impl TankType {
+    pub fn get_max_tanks(&self) -> u8 {
+        match self {
+            TankType::NoseTank => 1,
+            TankType::CylindricalTank => 4,
+            TankType::RadialTank => 8,
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -40,7 +57,8 @@ impl Tank {
             dry_mass,
             size,
             cost,
-            fuel_type
+            fuel_type,
+            tank_type: TankType::CylindricalTank,
         };
     }
     
@@ -139,5 +157,25 @@ impl FuelStack {
             result.push_str(&t.name);
         }
         result
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn calculate_fuel_volume(diameter: f64, height: f64) -> f64 {
+        let radius = diameter / 2.0;
+        let total_volume = (std::f64::consts::PI * radius.powi(2) * height) / 3.0;
+        let usable_volume = total_volume * 0.83;
+        usable_volume * 1000f64 // Returning volume in liters (cubic meters * 1000)
+    }
+
+    #[test]
+    #[ignore = "This test is ignored because it only uses geometric cones rather than curvy cones."]
+    fn test_tank_volume() {
+        let fuel_volume = calculate_fuel_volume(1.3, 1.639);
+        assert_eq!(fuel_volume, 973.0)
     }
 }
