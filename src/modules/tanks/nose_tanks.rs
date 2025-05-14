@@ -1,5 +1,7 @@
 //! Module for calculating the volume and wet mass of a nose cone tank.
 
+use super::Tanks;
+
 const NOSE_1_CORRECTION_COEF: f64 = 1.34180454434038853861466122907586;
 const NOSE_2_CORRECTION_COEF: f64 = 1.62346946577909534425998572260141;
 const NOSE_3_CORRECTION_COEF: f64 = 1.35970328040517141054976946179522;
@@ -39,6 +41,11 @@ const HP_STEEL_STIR_WELDED_TANK_UTIL_PERCENT: f64 = 96.0;
 pub struct NoseConeVariant {
     pub name: String,
     pub cores: Vec<NoseTankCore>,
+}
+
+impl Tanks for NoseConeVariant {
+    const MIN_VSA: f64 = 0.25;
+    const MAX_VSA: f64 = 4.0;
 }
 
 impl NoseConeVariant {

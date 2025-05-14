@@ -1,4 +1,5 @@
 #![allow(unused)]
+#![feature(const_trait_impl)]
 
 use std::io::{self, Write};
 
