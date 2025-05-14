@@ -1,70 +1,204 @@
 use super::{size::Size, fuel_type::FuelType};
 
-pub const ENGINES: [Engine; 20] = Engine::init_engines();
+const MAX_ENGINE_CONFIGS: usize = 4;
+pub const ENGINES: [Engine; NUM_EGINES] = Engine::init_rp1_engines();
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Engine {
-    pub name: &'static str,
-    pub thrust_asl: f64,
-    pub thrust_vac: f64,
-    pub min_thrust: f64,
-    pub isp_asl: f64,
-    pub isp_vac: f64,
-    pub mass: f64,
-    pub has_gimbal: bool,
-    pub size: Size,
-    pub fuel_type: FuelType
+        pub name: &'static str, 
+        is_solid: bool,
+        pub thrust_asl: f64, 
+        pub thrust_vac: f64, 
+        pub min_thrust: f64, 
+        pub isp_asl: f64, 
+        pub isp_vac: f64, 
+        pub mass: f64, 
+        pub residuals: f64,
+        pub rated_burn_time: f64,
+        pub has_gimbal: bool, 
+        pub is_radial: bool,
+        pub hp_fuel: bool,
+        pub throttleable: bool,
+        pub ullage: bool,
+        pub ignitions: u8,
+        pub size: Size, 
+        pub tank_volume_liters: f64,
+        pub fuel_types: &'static [FuelType],
+        pub configurations: [EngineConfiguration; MAX_ENGINE_CONFIGS]
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct EngineConfiguration {
+    pub name: &'static str,
+    pub thrust_kn: f64, // thrust of the engine config, presumuably ASL
+    pub min_thrust_percentage: f64,
+    pub mass: f64, // mass in tons
+    pub isp_asl: f64,
+    pub isp_vac: f64,
+    pub rated_burn_time: f64,
+    pub ullage: bool,
+    pub hp_fuel: bool,
+    pub num_ignitions: u8,
+    pub is_initialized: bool,
+}
+
+impl EngineConfiguration {
+    pub const fn new(
+        name: &'static str,
+        thrust_kn: f64,
+        min_thrust_percentage: f64,
+        mass: f64,
+        isp_asl: f64,
+        isp_vac: f64,
+        rated_burn_time: f64,
+        ullage: bool,
+        hp_fuel: bool,
+        num_ignitions: u8,
+    ) -> Self {
+        Self {
+            name,
+            thrust_kn,
+            min_thrust_percentage,
+            mass,
+            isp_asl,
+            isp_vac,
+            rated_burn_time,
+            ullage,
+            hp_fuel,
+            num_ignitions,
+            is_initialized: true,
+        }
+    }
+    /// Calculates the thrust (vac) for a configuration.
+    pub const fn thrust_vac(&self) -> f64 {
+        self.thrust_kn * (self.isp_vac / self.isp_asl)
+    }
+    /// Zeroed initial engine config
+    pub const fn zeroed() -> Self {
+        Self {
+            name: "",
+            thrust_kn: 0.0,
+            min_thrust_percentage: 0.0,
+            mass: 0.0,
+            isp_asl: 0.0,
+            isp_vac: 0.0,
+            rated_burn_time: 0.0,
+            ullage: false,
+            hp_fuel: false,
+            num_ignitions: 0,
+            is_initialized: false,
+        }
+    }
+}
+
+const NUM_EGINES: usize = 5;
+
 impl Engine {
-    const fn new(name: &'static str, thrust_asl: f64, thrust_vac: f64, min_thrust: f64, isp_asl: f64, isp_vac: f64, mass: f64, has_gimbal: bool, size: Size, fuel_type: FuelType) -> Self {
+    /// Creates a new engine.
+    /// 
+    /// Parameters:
+    /// * `name` - Name of the engine
+    /// * `thrust_asl` - Thrust at sea level in kN
+    /// * `thrust_vac` - Thrust in a vacuum in kN
+    /// * `min_thrust` - Minimum thrust percentage
+    /// * `isp_asl` - Specific impulse (Isp) at sea level
+    /// * `isp_vac` - Specific impulse (Isp) in a vacuum
+    /// * `mass` - The mass of the engine in tons
+    /// * `has_gimbal` - Whether or not the engine can gimbal
+    /// * `is_radial` - Whether or not the engine is a radial engine
+    /// * `hp_fuel` - Whether or not the engine requires high pressure fuel
+    /// * `throttleable` - Whether or not the engine is throttleable
+    /// * `Size` - The size/diameter of the engine
+    /// * `fuel_types` - A slice of which fuel types this engine can use
+    const fn new(
+        name: &'static str, 
+        is_solid: bool,
+        thrust_asl: f64, 
+        thrust_vac: f64, 
+        min_thrust: f64, 
+        isp_asl: f64, 
+        isp_vac: f64, 
+        mass: f64, 
+        residuals: f64,
+        rated_burn_time: f64,
+        has_gimbal: bool, 
+        is_radial: bool,
+        hp_fuel: bool,
+        throttleable: bool,
+        ullage: bool,
+        ignitions: u8,
+        size: Size, 
+        tank_volume_liters: f64,
+        fuel_types: &'static [FuelType],
+    ) -> Self {
         Engine {
             name,
+            is_solid,
             thrust_asl,
             thrust_vac,
             min_thrust,
             isp_asl,
             isp_vac,
             mass,
+            residuals,
+            rated_burn_time,
             has_gimbal,
+            is_radial,
+            hp_fuel,
+            throttleable,
+            ullage,
+            ignitions,
             size,
-            fuel_type
+            tank_volume_liters,
+            fuel_types,
+            configurations: [EngineConfiguration::zeroed(); MAX_ENGINE_CONFIGS],
         }
     }
 
-    /// Defines all of the engines that we will consider in our calculations
-    pub const fn init_engines() -> [Engine; 20] {
-        [
-            // Size::Xs
-            Engine::new("48-7S \"Spark\"", 17.1, 20.0, 0.0, 270.0, 315.0, 0.130, true, Size::Xs, FuelType::Methalox),
-            Engine::new("LV-1 \"Ant\"", 0.5, 2.0, 0.0, 80.0, 330.0, 0.02, true, Size::Xs, FuelType::Methalox),
-            Engine::new("IX-6315 \"Dawn\"", 0.0, 0.2, 0.0, 100.0, 4200.0, 0.15, false, Size::Xs, FuelType::Methalox),
-            // Size::Sm
-            Engine::new("CR-7 R.A.P.I.E.R. Closed Cycle", 162.3, 180.0, 0.0, 275.0, 305.0, 2.0, true, Size::Sm, FuelType::Methalox),
-            Engine::new("LV-1000 \"Cornet\"", 6.6, 38.0, 0.0, 65.0, 375.0, 0.45, true, Size::Sm, FuelType::Methalox),
-            Engine::new("LV-909 \"Terrier\"", 30.4, 60.0, 0.0, 170.0, 335.0, 0.5, true, Size::Sm, FuelType::Methalox),
-            Engine::new("LV-T30 \"Reliant\"", 221.6, 260.0, 0.0, 260.0, 305.0, 1.25, false, Size::Sm, FuelType::Methalox),
-            Engine::new("LV-T45 \"Swivel\"", 188.1, 215.0, 0.0, 280.0, 320.0, 1.4, true, Size::Sm, FuelType::Methalox),
-            Engine::new("S3 KS-25 \"Vector\"", 769.0, 850.0, 0.0, 285.0, 315.0, 4.0, true, Size::Sm, FuelType::Methalox),
-            Engine::new("T-1 \"Dart\"", 159.4, 170.0, 0.0, 300.0, 320.0, 1.0, false, Size::Sm, FuelType::Methalox),
-            // Size::Md
-            Engine::new("LV-2000 \"Trumpet\"", 31.4, 160.0, 0.0, 75.0, 382.0, 1.65, true, Size::Md, FuelType::Methalox),
-            Engine::new("RE-I5 \"Skipper\"", 525.5, 600.0, 0.0, 282.0, 322.0, 3.0, true, Size::Md, FuelType::Methalox),
-            Engine::new("RE-L10 \"Poodle\"", 110.7, 215.0, 0.0, 175.0, 340.0, 1.75, true, Size::Md, FuelType::Methalox),
-            Engine::new("RE-M3 \"Mainsail\"", 1381.1, 1600.0, 0.0, 265.0, 307.0, 6.0, true, Size::Md, FuelType::Methalox),
-            // Size::Lg
-            Engine::new("KR-2XL \"Rhino\"", 1534.6, 1750.0, 0.0, 285.0, 325.0, 8.0, true, Size::Lg, FuelType::Methalox),
-            Engine::new("LV-3000 \"Tuba\"", 119.2, 510.0, 0.0, 90.0, 385.0, 5.0, true, Size::Lg, FuelType::Methalox),
-            Engine::new("S3 KS-100 \"Mammoth-II\"", 3701.6, 4250.0, 0.0, 270.0, 310.0, 15.0, true, Size::Lg, FuelType::Methalox),
-            Engine::new("SC-TT \"Labradoodle\"", 341.1, 650.0, 0.0, 180.0, 343.0, 5.25, true, Size::Lg, FuelType::Methalox),
+    pub const fn init_rp1_engines() -> [Engine; NUM_EGINES] {
+        let mut engines = [
+            Engine::new("Aerobee", false, 6.7, 7.7, 100.0, 195.0, 226.0, 0.008, 1.2, 47.0, false, false, true, false, true, 1, Size::Xs, 0.0, &[FuelType::AnilineFurfuryl_22p(0.893), FuelType::IRFNA_III(1.64), FuelType::Nitrogen(78.1)]),
+            Engine::new("U-1250", false, 12.7, 14.4, 100.0, 204.8, 232.1, 0.0156, 1.2, 56.0, false, false, true, false, true, 1, Size::Xs, 1.0, &[FuelType::Kerosene(1.71), FuelType::AK20(3.26), FuelType::Nitrogen(157.0)]),
+            Engine::new("Veronique", false, 39.2, 49.3, 100.0, 198.0, 249.0, 0.1511, 3.92, 45.0, false, false, true, false, true, 1, Size::Xs, 1.0, &[FuelType::Kerosene(5.46), FuelType::IRFNA_III(10.2), FuelType::Water(0.216)]),
+            Engine::new("Tiny Tim Booster", true, 133.4, 146.6, 100.0, 202.0, 222.0, 0.0673, 3.9, 5.0, false, false, false, false, false, 1, Size::Xs, 41.3903, &[FuelType::NGNC(42.1)]),
+            Engine::new("A4", false, 238.8, 284.7, 100.0, 203.0, 242.0, 0.9299, 0.47, 70.0, false, false, false, false, true, 1, Size::Sm, 0.0, &[FuelType::Ethanol_75(63.6), FuelType::Liquid_Oxygen(58.2), FuelType::HTP(1.22)]),
+        ];
+        // Aerobee engine configurations
+        engines[0].configurations[0] = EngineConfiguration::new("XASR-1", 13.8, 100.0, 0.010, 200.0, 235.44, 40.0, true, true, 1);
+        engines[0].configurations[1] = EngineConfiguration::new("XASR-2", 13.8, 100.0, 0.010, 200.0, 235.44, 40.0, true, true, 1);
+        engines[0].configurations[2] = EngineConfiguration::new("AJ10-27", 21.3, 100.0, 0.012, 198.0, 231.0, 52.0, true, true, 1);
+        
+        // U-1250 engine configurations
+        engines[1].configurations[0] = EngineConfiguration::new("U-1700", 19.4, 100.0, 0.015, 206.5, 236.4, 60.0, true, true, 1);
+        engines[1].configurations[1] = EngineConfiguration::new("U-2000", 23.0, 100.0, 0.013, 205.6, 241.3, 60.0, true, true, 1);
 
-            // FuelType::Hydrogen
-            // Size::Sm
-            Engine::new("LV-N \"Nerv\"", 20.8, 75.0, 0.0, 250.0, 900.0, 3.0, false, Size::Sm, FuelType::Hydrogen),
-            // Size::Lg
-            Engine::new("LV-SW \"Swerv\"", 154.5, 700.0, 0.0, 320.0, 1450.0, 10.0, true, Size::Lg, FuelType::Hydrogen)
-        ]
+        // Veronique engine configurations
+        engines[2].configurations[0] = EngineConfiguration::new("VeroniqueAGI", 49.3, 100.0, 0.150, 208.0, 261.0, 49.0, true, true, 1);
+        engines[2].configurations[1] = EngineConfiguration::new("Veronique61", 73.8, 100.0, 0.150, 208.0, 261.0, 56.0, true, true, 1);
+        
+        engines
+    }
+}
 
-        //result
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn engine_configs_thrust_vac() {
+        let engine = EngineConfiguration {
+            name: "Aerobee XASR-1",
+            thrust_kn: 13.8,
+            min_thrust_percentage: 100.0,
+            isp_asl: 200.0,
+            isp_vac: 235.44,
+            rated_burn_time: 40.0,
+            mass: 1.0,
+            ullage: true,
+            hp_fuel: true,
+            num_ignitions: 1,
+            is_initialized: true,
+        };
+        assert_eq!(engine.thrust_vac(), 16.24536);
     }
 }

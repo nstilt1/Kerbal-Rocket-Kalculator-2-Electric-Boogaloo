@@ -1,5 +1,40 @@
 //! Module for calculating the volume and wet mass of a nose cone tank.
 
+const NOSE_1_CORRECTION_COEF: f64 = 1.34180454434038853861466122907586;
+const NOSE_2_CORRECTION_COEF: f64 = 1.62346946577909534425998572260141;
+const NOSE_3_CORRECTION_COEF: f64 = 1.35970328040517141054976946179522;
+const NOSE_4_CORRECTION_COEF: f64 = 1.62497042872616614950231905822875;
+const NOSE_5_CORRECTION_COEF: f64 = 1.27217604871392087062531572883017;
+const NOSE_12_CORRECTION_COEF: f64 = 1.27211850249056235284683680220041;
+const NOSE_13_CORRECTION_COEF: f64 = 1.34177037377202035273171532026026;
+
+const STEEL_FUSELAGE_DENSITY: f64 = 0.7050215444;
+const STEEL_FUSELAGE_MAX_UTIL_PERCENT: f64 = 83.0;
+const HP_STEEL_FUSELAGE_DENSITY: f64 = 1.0493497032;
+const HP_STEEL_FUSELAGE_MAX_UTIL_PERCENT: f64 = 75.0;
+const AL_FUSELAGE_DENSITY: f64 = 0.5997974356;
+const AL_FUSELAGE_MAX_UTIL_PERCENT: f64 = 87.0;
+const HP_AL_FUSELAGE_DENSITY: f64 = 1.6430042237;
+const HP_AL_FUSELAGE_MAX_UTIL_PERCENT: f64 = 84.0;
+const AL_STRINGER_TANK_DENSITY: f64 = 0.7186757557;
+const AL_STRINGER_TANK_MAX_UTIL_PERCENT: f64 = 92.0;
+const HP_AL_STRINGER_TANK_DENSITY: f64 = 2.3393934028;
+const HP_AL_STRINGER_TANK_UTIL_PERCENT: f64 = 90.0;
+const REFINED_AL_STRINGER_TANK_DENSITY: f64 = 0.5319629752;
+const REFINED_AL_STRINGER_TANK_UTIL_PERCENT: f64 = 92.0;
+const HP_REFINED_AL_STRINGER_TANK_DENSITY: f64 = 1.7487016847;
+const HP_REFINED_AL_STRINGER_TANK_UTIL_PERCENT: f64 = 90.0;
+const HP_AL_LI_STRINGER_TANK_DENSITY: f64 = 2.6723521459;
+const HP_AL_LI_STRINGER_TANK_UTIL_PERCENT: f64 = 96.0;
+const REFINED_AL_LI_STRINGER_TANK_DENSITY: f64 = 1.1121288578;
+const REFINED_AL_LI_STRINGER_TANK_UTIL_PERCENT: f64 = 97.0;
+const HP_REFINED_AL_LI_STRINGER_TANK_DENSITY: f64 = 2.3157513557;
+const HP_REFINED_AL_LI_STRINGER_TANK_UTIL_PERCENT: f64 = 96.0;
+const STEEL_STIR_WELDED_TANK_DENSITY: f64 = 1.3803043213;
+const STEEL_STIR_WELDED_TANK_UTIL_PERCENT: f64 = 97.0;
+const HP_STEEL_STIR_WELDED_TANK_DENSITY: f64 = 3.9418707664;
+const HP_STEEL_STIR_WELDED_TANK_UTIL_PERCENT: f64 = 96.0;
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct NoseConeVariant {
     pub name: String,
@@ -9,12 +44,13 @@ pub struct NoseConeVariant {
 impl NoseConeVariant {
     pub fn nosecones() -> Self {
         let cores = vec![
-            NoseTankCore::new("Nose-1", 1.2608, 1.34180454434038853861466122907586),
-            NoseTankCore::new("Nose-2", 1.3558, 1.62346946577909534425998572260141),
-            NoseTankCore::new("Nose-3", 0.6402, 1.35970328040517141054976946179522),
-            NoseTankCore::new("Nose-4", 0.3914, 1.62497042872616614950231905822875),
-            NoseTankCore::new("Nose-5", 1.2148, 1.27217604871392087062531572883017),
-            NoseTankCore::new("Nose-12", 5.0000, 0f64),
+            NoseTankCore::new("Nose-1", 1.2608, NOSE_1_CORRECTION_COEF),
+            NoseTankCore::new("Nose-2", 1.3558, NOSE_2_CORRECTION_COEF),
+            NoseTankCore::new("Nose-3", 0.6402, NOSE_3_CORRECTION_COEF),
+            NoseTankCore::new("Nose-4", 0.3914, NOSE_4_CORRECTION_COEF),
+            NoseTankCore::new("Nose-5", 1.2148, NOSE_5_CORRECTION_COEF),
+            NoseTankCore::new("Nose-12", 5.0000, NOSE_12_CORRECTION_COEF),
+            NoseTankCore::new("Nose-13", 3.7760, NOSE_13_CORRECTION_COEF),
         ];
         NoseConeVariant {
             name: "Nosecones".to_string(),
@@ -49,8 +85,17 @@ fn calculate_corrected_volume(diameter: f64, height: f64, correction_coefficient
 
 /// Calculate the dry mass for a nose tank based on the diameter, height, and 
 /// the coefficient.
-fn calculate_dry_mass(diameter: f64, height: f64, coefficient: f64) -> f64 {
-    coefficient * diameter * height
+fn calculate_dry_mass(
+    diameter: f64, 
+    height: f64, 
+    density: f64, 
+    max_utilization: f64, 
+    correction_coefficient: f64
+) -> f64 {
+    let volume = calculate_corrected_volume(diameter, height, correction_coefficient);
+    let structural_volume = volume / max_utilization * (100.0 - max_utilization);
+
+    structural_volume * density
 }
 
 fn calculate_cone_lengths(diameter: f64) -> (f64, f64, f64) {
@@ -63,6 +108,11 @@ fn calculate_cone_lengths(diameter: f64) -> (f64, f64, f64) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const N1: f64 = NOSE_1_CORRECTION_COEF;
+
+    // using a const since you can't easily pass arguments to `cargo test`
+    const PRINT_STATS: bool = false;
 
     /// Calculate the correction coefficient for the tank volume based on sample 
     /// measurements.
@@ -85,6 +135,17 @@ mod tests {
         sum_ratio / count as f64 // Average correction coefficient
     }
 
+    /// Conditionally calls `println!` if --print-nose-tank-stats is present.
+    macro_rules! cprintln {
+        ($($arg:tt)*) => {
+            if PRINT_STATS {
+            //if std::env::args().any(|arg| arg == "--print-nose-tank-stats") {
+                println!($($arg)*);
+            }
+        };
+    }
+    
+
     /// Generate tests for nosecone tanks based on the provided samples and test 
     /// samples.
     macro_rules! impl_nosecone_test {
@@ -92,7 +153,7 @@ mod tests {
             #[test]
             fn $name() {
                 let correction_coefficient = calculate_correction_coefficient($samples);
-                println!("\nCorrection coefficient for core '{}': {:.32}\n", $core, correction_coefficient);
+                cprintln!("\nCorrection coefficient for core '{}': {:.32}\n", $core, correction_coefficient);
 
                 for (i, &(diameter, height, expected, error)) in $test_samples.iter().enumerate() {
                     let corrected_volume = calculate_corrected_volume(diameter, height, correction_coefficient);
@@ -250,17 +311,20 @@ mod tests {
     );
 
     /// Calculates the dry mass coefficient for some nose tanks
-    fn calculate_dry_mass_coefficient(samples: &[(f64, f64, f64)]) -> f64 {
-        let mut sum_ratio = 0.0;
+    fn calculate_dry_mass_coefficient(samples: &[(f64, f64, f64, f64, f64)]) -> f64 {
+        let mut sum_density = 0.0;
         let mut count = 0;
     
-        for &(diameter, height, dry_mass) in samples {
-            let coefficient = dry_mass / (diameter * height);
-            sum_ratio += coefficient;
+        for &(diameter, height, dry_mass, max_utilization, correction_coefficient) in samples {
+            let volume = calculate_corrected_volume(diameter, height, correction_coefficient);
+            let structural_volume = volume / max_utilization * (100.0 - max_utilization);
+            
+            let density = dry_mass / structural_volume;
+            sum_density += density;
             count += 1;
         }
     
-        sum_ratio / count as f64 // Returns the average coefficient
+        sum_density / count as f64 // Returns the average coefficient
     }
     
     /// Implements some tests for finding the dry mass coefficient and validates 
@@ -269,13 +333,13 @@ mod tests {
         ($name:ident, $core:literal, $tank_type:literal, $samples:expr, $test_samples:expr) => {
             #[test]
             fn $name() {
-                let dry_mass_coefficient = calculate_dry_mass_coefficient($samples);
-                println!("\nDry mass coefficient for core '{}:{}': {:.5}\n", $core, $tank_type, dry_mass_coefficient);
+                let density = calculate_dry_mass_coefficient($samples);
+                cprintln!("\nDry mass density for core '{}:{}': {:.10}\n", $core, $tank_type, density);
 
-                for (i, &(diameter, height, expected, error)) in $test_samples.iter().enumerate() {
-                    let estimated_dry_mass = calculate_dry_mass(diameter, height, dry_mass_coefficient);
+                for (i, &(diameter, height, expected, error, max_utilization, correction_coefficient)) in $test_samples.iter().enumerate() {
+                    let estimated_dry_mass = calculate_dry_mass(diameter, height, density, max_utilization, correction_coefficient);
                     let diff = (estimated_dry_mass - expected).abs();
-                    assert!(diff < error, "Dry mass Difference for sample {} is too large: {}\n", i + 1, diff);
+                    assert!(diff < error, "Dry mass Difference for sample {} is too large: {}\nExpected: {}\nEstimate: {}\n", i + 1, diff, expected, estimated_dry_mass);
                 }
             }
         };
@@ -286,16 +350,297 @@ mod tests {
         "Nose-1",
         "Steel Fuselage",
         &[
-            (0.1, 0.0315, 0.016),//VSA = 0.25
-            (0.1, 0.1261, 0.0639),//VSA = 1.00
-            (1.0, 0.3152, 16.0),//VSA = 0.25
-            (1.0, 0.3782, 19.2),//VSA = 0.30
-            (1.0, 1.2608, 63.9),//VSA = 1.00
+            (0.1, 0.0315, 0.016, 83.0, NOSE_1_CORRECTION_COEF),//VSA = 0.25
+            (0.1, 0.1261, 0.0639, 83.0, NOSE_1_CORRECTION_COEF),//VSA = 1.00
+            (1.0, 0.3152, 16.0, 83.0, NOSE_1_CORRECTION_COEF),//VSA = 0.25
+            (1.0, 0.3782, 19.2, 83.0, NOSE_1_CORRECTION_COEF),//VSA = 0.30
+            (1.0, 1.2608, 63.9, 83.0, NOSE_1_CORRECTION_COEF),//VSA = 1.00
+            (1.3, 0.8195, 70.2, 83.0, NOSE_1_CORRECTION_COEF),// VSA = 0.50
+            (1.3, 5.7366, 492.0, 83.0, NOSE_1_CORRECTION_COEF),//VSA = 3.50
+            (3.0, 13.2384, 6040.0, 83.0, NOSE_1_CORRECTION_COEF),// VSA = 3.50
         ],
         &[
-            (3.0, 7.5648, 3045.0, 0.5),//VSA = 2.0
+            (3.0, 7.5648, 3450.0, 4.3, 83.0, NOSE_1_CORRECTION_COEF),//VSA = 2.0
+            (4.0, 10.0864, 8180.0, 6.3, 83.0, NOSE_1_CORRECTION_COEF),// VSA = 2.0
         ]
     );
+
+    impl_nosecone_mass_test!(
+        tank_dry_mass_core_nose_2_steel_fuselage,
+        "Nose-2",
+        "Steel Fuselage",
+        &[
+            (0.1, 0.0339, 0.0208, 83.0, NOSE_2_CORRECTION_COEF),// VSA = 0.25
+            (0.1, 0.1356, 0.0832, 83.0, NOSE_2_CORRECTION_COEF),// VSA = 1.0
+            (1.0, 0.3390, 20.8, 83.0, NOSE_2_CORRECTION_COEF),// VSA = 0.25
+        ],
+        &[
+            (3.0, 4.0674, 2250.0, 3.94, 83.0, NOSE_2_CORRECTION_COEF),// VSA = 1.0
+        ]
+    );
+
+    impl_nosecone_mass_test!(
+        tank_dry_mass_core_nose_1_hp_steel_fuselage,
+        "Nose-1",
+        "HP Steel Fuselage",
+        &[
+            (0.1, 0.0315, 0.0387, 75.0, NOSE_1_CORRECTION_COEF),//VSA = 0.25
+            (0.1, 0.1261, 0.155, 75.0, NOSE_1_CORRECTION_COEF),// VSA = 1.0
+            (1.0, 0.3152, 38.7, 75.0, NOSE_1_CORRECTION_COEF),// VSA = 0.25
+            (1.0, 1.2608, 155.0, 75.0, NOSE_1_CORRECTION_COEF),// VSA = 1.0
+        ],
+        &[
+            (3.0, 7.5648, 8360.0, 5.6, 75.0, NOSE_1_CORRECTION_COEF),// VSA = 2.0
+            (5.0, 12.6080, 38700.0, 29.7, 75.0, NOSE_1_CORRECTION_COEF),// VSA = 2.0
+        ]
+    );
+
+    impl_nosecone_mass_test!(
+        tank_dry_mass_core_nose_1_al_fuselage,
+        "Nose-1",
+        "Al Fuselage",
+        &[
+            (0.1, 0.0315, 0.00992, 87.0, N1),// VSA = 0.25
+            (0.1, 0.1261, 0.0397, 87.0, N1),// VSA = 1.0
+            (1.0, 0.3152, 9.92, 87.0, N1),// VSA = 0.25
+            (1.0, 1.2608, 39.7, 87.0, N1),// VSA = 1.0
+        ],
+        &[
+            (3.0, 7.5648, 2140.0, 3.6, 87.0, N1),// VSA = 2.0
+            (5.0, 12.6080, 9920.0, 3.7, 87.0, N1),// VSA = 2.0
+        ]
+    );
+
+    macro_rules! get_fuselage_densities {
+        ($name:ident, $fuselage:literal, $utilization:literal, 
+            $mass_1:literal, $mass_2:literal, $mass_3:literal, 
+            $mass_4:literal, $expct_mass_1:literal, $expct_mass_2:literal,
+            $error_1:literal, $error_2:literal
+        ) => {
+            impl_nosecone_mass_test!(
+                $name,
+                "Nose-1",
+                $fuselage,
+                &[
+                    (0.1, 0.0315, $mass_1, $utilization, N1),// VSA = 0.25
+                    (0.1, 0.1261, $mass_2, $utilization, N1),// VSA = 1.0
+                    (0.5, 0.3152, $mass_3, $utilization, N1),// VSA = 0.5
+                    (1.0, 0.3152, $mass_4, $utilization, N1),// VSA = 0.25
+                    //(1.0, 1.2608, $mass_4, $utilization, N1),// VSA = 1.0
+                    //(2.0, 5.0432, $mass_5, $utilization, N1),// VSA = 2.0
+                ],
+                &[
+                    (3.0, 7.5648, $expct_mass_1, $error_1, $utilization, N1),// VSA = 2.0
+                    (5.0, 12.6080, $expct_mass_2, $error_2, $utilization, N1),// VSA = 2.0
+                ]
+            );
+        };
+    }
+    get_fuselage_densities!(tank_dry_mass_core_nose_1_hp_al_fuselage, "HP Al Fuselage", 84.0, 0.0346, 0.139, 8.66, 34.6, 7480.0, 34600.0, 4.8, 51.7);
+    get_fuselage_densities!(tank_dry_mass_core_nose_1_al_stringer_tank, "Al Stringer Tank", 92.0, 0.00691, 0.0277, 1.73, 6.92, 1490.0, 6920.0, 4.7, 0.43);
+    get_fuselage_densities!(
+        tank_dry_mass_core_nose_1_hp_al_stringer_tank, 
+        "HP Al Stringer Tank", 
+        90.0,       // Utilization 
+        0.0288,     // D=0.1 VSA=0.25
+        0.115,      // D=0.1 VSA=1.00
+        7.19,       // D=0.5 VSA=0.50
+        28.8,       // D=1.0 VSA=0.25
+        6210.0,     // D=3.0 VSA=2.00
+        28800.0,    // D=5.0 VSA=2.00
+        6.7,        // Error for sample 1
+        19.1        // Error for sample 2
+    );
+    get_fuselage_densities!(
+        tank_dry_mass_core_nose_1_refined_al_stringer_tank, 
+        "Refined Al Stringer Tank", 
+        92.0,       // Utilization 
+        0.00512,     // D=0.1 VSA=0.25
+        0.0205,      // D=0.1 VSA=1.00
+        1.28,       // D=0.5 VSA=0.50
+        5.12,       // D=1.0 VSA=0.25
+        1110.0,     // D=3.0 VSA=2.00
+        5120.0,    // D=5.0 VSA=2.00
+        3.7,        // Error for sample 1
+        1.9        // Error for sample 2
+    );
+    get_fuselage_densities!(
+        tank_dry_mass_core_nose_1_hp_refined_al_stringer_tank, 
+        "HP Refined Al Stringer Tank", 
+        90.0,       // Utilization 
+        0.0215,     // D=0.1 VSA=0.25
+        0.0861,      // D=0.1 VSA=1.00
+        5.38,       // D=0.5 VSA=0.50
+        21.5,       // D=1.0 VSA=0.25
+        4650.0,     // D=3.0 VSA=2.00
+        21500.0,    // D=5.0 VSA=2.00
+        3.1,        // Error for sample 1
+        13.9        // Error for sample 2
+    );
+    get_fuselage_densities!(
+        tank_dry_mass_core_nose_1_al_li_stringer_tank, 
+        "Al-Li Stringer Tank", 
+        97.0,       // Utilization 
+        0.00407,     // D=0.1 VSA=0.25
+        0.0163,      // D=0.1 VSA=1.00
+        1.02,       // D=0.5 VSA=0.50
+        4.07,       // D=1.0 VSA=0.25
+        880.0,     // D=3.0 VSA=2.00
+        4070.0,    // D=5.0 VSA=2.00
+        0.04,        // Error for sample 1
+        4.3        // Error for sample 2
+    );
+    get_fuselage_densities!(
+        tank_dry_mass_core_nose_1_hp_al_li_stringer_tank, 
+        "HP Al-Li Stringer Tank", 
+        96.0,       // Utilization 
+        0.0123,     // D=0.1 VSA=0.25
+        0.0494,      // D=0.1 VSA=1.00
+        3.09,       // D=0.5 VSA=0.50
+        12.3,       // D=1.0 VSA=0.25
+        2670.0,     // D=3.0 VSA=2.00
+        12300.0,    // D=5.0 VSA=2.00
+        7.0,        // Error for sample 1
+        29.0        // Error for sample 2
+    );
+    get_fuselage_densities!(
+        tank_dry_mass_core_nose_1_refined_al_li_stringer_tank, 
+        "Refined Al-Li Stringer Tank", 
+        97.0,       // Utilization 
+        0.00381,     // D=0.1 VSA=0.25
+        0.0152,      // D=0.1 VSA=1.00
+        0.953,       // D=0.5 VSA=0.50
+        3.81,       // D=1.0 VSA=0.25
+        823.0,     // D=3.0 VSA=2.00
+        3810.0,    // D=5.0 VSA=2.00
+        0.4,        // Error for sample 1
+        1.6        // Error for sample 2
+    );
+    get_fuselage_densities!(
+        tank_dry_mass_core_nose_1_hp_refined_al_li_stringer_tank, 
+        "HP Refined Al-Li Stringer Tank", 
+        96.0,       // Utilization 
+        0.0107,     // D=0.1 VSA=0.25
+        0.0426,      // D=0.1 VSA=1.00
+        2.67,       // D=0.5 VSA=0.50
+        10.7,       // D=1.0 VSA=0.25
+        2300.0,     // D=3.0 VSA=2.00
+        10700.0,    // D=5.0 VSA=2.00
+        7.7,        // Error for sample 1
+        16.3        // Error for sample 2
+    );
+    get_fuselage_densities!(
+        tank_dry_mass_core_nose_1_steel_stir_welded_tank, 
+        "Steel Stir Welded Tank", 
+        97.0,       // Utilization 
+        0.00473,     // D=0.1 VSA=0.25
+        0.0189,      // D=0.1 VSA=1.00
+        1.18,       // D=0.5 VSA=0.50
+        4.73,       // D=1.0 VSA=0.25
+        1020.0,     // D=3.0 VSA=2.00
+        4730.0,    // D=5.0 VSA=2.00
+        1.0,        // Error for sample 1
+        3.2        // Error for sample 2
+    );
+    get_fuselage_densities!(
+        tank_dry_mass_core_nose_1_hp_steel_stir_welded_tank, 
+        "HP Steel Stir Welded Tank", 
+        96.0,       // Utilization 
+        0.0182,     // D=0.1 VSA=0.25
+        0.0727,      // D=0.1 VSA=1.00
+        4.54,       // D=0.5 VSA=0.50
+        18.2,       // D=1.0 VSA=0.25
+        3920.0,     // D=3.0 VSA=2.00
+        18200.0,    // D=5.0 VSA=2.00
+        8.16,        // Error for sample 1
+        14.1        // Error for sample 2
+    );
+    /// Determines that fuselage densities are the same across different nose 
+    /// cores.
+    #[test]
+    fn noses_with_const_density() {
+        let density = 0.7050215444;
+
+        {
+            let volume_n2 = calculate_corrected_volume(
+                3.0, 
+                4.0674, 
+                NOSE_2_CORRECTION_COEF
+            );
+            let struct_vol = volume_n2 / 83.0 * (100.0 - 83.0);
+            let expected_dry_mass = 2250.0;
+            let dry_mass = density * struct_vol;
+            let diff = (expected_dry_mass - dry_mass).abs();
+            assert!(diff < 4.3, "Dry mass diff was {}", diff);
+        }
+
+        // nose-3
+        {
+            let volume_n3 = calculate_corrected_volume(
+                3.0, 
+                3.8412, 
+                NOSE_3_CORRECTION_COEF
+            );
+            let actual_volume = 12306.3179;
+            let diff = (volume_n3 - actual_volume).abs();
+            assert!(diff < 0.2, "\nVolume diff was {}\n", diff);
+            let struct_vol = volume_n3 / 83.0 * (100.0 - 83.0);
+            let expected_dry_mass = 1780.0;
+            let dry_mass = density * struct_vol;
+            let diff = (expected_dry_mass - dry_mass).abs();
+            assert!(diff < 3.0, "\nDry mass diff was {}\nDry mass = {}\nExpected = {}", diff, dry_mass, expected_dry_mass);
+        }
+
+        {
+            let volume_n3 = calculate_corrected_volume(
+                3.0, 
+                1.9206, 
+                NOSE_3_CORRECTION_COEF
+            );
+            let actual_volume = 6153.159;
+            let diff = (volume_n3 - actual_volume).abs();
+            assert!(diff < 0.3, "\nVolume diff was {}\n", diff);
+            let struct_vol = volume_n3 / 83.0 * (100.0 - 83.0);
+            let expected_dry_mass = 888.0;
+            let dry_mass = density * struct_vol;
+            let diff = (expected_dry_mass - dry_mass).abs();
+            assert!(diff < 1.0, "\nDry mass diff was {}\nDry mass = {}\nExpected = {}", diff, dry_mass, expected_dry_mass);
+        }
+
+        // nose-4
+        {
+            let volume_n4 = calculate_corrected_volume(
+                3.0, 
+                1.1742, 
+                NOSE_4_CORRECTION_COEF
+            );
+            let actual_volume = 4495.536;
+            let diff = (volume_n4 - actual_volume).abs();
+            assert!(diff < 0.3, "\nVolume diff was {}\n", diff);
+            let struct_vol = volume_n4 / 83.0 * (100.0 - 83.0);
+            let expected_dry_mass = 649.0;
+            let dry_mass = density * struct_vol;
+            let diff = (expected_dry_mass - dry_mass).abs();
+            assert!(diff < 1.0, "\nDry mass diff was {}\nDry mass = {}\nExpected = {}", diff, dry_mass, expected_dry_mass);
+        }
+
+        // nose-5
+        {
+            let volume_n5 = calculate_corrected_volume(
+                3.0, 
+                3.6444, 
+                NOSE_5_CORRECTION_COEF
+            );
+            let actual_volume = 10924.0687;
+            let diff = (volume_n5 - actual_volume).abs();
+            assert!(diff < 0.3, "\nVolume diff was {}\n", diff);
+            let struct_vol = volume_n5 / 83.0 * (100.0 - 83.0);
+            let expected_dry_mass = 1580.0;
+            let dry_mass = density * struct_vol;
+            let diff = (expected_dry_mass - dry_mass).abs();
+            assert!(diff < 3.0, "\nDry mass diff was {}\nDry mass = {}\nExpected = {}", diff, dry_mass, expected_dry_mass);
+        }
+    }
 
     #[test]
     fn test_tank_length() {

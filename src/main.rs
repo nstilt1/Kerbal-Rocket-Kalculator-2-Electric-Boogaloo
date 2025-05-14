@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use std::io::{self, Write};
 
 use crate::modules::{size::Size, calculator::Calculator, rocket_config::Rocket};

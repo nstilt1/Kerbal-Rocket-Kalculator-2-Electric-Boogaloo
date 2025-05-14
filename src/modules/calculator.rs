@@ -99,19 +99,19 @@ impl Calculator {
     pub fn get_indices(&self) -> ((usize, usize), (usize, usize)) {
         let mut i1 = -1;
         let mut i2 = -1;
-        let mut j1 = -1;
+        let mut j1: i32 = -1;
         let mut j2 = -1;
         let mut t = 0;
         for engine in ENGINES.iter() {
             if i1 == -1 {
-                if engine.size == self.size && engine.fuel_type == FuelType::Methalox {
-                    i1 = t;
-                }
+                // if engine.size == self.size && engine.fuel_types[0] == FuelType::RP1 {
+                //     i1 = t;
+                // }
             }else if i2 == -1 {
-                if engine.size != self.size && engine.fuel_type == FuelType::Methalox {
-                    i2 = t;
-                    break;
-                }
+                // if engine.size != self.size && engine.fuel_types[0] == FuelType::RP1 {
+                //     i2 = t;
+                //     break;
+                // }
             }
             t += 1;
         }
@@ -125,13 +125,13 @@ impl Calculator {
         t = 0;
         for tank in self.tanks.iter() {
             if j1 == -1 {
-                if tank.size == self.size && tank.fuel_type == FuelType::Methalox {
-                    j1 = t;
-                }
+                // if tank.size == self.size && tank.fuel_type == FuelType::RP1 {
+                //     j1 = t;
+                // }
             }else if j2 == -1 {
-                if tank.size != self.size && tank.fuel_type == FuelType::Methalox {
-                    j2 = t;
-                }
+                // if tank.size != self.size && tank.fuel_type == FuelType::RP1 {
+                //     j2 = t;
+                // }
             }
             t += 1;
         }

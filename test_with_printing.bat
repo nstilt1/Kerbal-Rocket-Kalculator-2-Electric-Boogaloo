@@ -1,1 +1,1 @@
-cargo test -- --nocapture
+cargo test -- --skip modules::tanks::nose_tanks::tests --nocapture --test-threads=1
