@@ -2,6 +2,35 @@
 
 use super::{TankType, Tanks};
 
+const STEEL_FUSELAGE_DENSITY: f64 = 0.7046255853625588; // kg/L
+const STEEL_FUSELAGE_UTIL_PERCENT: f64 = 83.0;
+const HP_STEEL_FUSELAGE_DENSITY: f64 = 1.161194204449523; // kg/L
+const HP_STEEL_FUSELAGE_UTIL_PERCENT: f64 = 75.0;
+const AL_FUSELAGE_DENSITY: f64 = 0.572370017780281; // kg/L
+const AL_FUSELAGE_UTIL_PERCENT: f64 = 87.0;
+const HP_AL_FUSELAGE_DENSITY: f64 = 1.6233800555626554; // kg/L
+const HP_AL_FUSELAGE_UTIL_PERCENT: f64 = 84.0;
+const AL_STRINGER_TANK_DENSITY: f64 = 0.6474421633361649; // kg/L
+const AL_STRINGER_TANK_UTIL_PERCENT: f64 = 92.0;
+const HP_AL_STRINGER_TANK_DENSITY: f64 = 2.1543208266760887; // kg/L
+const HP_AL_STRINGER_TANK_UTIL_PERCENT: f64 = 90.0;
+const REFINED_AL_STRINGER_TANK_DENSITY: f64 = 0.4793745811132077; // kg/L
+const REFINED_AL_STRINGER_TANK_UTIL_PERCENT: f64 = 92.0;
+const HP_REFINED_AL_STRINGER_TANK_DENSITY: f64 = 1.6195603377848609; // kg/L
+const HP_REFINED_AL_STRINGER_TANK_UTIL_PERCENT: f64 = 90.0;
+const AL_LI_STRINGER_TANK_DENSITY: f64 = 1.0134984503748028; // kg/L
+const AL_LI_STRINGER_TANK_UTIL_PERCENT: f64 = 97.0;
+const HP_AL_LI_STRINGER_TANK_DENSITY: f64 = 2.3147489733434568; // kg/L
+const HP_AL_LI_STRINGER_TANK_UTIL_PERCENT: f64 = 96.0;
+const REFINED_AL_LI_STRINGER_TANK_DENSITY: f64 = 0.9523829659300911; // kg/L
+const REFINED_AL_LI_STRINGER_TANK_UTIL_PERCENT: f64 = 97.0;
+const HP_REFINED_AL_LI_STRINGER_TANK_DENSITY: f64 = 1.9977123977865145; // kg/L
+const HP_REFINED_AL_LI_STRINGER_TANK_UTIL_PERCENT: f64 = 96.0;
+const STEEL_STIR_WELDED_TANK_DENSITY: f64 = 1.1815660325977602; // kg/L
+const STEEL_STIR_WELDED_TANK_UTIL_PERCENT: f64 = 97.0;
+const HP_STEEL_STIR_WELDED_TANK_DENSITY: f64 = 3.4033685400148843; // kg/L
+const HP_STEEL_STIR_WELDED_TANK_UTIL_PERCENT: f64 = 96.0;
+
 pub struct CylindricalTank {
 
 }
@@ -211,5 +240,86 @@ mod tests {
         ]
     );
 
-    
+    macro_rules! dry_mass_test {
+        ($samples:expr) => {
+            #[test]
+            fn dry_mass_tests_macro() {
+                let diameter = 5.0;
+                let height = 5.0;
+                let volume = tank_volume(diameter, height);
+                for (i, &(utilization, density, expected, error)) in $samples.iter().enumerate() {
+                    let unutilization = (100.0 - utilization) / 100.0;
+                    let unused_mass = volume * unutilization * density;
+                    let diff = unused_mass - expected;
+                    assert!(diff.abs() < error, "Diff for sample {} = {}\nExpected = {}\nEstimation = {}", i + 1, diff, expected, unused_mass);
+                }
+            }
+        };
+    }
+
+    dry_mass_test!(
+        &[
+            (STEEL_FUSELAGE_UTIL_PERCENT, STEEL_FUSELAGE_DENSITY, 9800.0, 100.0),
+            (HP_STEEL_FUSELAGE_UTIL_PERCENT, HP_STEEL_FUSELAGE_DENSITY, 23700.0, 100.0),
+            (AL_FUSELAGE_UTIL_PERCENT, AL_FUSELAGE_DENSITY, 6080.0, 20.0),
+            (HP_AL_FUSELAGE_UTIL_PERCENT, HP_AL_FUSELAGE_DENSITY, 21200.0, 100.0),
+            (AL_STRINGER_TANK_UTIL_PERCENT, AL_STRINGER_TANK_DENSITY, 4240.0, 20.0),
+            (HP_AL_STRINGER_TANK_UTIL_PERCENT, HP_AL_STRINGER_TANK_DENSITY, 17600.0, 100.0),
+            (REFINED_AL_STRINGER_TANK_UTIL_PERCENT, REFINED_AL_STRINGER_TANK_DENSITY, 3140.0, 10.0),
+            (HP_REFINED_AL_STRINGER_TANK_UTIL_PERCENT, HP_REFINED_AL_STRINGER_TANK_DENSITY, 13200.0, 100.0),
+            (AL_LI_STRINGER_TANK_UTIL_PERCENT, AL_LI_STRINGER_TANK_DENSITY, 2500.0, 13.0),
+            (HP_AL_LI_STRINGER_TANK_UTIL_PERCENT, HP_AL_LI_STRINGER_TANK_DENSITY, 7570.0, 10.0),
+            (REFINED_AL_LI_STRINGER_TANK_UTIL_PERCENT, REFINED_AL_LI_STRINGER_TANK_DENSITY, 2340.0, 10.0),
+            (HP_REFINED_AL_LI_STRINGER_TANK_UTIL_PERCENT, HP_REFINED_AL_LI_STRINGER_TANK_DENSITY, 6540.0, 10.0),
+            (STEEL_STIR_WELDED_TANK_UTIL_PERCENT, STEEL_STIR_WELDED_TANK_DENSITY, 2900.0, 100.0),
+            (HP_STEEL_STIR_WELDED_TANK_UTIL_PERCENT, HP_STEEL_STIR_WELDED_TANK_DENSITY, 11100.0, 100.0)
+        ]
+    );
+
+    #[test]
+    fn dry_mass_tests() {
+        let diameter = 5.0;
+        let height = 5.0;
+        let volume = tank_volume(diameter, height);
+        let unutilization = (100.0 - STEEL_FUSELAGE_UTIL_PERCENT) / 100.0;
+        let unused = volume * unutilization * STEEL_FUSELAGE_DENSITY;
+        let expected = 9800.0;
+        let diff = unused - expected;
+        assert!(diff.abs() < 0.1, "Diff = {:.5}", diff);
+        let unusable_volume = volume * (100.0 - HP_AL_FUSELAGE_UTIL_PERCENT) / 100.0;
+        let diff = (unusable_volume * HP_AL_FUSELAGE_DENSITY - 21200.0);
+        assert!(diff.abs() < 50.1, "Diff = {}", diff);
+    }
+
+    fn calculate_density(fuselage: &str, utilization: f64, dry_mass_kg: f64) {
+        let volume = tank_volume(1.0, 1.0);
+        let unused_volume = (100.0 - utilization) / 100.0 * volume;
+        let density = dry_mass_kg / unused_volume;
+        let var_name = {
+            let replaced = fuselage.replace(' ', "_");
+            let replaced = replaced.replace('-', "_");
+            replaced.to_ascii_uppercase()
+        };
+        println!("const {}_DENSITY: f64 = {}; // kg/L", var_name, density);
+        println!("const {}_UTIL_PERCENT: f64 = {:.1};", var_name, utilization);
+    }
+
+    #[test]
+    fn dry_mass_tests_v2() {
+        println!("\n");
+        let density = calculate_density("Steel Fuselage", 83.0, 78.4);
+        calculate_density("HP Steel Fuselage", 75.0, 190.0);
+        calculate_density("Al Fuselage", 87.0, 48.7);
+        calculate_density("HP Al Fuselage", 84.0, 170.0);
+        calculate_density("Al Stringer Tank", 92.0, 33.9);
+        calculate_density("HP Al Stringer Tank", 90.0, 141.0);
+        calculate_density("Refined Al Stringer Tank", 92.0, 25.1);
+        calculate_density("HP Refined Al Stringer Tank", 90.0, 106.0);
+        calculate_density("Al-Li Stringer Tank", 97.0, 19.9);
+        calculate_density("HP Al-Li Stringer Tank", 96.0, 60.6);
+        calculate_density("Refined Al-Li Stringer Tank", 97.0, 18.7);
+        calculate_density("HP Refined Al-Li Stringer Tank", 96.0, 52.3);
+        calculate_density("Steel Stir-Welded Tank", 97.0, 23.2);
+        calculate_density("HP Steel Stir-Welded Tank", 96.0, 89.1);
+    }
 }
