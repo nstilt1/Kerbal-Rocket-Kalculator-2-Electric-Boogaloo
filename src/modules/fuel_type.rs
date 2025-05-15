@@ -20,17 +20,27 @@ impl FuelType {
     pub fn density(&self) -> f64 {
         match self {
             Self::RP1(_) => 0.80655,
-            Self::PSPC => 1.73874,
+            //Self::PSPC => 1.73874, // Measured, actual 0.00174
+            Self::PSPC => 1.74,
             Self::AnilineFurfuryl_22p(_) => 1.04410,
-            Self::IRFNA_III(_) => 1.56377,
-            Self::Nitrogen(_) => 0.82310,
-            Self::Kerosene(_) => 0.77531,
-            Self::AK20(_) => 1.53390,
-            Self::Water(_) => 1.00229,
-            Self::NGNC(_) => 1.59941,
-            Self::Ethanol_75(_) => 0.84102,
-            Self::Liquid_Oxygen(_) => 1.13967,
-            Self::HTP(_) => 1.43236,
+            //Self::IRFNA_III(_) => 1.56377, // Measured, actual 0.001658
+            Self::IRFNA_III(_) => 1.658,
+            //Self::Nitrogen(_) => 0.82310,
+            Self::Nitrogen(_) => 0.824907,
+            //Self::Kerosene(_) => 0.77531, // Measured, actual 0.00082
+            Self::Kerosene(_) => 0.82,
+            //Self::AK20(_) => 1.53390, // Measured, actual from CommonResources.cfg: 0.001499
+            Self::AK20(_) => 1.499,
+            //Self::Water(_) => 1.00229,
+            Self::Water(_) => 1.0,
+            //Self::NGNC(_) => 1.59941, // Measured, actual 0.0016
+            Self::NGNC(_) => 1.6,
+            //Self::Ethanol_75(_) => 0.84102, // Measured, actual: 0.00084175
+            Self::Ethanol_75(_) => 0.84175,
+            //Self::Liquid_Oxygen(_) => 1.13967, // Measured, actual 0.001141
+            Self::Liquid_Oxygen(_) => 1.141,
+            //Self::HTP(_) => 1.43236, // Measured, actual 0.001431
+            Self::HTP(_) => 1.431,
         }
     }
     /// Returns the fuel flow rate for a specific engine in L/s
