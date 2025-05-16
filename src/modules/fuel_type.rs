@@ -60,6 +60,34 @@ impl FuelType {
             Self::HTP(flow_rate) => *flow_rate,
         }
     }
+
+    /// Returns the maximum volume of fuel that an engine can burn through in 
+    /// its rated burn time. Unit: Liters
+    pub fn max_volume(&self, rated_burn_time: f64) -> f64 {
+        self.flow_rate() * rated_burn_time
+    }
+
+    /// Returns the mass of this fuel given some volume. Unit: kg
+    pub fn mass(&self, volume: f64) -> f64 {
+        self.density() * volume
+    }
+
+    pub fn name(&self) -> &str {
+        match self {
+            Self::AK20(_) => "AK20",
+            Self::AnilineFurfuryl_22p(_) => "AnilineFurfuryl_22p",
+            Self::Ethanol_75(_) => "Ethanol 75",
+            Self::HTP(_) => "HTP",
+            Self::IRFNA_III(_) => "IRFNA_III",
+            Self::Kerosene(_) => "Kerosene",
+            Self::Liquid_Oxygen(_) => "Liquid Oxygen",
+            Self::NGNC(_) => "NGNC",
+            Self::Nitrogen(_) => "Nitrogen",
+            Self::PSPC => "PSPC",
+            Self::RP1(_) => "RP-1",
+            Self::Water(_) => "Water",
+        }
+    }
 }
 
 #[cfg(test)]

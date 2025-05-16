@@ -41,6 +41,21 @@ const STEEL_STIR_WELDED_TANK_UTIL_PERCENT: f64 = 97.0;
 const HP_STEEL_STIR_WELDED_TANK_DENSITY: f64 = 3.9418707664;
 const HP_STEEL_STIR_WELDED_TANK_UTIL_PERCENT: f64 = 96.0;
 
+/// A nosecone and its dimensions/features.
+#[derive(Debug, PartialEq, Clone)]
+pub struct NoseCone {
+    pub core: NoseTankCore,
+    pub length: f64,
+    pub diameter: f64,
+    pub fuselage: Fuselage,
+}
+
+impl NoseCone {
+    pub fn display(&self) -> String {
+        format!("\nCore: {}\nLength: {}\nDiameter: {}\nFuselage: {}", self.core.name, self.length, self.diameter, self.fuselage.name)
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct NoseConeVariant {
     pub name: &'static str,
@@ -54,7 +69,7 @@ impl Tanks for NoseConeVariant {
     fn init_fuselage_types() -> (HashMap<&'static str, Fuselage>, HashMap<&'static str, Fuselage>) {
         let mut hp_tanks: HashMap<&str, Fuselage> = HashMap::with_capacity(7);
         let mut non_hp_tanks: HashMap<&str, Fuselage> = HashMap::with_capacity(7);
-        hp_tanks.insert(HP_AL_FUSELAGE_NAME, Fuselage::new(HP_AL_FUSELAGE_NAME, 1.6430042237, 0.84));
+        hp_tanks.insert(HP_STEEL_FUSELAGE_NAME, Fuselage::new(HP_STEEL_FUSELAGE_NAME, HP_STEEL_FUSELAGE_DENSITY, HP_STEEL_FUSELAGE_UTIL_PERCENT));
         hp_tanks.insert(HP_AL_FUSELAGE_NAME, Fuselage::new(HP_AL_FUSELAGE_NAME, 1.6430042237, 0.84));
         hp_tanks.insert(HP_AL_STRINGER_TANK_NAME, Fuselage::new(HP_AL_STRINGER_TANK_NAME, 2.3393934028, 0.90));
         hp_tanks.insert(HP_REFINED_AL_STRINGER_TANK_NAME, Fuselage::new(HP_REFINED_AL_STRINGER_TANK_NAME, 1.7487016847, 0.90));
@@ -95,7 +110,7 @@ pub struct NoseTankCore {
     pub name: &'static str,
     /// The length of the tank in meters with V.ScaleAdj = 1.0000
     pub base_length: f64,
-    correction_coefficient: f64,
+    pub correction_coefficient: f64,
 }
 
 impl NoseTankCore {
@@ -107,7 +122,7 @@ impl NoseTankCore {
 
 /// Calculate the corrected volume of the tank based on the diameter, height,
 /// and correction coefficient.
-fn calculate_corrected_volume(diameter: f64, height: f64, correction_coefficient: f64) -> f64 {
+pub fn calculate_corrected_volume(diameter: f64, height: f64, correction_coefficient: f64) -> f64 {
     let radius = diameter / 2.0;
     let ideal_volume_liters = ((std::f64::consts::PI * radius.powi(2) * height) / 3.0) * 1000.0;
     let corrected_volume = ideal_volume_liters * correction_coefficient;
@@ -116,7 +131,7 @@ fn calculate_corrected_volume(diameter: f64, height: f64, correction_coefficient
 
 /// Calculate the dry mass for a nose tank based on the diameter, height, and 
 /// the coefficient.
-fn calculate_dry_mass(
+pub fn calculate_nose_dry_mass(
     diameter: f64, 
     height: f64, 
     density: f64, 
@@ -368,7 +383,7 @@ mod tests {
                 cprintln!("\nDry mass density for core '{}:{}': {:.10}\n", $core, $tank_type, density);
 
                 for (i, &(diameter, height, expected, error, max_utilization, correction_coefficient)) in $test_samples.iter().enumerate() {
-                    let estimated_dry_mass = calculate_dry_mass(diameter, height, density, max_utilization, correction_coefficient);
+                    let estimated_dry_mass = calculate_nose_dry_mass(diameter, height, density, max_utilization, correction_coefficient);
                     let diff = (estimated_dry_mass - expected).abs();
                     assert!(diff < error, "Dry mass Difference for sample {} is too large: {}\nExpected: {}\nEstimate: {}\n", i + 1, diff, expected, estimated_dry_mass);
                 }

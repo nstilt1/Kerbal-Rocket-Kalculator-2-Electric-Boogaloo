@@ -1,8 +1,9 @@
-use super::{tanks::FuelStack, engines::Engine};
+use super::{engines::Engine, tanks::{cylindrical_tanks::CylindricalTank, nose_tanks::NoseCone, FuelStack}};
 
 #[derive(Debug, Clone)]
 pub struct Rocket {
-    fuel_config: FuelStack,
+    nose: Option<NoseCone>,
+    tank: Option<CylindricalTank>,
     engine: Engine,
     num_engines: u8,
     pub(crate) mass: f64,
@@ -10,14 +11,17 @@ pub struct Rocket {
 }
 
 impl Rocket {
-    pub fn new(fuel_stack: FuelStack, 
+    pub fn new(
+        nose: Option<NoseCone>,
+        tank: Option<CylindricalTank>, 
         engine: Engine, 
         num_engines: u8, 
         mass: f64, 
         twr: f64
     ) -> Self{
         Rocket {
-            fuel_config: fuel_stack,
+            nose,
+            tank,
             engine,
             num_engines,
             mass,
@@ -27,7 +31,13 @@ impl Rocket {
 
     pub fn print(&self) {
         println!("Mass: {}\nThrust to weight ratio: {}", self.mass, self.twr);
-        println!("{}x {}\n{}x stacks with {}", self.num_engines, self.engine.name, self.num_engines, self.fuel_config.get_name());
+        println!("{}x {}\n{}x stacks", self.num_engines, self.engine.name, self.num_engines);
+        if let Some(tank) = &self.tank {
+            println!("Cylindrical tank with {}m length and {}m diameter and {}", tank.length, tank.diameter, tank.fuselage.name);
+        }
+        if let Some(nose) = &self.nose {
+            println!("Nosecone {} with {}m length and {}m diameter and {}", nose.core.name, nose.length, nose.diameter, nose.fuselage.name)
+        }
     }
 }
 

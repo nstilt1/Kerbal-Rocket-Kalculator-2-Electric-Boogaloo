@@ -31,10 +31,11 @@ pub trait Tanks {
     fn init_fuselage_types() -> (HashMap<&'static str, Fuselage>, HashMap<&'static str, Fuselage>);
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Fuselage {
-    name: &'static str,
-    density: f64,
-    utilization: f64,
+    pub name: &'static str,
+    pub density: f64,
+    pub utilization: f64,
 }
 
 impl Fuselage {

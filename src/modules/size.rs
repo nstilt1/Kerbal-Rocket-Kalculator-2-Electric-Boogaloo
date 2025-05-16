@@ -6,3 +6,16 @@ pub enum Size {
     Lg,
     Xl
 }
+
+impl Size {
+    /// Returns the diameter of this size in meters.
+    pub fn get_diameter(&self) -> f64 {
+        match self {
+            Self::Xs => 0.3,
+            Self::Sm => 1.3,
+            Self::Md => todo!(),
+            Self::Lg => todo!(),
+            Self::Xl => todo!(),
+        }
+    }
+}

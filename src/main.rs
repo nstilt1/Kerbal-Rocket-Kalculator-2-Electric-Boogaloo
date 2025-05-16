@@ -7,7 +7,8 @@ use crate::modules::{size::Size, calculator::Calculator, rocket_config::Rocket};
 
 mod modules;
 
-const G: f64 = 9.81;
+//const G: f64 = 9.81;
+const G: f64 = 9.80665;
 fn read(text: &str) -> String {
     let mut input = String::new();
     print!("{}", text);
@@ -51,29 +52,42 @@ fn main() {
         let minimum_twr: f64 = minimum_twr.parse().expect("Failed to parse minimum_twr");
 
         let is_vacuum = read("Is this stage in a vacuum? (y/n) > ");
-        let is_vacuum = match is_vacuum.as_str() {
+        let is_vacuum = match is_vacuum.to_lowercase().as_str() {
             "y" => true,
             "n" => false,
             _ => break
         };
 
-        let needs_gimballing = match read("Do you want gimballing? (y/n) > ").as_str() {
+        let needs_gimballing = match read("Do you want gimballing? (y/n) > ").to_lowercase().as_str() {
             "y" => true,
             "n" => false,
             _ => break
         };
 
+        let use_nosecone = match read("Do you want the center fuel tanks to have a nosecone? (y/n> > ").to_lowercase().as_str() {
+            "y" => true,
+            "n" => false,
+            _ => break
+        };
+        let diameter = match read("Enter the payload's diameter in meters > ").parse::<f64>() {
+            Ok(v) => v,
+            Err(_) => break
+        };
+        let unlocked_fuselages = read("Enter your unlocked fuselages separated by commas and excluding HP prefixes > ").to_string();
         let mut outputs: Vec<Option<Rocket>> = Vec::new();
-        for size in SIZES.iter() {
-            calculator.init(mass, target_delta_v, minimum_twr, needs_gimballing, is_vacuum, *size);
-            let mut output = calculator.calculate();
-            output.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        calculator.init(mass, target_delta_v, minimum_twr, needs_gimballing, is_vacuum, use_nosecone, Size::Sm, unlocked_fuselages.clone());
+        let (mut nose_plus_cylinder_results, mut cylinder_results, mut nose_results) = calculator.calculate();
+        let mut output: Vec<Rocket> = Vec::with_capacity(nose_plus_cylinder_results.len() + cylinder_results.len() + nose_results.len());
+        output.append(&mut nose_plus_cylinder_results.clone());
+        output.append(&mut cylinder_results.clone());
+        output.append(&mut nose_results.clone());
+        output.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
-            if output.len() == 0 {
-                outputs.push(None);
-            }else{
-                outputs.push(Some(output[0].clone()));
-            }
+        if output.len() == 0 {
+            outputs.push(None);
+            println!("No rockets found");
+        }else{
+            outputs.push(Some(output[0].clone()));
         }
 
         println!("\n\nStarting mass: {}", mass);

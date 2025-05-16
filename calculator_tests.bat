@@ -1,0 +1,1 @@
+cargo test modules::calculator::tests -- --nocapture --test-threads=1

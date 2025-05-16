@@ -33,8 +33,11 @@ const STEEL_STIR_WELDED_TANK_UTIL_PERCENT: f64 = 97.0;
 const HP_STEEL_STIR_WELDED_TANK_DENSITY: f64 = 3.4033685400148843; // kg/L
 const HP_STEEL_STIR_WELDED_TANK_UTIL_PERCENT: f64 = 96.0;
 
+#[derive(Debug, PartialEq, Clone)]
 pub struct CylindricalTank {
-
+    pub length: f64,
+    pub diameter: f64,
+    pub fuselage: Fuselage,
 }
 
 impl Tanks for CylindricalTank {
@@ -78,12 +81,18 @@ const K: f64 = 392.69893495497905;
 
 /// Calculates the volume of a tank with no nose or mount. Applies a correction 
 /// factor discovered during testing.
-fn tank_volume(diameter: f64, height: f64) -> f64 {
+pub fn tank_volume(diameter: f64, height: f64) -> f64 {
     let r = diameter / 2.0;
     // (ellipsoid_volume(r, r, r/2.0) + cylinder_volume(r, height)) * 1000.0 - 392.6991174
     let base_volume = (ellipsoid_volume(r, r, r/2.0) + cylinder_volume(r, height)) * 1000.0;
     let correction_factor = K * diameter.powi(3);
     base_volume - correction_factor
+}
+
+/// Calculates the dry mass of a cylindrical tank in kg.
+pub fn cylindrical_dry_mass(diameter: f64, height: f64, utilization: f64, density: f64) -> f64 {
+    let volume = tank_volume(diameter, height);
+    volume * (1.0 - utilization) * density
 }
 
 #[cfg(test)]
