@@ -1,6 +1,8 @@
 //! Module for calculating the volume and wet mass of a nose cone tank.
 
-use super::Tanks;
+use std::collections::HashMap;
+
+use super::{Fuselage, Tanks, fuselage_names::*};
 
 const NOSE_1_CORRECTION_COEF: f64 = 1.34180454434038853861466122907586;
 const NOSE_2_CORRECTION_COEF: f64 = 1.62346946577909534425998572260141;
@@ -11,21 +13,23 @@ const NOSE_12_CORRECTION_COEF: f64 = 1.27211850249056235284683680220041;
 const NOSE_13_CORRECTION_COEF: f64 = 1.34177037377202035273171532026026;
 
 const STEEL_FUSELAGE_DENSITY: f64 = 0.7050215444;
-const STEEL_FUSELAGE_MAX_UTIL_PERCENT: f64 = 83.0;
+const STEEL_FUSELAGE_UTIL_PERCENT: f64 = 83.0;
 const HP_STEEL_FUSELAGE_DENSITY: f64 = 1.0493497032;
-const HP_STEEL_FUSELAGE_MAX_UTIL_PERCENT: f64 = 75.0;
+const HP_STEEL_FUSELAGE_UTIL_PERCENT: f64 = 75.0;
 const AL_FUSELAGE_DENSITY: f64 = 0.5997974356;
-const AL_FUSELAGE_MAX_UTIL_PERCENT: f64 = 87.0;
+const AL_FUSELAGE_UTIL_PERCENT: f64 = 87.0;
 const HP_AL_FUSELAGE_DENSITY: f64 = 1.6430042237;
-const HP_AL_FUSELAGE_MAX_UTIL_PERCENT: f64 = 84.0;
+const HP_AL_FUSELAGE_UTIL_PERCENT: f64 = 84.0;
 const AL_STRINGER_TANK_DENSITY: f64 = 0.7186757557;
-const AL_STRINGER_TANK_MAX_UTIL_PERCENT: f64 = 92.0;
+const AL_STRINGER_TANK_UTIL_PERCENT: f64 = 92.0;
 const HP_AL_STRINGER_TANK_DENSITY: f64 = 2.3393934028;
 const HP_AL_STRINGER_TANK_UTIL_PERCENT: f64 = 90.0;
 const REFINED_AL_STRINGER_TANK_DENSITY: f64 = 0.5319629752;
 const REFINED_AL_STRINGER_TANK_UTIL_PERCENT: f64 = 92.0;
 const HP_REFINED_AL_STRINGER_TANK_DENSITY: f64 = 1.7487016847;
 const HP_REFINED_AL_STRINGER_TANK_UTIL_PERCENT: f64 = 90.0;
+const AL_LI_STRINGER_TANK_DENSITY: f64 = 1.1897409303;
+const AL_LI_STRINGER_TANK_UTIL_PERCENT: f64 = 97.0;
 const HP_AL_LI_STRINGER_TANK_DENSITY: f64 = 2.6723521459;
 const HP_AL_LI_STRINGER_TANK_UTIL_PERCENT: f64 = 96.0;
 const REFINED_AL_LI_STRINGER_TANK_DENSITY: f64 = 1.1121288578;
@@ -39,18 +43,38 @@ const HP_STEEL_STIR_WELDED_TANK_UTIL_PERCENT: f64 = 96.0;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct NoseConeVariant {
-    pub name: String,
-    pub cores: Vec<NoseTankCore>,
+    pub name: &'static str,
+    pub cores: [NoseTankCore; 7],
 }
 
 impl Tanks for NoseConeVariant {
     const MIN_VSA: f64 = 0.25;
     const MAX_VSA: f64 = 4.0;
+
+    fn init_fuselage_types() -> (HashMap<&'static str, Fuselage>, HashMap<&'static str, Fuselage>) {
+        let mut hp_tanks: HashMap<&str, Fuselage> = HashMap::with_capacity(7);
+        let mut non_hp_tanks: HashMap<&str, Fuselage> = HashMap::with_capacity(7);
+        hp_tanks.insert(HP_AL_FUSELAGE_NAME, Fuselage::new(HP_AL_FUSELAGE_NAME, 1.6430042237, 0.84));
+        hp_tanks.insert(HP_AL_FUSELAGE_NAME, Fuselage::new(HP_AL_FUSELAGE_NAME, 1.6430042237, 0.84));
+        hp_tanks.insert(HP_AL_STRINGER_TANK_NAME, Fuselage::new(HP_AL_STRINGER_TANK_NAME, 2.3393934028, 0.90));
+        hp_tanks.insert(HP_REFINED_AL_STRINGER_TANK_NAME, Fuselage::new(HP_REFINED_AL_STRINGER_TANK_NAME, 1.7487016847, 0.90));
+        hp_tanks.insert(HP_AL_LI_STRINGER_TANK_NAME, Fuselage::new(HP_AL_LI_STRINGER_TANK_NAME, 2.6723521459, 0.96));
+        hp_tanks.insert(HP_REFINED_AL_LI_STRINGER_TANK_NAME, Fuselage::new(HP_REFINED_AL_LI_STRINGER_TANK_NAME, 2.3157513557, 0.96));
+        hp_tanks.insert(HP_STEEL_STIR_WELDED_TANK_NAME, Fuselage::new(HP_STEEL_STIR_WELDED_TANK_NAME, 3.9418707664, 0.96));
+        non_hp_tanks.insert(STEEL_FUSELAGE_NAME, Fuselage::new(STEEL_FUSELAGE_NAME, 0.7050215444, 0.83));
+        non_hp_tanks.insert(AL_FUSELAGE_NAME, Fuselage::new(AL_FUSELAGE_NAME, 0.5997974356, 0.87));
+        non_hp_tanks.insert(AL_STRINGER_TANK_NAME, Fuselage::new(AL_STRINGER_TANK_NAME, 0.7186757557, 0.92));
+        non_hp_tanks.insert(REFINED_AL_STRINGER_TANK_NAME, Fuselage::new(REFINED_AL_STRINGER_TANK_NAME, 0.5319629752, 0.92));
+        non_hp_tanks.insert(AL_LI_STRINGER_TANK_NAME, Fuselage::new(AL_LI_STRINGER_TANK_NAME, 1.1897409303, 0.97));
+        non_hp_tanks.insert(REFINED_AL_LI_STRINGER_TANK_NAME, Fuselage::new(REFINED_AL_LI_STRINGER_TANK_NAME, 1.1121288578, 0.97));
+        non_hp_tanks.insert(STEEL_STIR_WELDED_TANK_NAME, Fuselage::new(STEEL_STIR_WELDED_TANK_NAME, 1.3803043213, 0.97));
+        (hp_tanks, non_hp_tanks)
+    }
 }
 
 impl NoseConeVariant {
-    pub fn nosecones() -> Self {
-        let cores = vec![
+    pub const fn nosecones() -> Self {
+        let cores = [
             NoseTankCore::new("Nose-1", 1.2608, NOSE_1_CORRECTION_COEF),
             NoseTankCore::new("Nose-2", 1.3558, NOSE_2_CORRECTION_COEF),
             NoseTankCore::new("Nose-3", 0.6402, NOSE_3_CORRECTION_COEF),
@@ -60,7 +84,7 @@ impl NoseConeVariant {
             NoseTankCore::new("Nose-13", 3.7760, NOSE_13_CORRECTION_COEF),
         ];
         NoseConeVariant {
-            name: "Nosecones".to_string(),
+            name: "Nosecones",
             cores,
         }
     }
@@ -68,7 +92,7 @@ impl NoseConeVariant {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct NoseTankCore {
-    pub name: String,
+    pub name: &'static str,
     /// The length of the tank in meters with V.ScaleAdj = 1.0000
     pub base_length: f64,
     correction_coefficient: f64,
@@ -76,8 +100,8 @@ pub struct NoseTankCore {
 
 impl NoseTankCore {
     /// Create a new NoseTank with the given name and base length.
-    pub fn new(name: &str, base_length: f64, correction_coefficient: f64) -> Self {
-        NoseTankCore { name: name.to_string(), base_length, correction_coefficient }
+    pub const fn new(name: &'static str, base_length: f64, correction_coefficient: f64) -> Self {
+        NoseTankCore { name, base_length, correction_coefficient }
     }
 }
 
@@ -119,7 +143,7 @@ mod tests {
     const N1: f64 = NOSE_1_CORRECTION_COEF;
 
     // using a const since you can't easily pass arguments to `cargo test`
-    const PRINT_STATS: bool = false;
+    const PRINT_STATS: bool = true;
 
     /// Calculate the correction coefficient for the tank volume based on sample 
     /// measurements.
@@ -659,5 +683,46 @@ mod tests {
         let (base_length, min_length, max_length) = calculate_cone_lengths(diameter);
         let expected_base_length = 3.7824;
         assert!((base_length - expected_base_length).abs() < 0.01, "Base length is incorrect");
+    }
+
+    fn write_fuselage_code(samples: &[(&str, f64, f64)]) {
+        let mut hp_tanks: Vec<(String, f64, f64)> = Vec::new();
+        let mut non_hp_tanks = hp_tanks.clone();
+        for &(fuselage, utilization, density) in samples {
+            if fuselage.to_lowercase().contains("hp") {
+                hp_tanks.push((fuselage.to_string(), density, utilization));
+            } else {
+                non_hp_tanks.push((fuselage.to_string(), density, utilization));
+            }
+        }
+        for (fuselage, density, utilization) in hp_tanks {
+            println!("hp_tanks.insert({}, Fuselage::new({}, {}, {:.2}));", fuselage, fuselage, density, utilization / 100.0);
+        }
+        for (fuselage, density, utilization) in non_hp_tanks {
+            println!("non_hp_tanks.insert({}, Fuselage::new({}, {}, {:.2}));", fuselage, fuselage, density, utilization / 100.0);
+        }
+    }
+
+    #[test]
+    fn generate_code() {
+        write_fuselage_code(
+            &[
+                ("STEEL_FUSELAGE_NAME", STEEL_FUSELAGE_UTIL_PERCENT, STEEL_FUSELAGE_DENSITY),
+                ("HP_STEEL_FUSELAGE_NAME", HP_STEEL_FUSELAGE_UTIL_PERCENT, HP_STEEL_FUSELAGE_DENSITY),
+                ("AL_FUSELAGE_NAME", AL_FUSELAGE_UTIL_PERCENT, AL_FUSELAGE_DENSITY),
+                ("HP_AL_FUSELAGE_NAME", HP_AL_FUSELAGE_UTIL_PERCENT, HP_AL_FUSELAGE_DENSITY),
+                ("HP_AL_FUSELAGE_NAME", HP_AL_FUSELAGE_UTIL_PERCENT, HP_AL_FUSELAGE_DENSITY),
+                ("AL_STRINGER_TANK_NAME", AL_STRINGER_TANK_UTIL_PERCENT, AL_STRINGER_TANK_DENSITY),
+                ("HP_AL_STRINGER_TANK_NAME", HP_AL_STRINGER_TANK_UTIL_PERCENT, HP_AL_STRINGER_TANK_DENSITY),
+                ("REFINED_AL_STRINGER_TANK_NAME", REFINED_AL_STRINGER_TANK_UTIL_PERCENT, REFINED_AL_STRINGER_TANK_DENSITY),
+                ("HP_REFINED_AL_STRINGER_TANK_NAME", HP_REFINED_AL_STRINGER_TANK_UTIL_PERCENT, HP_REFINED_AL_STRINGER_TANK_DENSITY),
+                ("AL_LI_STRINGER_TANK_NAME", AL_LI_STRINGER_TANK_UTIL_PERCENT, AL_LI_STRINGER_TANK_DENSITY),
+                ("HP_AL_LI_STRINGER_TANK_NAME", HP_AL_LI_STRINGER_TANK_UTIL_PERCENT, HP_AL_LI_STRINGER_TANK_DENSITY),
+                ("REFINED_AL_LI_STRINGER_TANK_NAME", REFINED_AL_LI_STRINGER_TANK_UTIL_PERCENT, REFINED_AL_LI_STRINGER_TANK_DENSITY),
+                ("HP_REFINED_AL_LI_STRINGER_TANK_NAME", HP_REFINED_AL_LI_STRINGER_TANK_UTIL_PERCENT, HP_REFINED_AL_LI_STRINGER_TANK_DENSITY),
+                ("STEEL_STIR_WELDED_TANK_NAME", STEEL_STIR_WELDED_TANK_UTIL_PERCENT, STEEL_STIR_WELDED_TANK_DENSITY),
+                ("HP_STEEL_STIR_WELDED_TANK_NAME", HP_STEEL_STIR_WELDED_TANK_UTIL_PERCENT, HP_STEEL_STIR_WELDED_TANK_DENSITY),
+            ]
+        );
     }
 }

@@ -1,6 +1,8 @@
 //! Module for calculating the volume and wet mass of cyllindrical tanks.
 
-use super::{TankType, Tanks};
+use std::collections::HashMap;
+
+use super::{Fuselage, TankType, Tanks, fuselage_names::*};
 
 const STEEL_FUSELAGE_DENSITY: f64 = 0.7046255853625588; // kg/L
 const STEEL_FUSELAGE_UTIL_PERCENT: f64 = 83.0;
@@ -40,6 +42,26 @@ impl Tanks for CylindricalTank {
     const MIN_VSA: f64 = 0.5;
     const MAX_VSA: f64 = 50.0;
     const TANK_TYPE: TankType = TankType::Cylindrical;
+
+    fn init_fuselage_types() -> (HashMap<&'static str, Fuselage>, HashMap<&'static str, Fuselage>) {
+        let mut hp_tanks: HashMap<&str, Fuselage> = HashMap::with_capacity(7);
+        let mut non_hp_tanks: HashMap<&str, Fuselage> = HashMap::with_capacity(7);
+        hp_tanks.insert(HP_STEEL_FUSELAGE_NAME, Fuselage::new(HP_STEEL_FUSELAGE_NAME, 1.161194204449523, 0.75));
+        hp_tanks.insert(HP_AL_FUSELAGE_NAME, Fuselage::new(HP_AL_FUSELAGE_NAME, 1.6233800555626554, 0.84));
+        hp_tanks.insert(HP_AL_STRINGER_TANK_NAME, Fuselage::new(HP_AL_STRINGER_TANK_NAME, 2.1543208266760887, 0.90));
+        hp_tanks.insert(HP_REFINED_AL_STRINGER_TANK_NAME, Fuselage::new(HP_REFINED_AL_STRINGER_TANK_NAME, 1.6195603377848609, 0.90));
+        hp_tanks.insert(HP_AL_LI_STRINGER_TANK_NAME, Fuselage::new(HP_AL_LI_STRINGER_TANK_NAME, 2.3147489733434568, 0.96));
+        hp_tanks.insert(HP_REFINED_AL_LI_STRINGER_TANK_NAME, Fuselage::new(HP_REFINED_AL_LI_STRINGER_TANK_NAME, 1.9977123977865145, 0.96));
+        hp_tanks.insert(HP_STEEL_STIR_WELDED_TANK_NAME, Fuselage::new(HP_STEEL_STIR_WELDED_TANK_NAME, 3.4033685400148843, 0.96));
+        non_hp_tanks.insert(STEEL_FUSELAGE_NAME, Fuselage::new(STEEL_FUSELAGE_NAME, 0.7046255853625588, 0.83));
+        non_hp_tanks.insert(AL_FUSELAGE_NAME, Fuselage::new(AL_FUSELAGE_NAME, 0.572370017780281, 0.87));
+        non_hp_tanks.insert(AL_STRINGER_TANK_NAME, Fuselage::new(AL_STRINGER_TANK_NAME, 0.6474421633361649, 0.92));
+        non_hp_tanks.insert(REFINED_AL_STRINGER_TANK_NAME, Fuselage::new(REFINED_AL_STRINGER_TANK_NAME, 0.4793745811132077, 0.92));
+        non_hp_tanks.insert(AL_LI_STRINGER_TANK_NAME, Fuselage::new(AL_LI_STRINGER_TANK_NAME, 1.0134984503748028, 0.97));
+        non_hp_tanks.insert(REFINED_AL_LI_STRINGER_TANK_NAME, Fuselage::new(REFINED_AL_LI_STRINGER_TANK_NAME, 0.9523829659300911, 0.97));
+        non_hp_tanks.insert(STEEL_STIR_WELDED_TANK_NAME, Fuselage::new(STEEL_STIR_WELDED_TANK_NAME, 1.1815660325977602, 0.97));
+        (hp_tanks, non_hp_tanks)
+    }
 }
 
 /// Calculates the volume of a cylinder.
@@ -291,35 +313,56 @@ mod tests {
         assert!(diff.abs() < 50.1, "Diff = {}", diff);
     }
 
-    fn calculate_density(fuselage: &str, utilization: f64, dry_mass_kg: f64) {
-        let volume = tank_volume(1.0, 1.0);
-        let unused_volume = (100.0 - utilization) / 100.0 * volume;
-        let density = dry_mass_kg / unused_volume;
-        let var_name = {
-            let replaced = fuselage.replace(' ', "_");
-            let replaced = replaced.replace('-', "_");
-            replaced.to_ascii_uppercase()
-        };
-        println!("const {}_DENSITY: f64 = {}; // kg/L", var_name, density);
-        println!("const {}_UTIL_PERCENT: f64 = {:.1};", var_name, utilization);
+    /// Generates code to use.
+    /// 
+    /// (fuselage: &str, utilization: f64, dry_mass_kg: f64)
+    fn calculate_densities(samples: &[(&str, f64, f64)]) {
+        let mut hp_tanks: Vec<(String, f64, f64)> = Vec::new();
+        let mut non_hp_tanks: Vec<(String, f64, f64)> = Vec::new();
+        for &(fuselage, utilization, dry_mass_kg) in samples {
+            let volume = tank_volume(1.0, 1.0);
+            let unused_volume = (100.0 - utilization) / 100.0 * volume;
+            let density = dry_mass_kg / unused_volume;
+            let var_name = {
+                let replaced = fuselage.replace(' ', "_");
+                let replaced = replaced.replace('-', "_");
+                replaced.to_ascii_uppercase()
+            };
+            if var_name.contains("HP") {
+                hp_tanks.push((format!("{}_NAME", var_name.to_string()), density, utilization));
+            } else {
+                non_hp_tanks.push((format!("{}_NAME", var_name.to_string()), density, utilization));
+            }
+            //println!("const {}_DENSITY: f64 = {}; // kg/L", var_name, density);
+            //println!("const {}_UTIL_PERCENT: f64 = {:.1};", var_name, utilization);
+            println!("pub const {}_NAME: &str = \"{}\";", var_name, fuselage);
+        }
+        for (fuselage, density, utilization) in hp_tanks {
+            println!("hp_tanks.insert({}, Fuselage::new({}, {}, {:.2}));", fuselage, fuselage, density, utilization / 100.0);
+        }
+        for (fuselage, density, utilization) in non_hp_tanks {
+            println!("non_hp_tanks.insert({}, Fuselage::new({}, {}, {:.2}));", fuselage, fuselage, density, utilization / 100.0);
+        }
     }
 
     #[test]
     fn dry_mass_tests_v2() {
         println!("\n");
-        let density = calculate_density("Steel Fuselage", 83.0, 78.4);
-        calculate_density("HP Steel Fuselage", 75.0, 190.0);
-        calculate_density("Al Fuselage", 87.0, 48.7);
-        calculate_density("HP Al Fuselage", 84.0, 170.0);
-        calculate_density("Al Stringer Tank", 92.0, 33.9);
-        calculate_density("HP Al Stringer Tank", 90.0, 141.0);
-        calculate_density("Refined Al Stringer Tank", 92.0, 25.1);
-        calculate_density("HP Refined Al Stringer Tank", 90.0, 106.0);
-        calculate_density("Al-Li Stringer Tank", 97.0, 19.9);
-        calculate_density("HP Al-Li Stringer Tank", 96.0, 60.6);
-        calculate_density("Refined Al-Li Stringer Tank", 97.0, 18.7);
-        calculate_density("HP Refined Al-Li Stringer Tank", 96.0, 52.3);
-        calculate_density("Steel Stir-Welded Tank", 97.0, 23.2);
-        calculate_density("HP Steel Stir-Welded Tank", 96.0, 89.1);
+        let density = calculate_densities(&[
+            ("Steel Fuselage", 83.0, 78.4),
+            ("HP Steel Fuselage", 75.0, 190.0),
+            ("Al Fuselage", 87.0, 48.7),
+            ("HP Al Fuselage", 84.0, 170.0),
+            ("Al Stringer Tank", 92.0, 33.9),
+            ("HP Al Stringer Tank", 90.0, 141.0),
+            ("Refined Al Stringer Tank", 92.0, 25.1),
+            ("HP Refined Al Stringer Tank", 90.0, 106.0),
+            ("Al-Li Stringer Tank", 97.0, 19.9),
+            ("HP Al-Li Stringer Tank", 96.0, 60.6),
+            ("Refined Al-Li Stringer Tank", 97.0, 18.7),
+            ("HP Refined Al-Li Stringer Tank", 96.0, 52.3),
+            ("Steel Stir-Welded Tank", 97.0, 23.2),
+            ("HP Steel Stir-Welded Tank", 96.0, 89.1),
+        ]);
     }
 }
