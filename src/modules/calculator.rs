@@ -118,7 +118,7 @@ impl Calculator {
                     // partial mass = offset + engines' mass + payload mass
                     let partial_mass = mass_offset + (num_engines as f64 * engine.mass * 1000.0) + self.mass;
                     println!("engine.mass = {}\npartial_mass = {}", engine.mass * 1000.0, partial_mass);
-                    let thrust = if self.in_vacuum { engine.thrust_vac } else { engine.thrust_asl } * num_engines as f64;
+                    let thrust = if self.in_vacuum { engine.thrust_vac } else { engine.thrust_asl } * num_engines as f64 * 1000.0;
 
                     for fuel in engine.fuel_types {
                         let max_volume_per_stack = fuel.max_volume(engine.rated_burn_time);
