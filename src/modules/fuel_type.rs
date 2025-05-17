@@ -1,3 +1,73 @@
+//! A module for fuels and fuel mixes
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub struct FuelMix {
+    fuels: &'static [FuelType]
+}
+
+impl FuelMix {
+    /// Creates a new fuel mixture.
+    pub const fn new(fuels: &'static [FuelType]) -> Self {
+        Self {
+            fuels
+        }
+    }
+
+    /// Returns the density of this fuel mixture.
+    pub fn density(&self) -> f64 {
+        let total_flow_rate = self.flow_rate();
+        if total_flow_rate == 0.0 {
+            return 0.0; // Avoid division by zero
+        }
+
+        let mut weighted_density_sum = 0.0;
+        for fuel in self.fuels {
+            let flow_rate = fuel.flow_rate();
+            let density = fuel.density();
+            weighted_density_sum += flow_rate * density;
+        }
+
+        // Weighted average density
+        weighted_density_sum / total_flow_rate
+    }
+
+    /// Returns the flow rate of this fuel mixture
+    pub fn flow_rate(&self) -> f64 {
+        let mut flow_rate_sum = 0.0;
+        for fuel in self.fuels {
+            flow_rate_sum += fuel.flow_rate();
+        }
+        flow_rate_sum
+    }
+
+    /// Returns the maximum volume of fuel that an engine can burn through in 
+    /// its rated burn time. Unit = liters
+    pub fn max_volume(&self, rated_burn_time: f64) -> f64 {
+        self.flow_rate() * rated_burn_time
+    }
+
+    /// Returns the mass of this fuel mixture when filling the specified volume.
+    pub fn mass(&self, volume: f64) -> f64 {
+        self.density() * volume
+    }
+
+    /// Returns the fuel volumes for this mixture to fill up a volume.
+    pub fn fuel_volumes(&self, volume: f64) -> String {
+        let mut output = "Fuels:\n".to_string();
+        let total_flow_rate = self.flow_rate();
+        if total_flow_rate <= 0.0 {
+            return "Fuel flow rates summed up to 0.0".to_string();
+        }
+        for fuel in self.fuels {
+            let flow_rate = fuel.flow_rate();
+            let percentage = flow_rate / total_flow_rate;
+            let fuel_volume = percentage * volume;
+            output.push_str(&format!("{}: {:.4} L", fuel.name(), fuel_volume));
+        }
+        output
+    }
+}
+
 #[derive(Debug, PartialEq, Clone, Copy)]
 #[allow(non_camel_case_types)]
 pub enum FuelType {

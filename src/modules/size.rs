@@ -12,7 +12,7 @@ impl Size {
     pub fn get_diameter(&self) -> f64 {
         match self {
             Self::Xs => 0.3,
-            Self::Sm => 1.3,
+            Self::Sm => 1.25,
             Self::Md => todo!(),
             Self::Lg => todo!(),
             Self::Xl => todo!(),

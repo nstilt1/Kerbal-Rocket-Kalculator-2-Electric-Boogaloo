@@ -1,4 +1,4 @@
-use super::{size::Size, fuel_type::FuelType};
+use super::{fuel_type::{FuelMix, FuelType}, size::Size};
 
 const MAX_ENGINE_CONFIGS: usize = 4;
 pub const ENGINES: [Engine; NUM_EGINES] = Engine::init_rp1_engines();
@@ -23,7 +23,7 @@ pub struct Engine {
         pub ignitions: u8,
         pub size: Size, 
         pub tank_volume_liters: f64,
-        pub fuel_types: &'static [FuelType],
+        pub fuel_mix: FuelMix,
         pub configurations: [EngineConfiguration; MAX_ENGINE_CONFIGS]
 }
 
@@ -129,7 +129,7 @@ impl Engine {
         ignitions: u8,
         size: Size, 
         tank_volume_liters: f64,
-        fuel_types: &'static [FuelType],
+        fuel_mix: FuelMix,
     ) -> Self {
         Engine {
             name,
@@ -150,18 +150,18 @@ impl Engine {
             ignitions,
             size,
             tank_volume_liters,
-            fuel_types,
+            fuel_mix,
             configurations: [EngineConfiguration::zeroed(); MAX_ENGINE_CONFIGS],
         }
     }
 
     pub const fn init_rp1_engines() -> [Engine; NUM_EGINES] {
         let mut engines = [
-            Engine::new("Aerobee", false, 6.7, 7.7, 100.0, 195.0, 226.0, 0.008, 1.2, 47.0, false, false, true, false, true, 1, Size::Xs, 0.0, &[FuelType::AnilineFurfuryl_22p(0.893), FuelType::IRFNA_III(1.64), FuelType::Nitrogen(78.1)]),
-            Engine::new("U-1250", false, 12.7, 14.4, 100.0, 204.8, 232.1, 0.0156, 1.2, 56.0, false, false, true, false, true, 1, Size::Xs, 1.0, &[FuelType::Kerosene(1.71), FuelType::AK20(3.26), FuelType::Nitrogen(157.0)]),
-            Engine::new("Veronique", false, 39.2, 49.3, 100.0, 198.0, 249.0, 0.1511, 3.92, 45.0, false, false, true, false, true, 1, Size::Xs, 1.0, &[FuelType::Kerosene(5.46), FuelType::IRFNA_III(10.2), FuelType::Water(0.216)]),
-            Engine::new("Tiny Tim Booster", true, 133.4, 146.6, 100.0, 202.0, 222.0, 0.0673, 3.9, 5.0, false, false, false, false, false, 1, Size::Xs, 41.3903, &[FuelType::NGNC(42.1)]),
-            Engine::new("A4", false, 238.8, 284.7, 100.0, 203.0, 242.0, 0.9299, 0.47, 70.0, false, false, false, false, true, 1, Size::Sm, 0.0, &[FuelType::Ethanol_75(63.6), FuelType::Liquid_Oxygen(58.2), FuelType::HTP(1.22)]),
+            Engine::new("Aerobee", false, 6.7, 7.7, 100.0, 195.0, 226.0, 0.008, 1.2, 47.0, false, false, true, false, true, 1, Size::Xs, 0.0, FuelMix::new(&[FuelType::AnilineFurfuryl_22p(0.893), FuelType::IRFNA_III(1.64), FuelType::Nitrogen(78.1)])),
+            Engine::new("U-1250", false, 12.7, 14.4, 100.0, 204.8, 232.1, 0.0156, 1.2, 56.0, false, false, true, false, true, 1, Size::Xs, 1.0, FuelMix::new(&[FuelType::Kerosene(1.71), FuelType::AK20(3.26), FuelType::Nitrogen(157.0)])),
+            Engine::new("Veronique", false, 39.2, 49.3, 100.0, 198.0, 249.0, 0.1511, 3.92, 45.0, false, false, true, false, true, 1, Size::Xs, 1.0, FuelMix::new(&[FuelType::Kerosene(5.46), FuelType::IRFNA_III(10.2), FuelType::Water(0.216)])),
+            Engine::new("Tiny Tim Booster", true, 133.4, 146.6, 100.0, 202.0, 222.0, 0.0673, 3.9, 5.0, false, false, false, false, false, 1, Size::Xs, 41.3903, FuelMix::new(&[FuelType::NGNC(42.1)])),
+            Engine::new("A4", false, 238.8, 284.7, 100.0, 203.0, 242.0, 0.9299, 0.47, 70.0, false, false, false, false, true, 1, Size::Sm, 0.0, FuelMix::new(&[FuelType::Ethanol_75(63.6), FuelType::Liquid_Oxygen(58.2), FuelType::HTP(1.22)])),
         ];
         // Aerobee engine configurations
         engines[0].configurations[0] = EngineConfiguration::new("XASR-1", 13.8, 100.0, 0.010, 200.0, 235.44, 40.0, true, true, 1);

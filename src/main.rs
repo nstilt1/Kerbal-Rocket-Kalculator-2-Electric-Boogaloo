@@ -50,6 +50,10 @@ fn main() {
             break;
         }
         let minimum_twr: f64 = minimum_twr.parse().expect("Failed to parse minimum_twr");
+        let maximum_twr: f64 = match read("Enter the maximum TWR > ").parse::<f64>() {
+            Ok(v) => v,
+            Err(_) => break
+        };
 
         let is_vacuum = read("Is this stage in a vacuum? (y/n) > ");
         let is_vacuum = match is_vacuum.to_lowercase().as_str() {
@@ -75,6 +79,7 @@ fn main() {
         };
         let size = match diameter {
             0.3 => Size::Xs,
+            1.25 => Size::Sm,
             1.3 => Size::Sm,
             _ => Size::Sm,
         };
