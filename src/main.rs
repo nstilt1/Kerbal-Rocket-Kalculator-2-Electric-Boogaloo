@@ -73,9 +73,14 @@ fn main() {
             Ok(v) => v,
             Err(_) => break
         };
+        let size = match diameter {
+            0.3 => Size::Xs,
+            1.3 => Size::Sm,
+            _ => Size::Sm,
+        };
         let unlocked_fuselages = read("Enter your unlocked fuselages separated by commas and excluding HP prefixes > ").to_string();
         let mut outputs: Vec<Option<Rocket>> = Vec::new();
-        calculator.init(mass, target_delta_v, minimum_twr, needs_gimballing, is_vacuum, use_nosecone, Size::Sm, unlocked_fuselages.clone());
+        calculator.init(mass, target_delta_v, minimum_twr, needs_gimballing, is_vacuum, use_nosecone, size, unlocked_fuselages.clone());
         let (mut nose_plus_cylinder_results, mut cylinder_results, mut nose_results) = calculator.calculate();
         let mut output: Vec<Rocket> = Vec::with_capacity(nose_plus_cylinder_results.len() + cylinder_results.len() + nose_results.len());
         output.append(&mut nose_plus_cylinder_results.clone());

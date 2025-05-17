@@ -156,6 +156,7 @@ impl Calculator {
                                             }),
                                             None,
                                             *engine,
+                                            fuel.name(),
                                             num_engines,
                                             wet_mass,
                                             twr
@@ -204,6 +205,7 @@ impl Calculator {
                                                         }
                                                     ),
                                                     *engine,
+                                                    fuel.name(),
                                                     num_engines,
                                                     wet_mass,
                                                     twr
@@ -259,6 +261,7 @@ impl Calculator {
                                             }
                                         ),
                                         *engine,
+                                        fuel.name(),
                                         num_engines,
                                         wet_mass,
                                         twr

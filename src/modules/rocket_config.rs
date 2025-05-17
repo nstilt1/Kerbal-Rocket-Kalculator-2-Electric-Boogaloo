@@ -5,6 +5,7 @@ pub struct Rocket {
     nose: Option<NoseCone>,
     tank: Option<CylindricalTank>,
     engine: Engine,
+    fuel: &'static str,
     num_engines: u8,
     pub(crate) mass: f64,
     twr: f64
@@ -15,6 +16,7 @@ impl Rocket {
         nose: Option<NoseCone>,
         tank: Option<CylindricalTank>, 
         engine: Engine, 
+        fuel: &'static str,
         num_engines: u8, 
         mass: f64, 
         twr: f64
@@ -23,6 +25,7 @@ impl Rocket {
             nose,
             tank,
             engine,
+            fuel,
             num_engines,
             mass,
             twr
@@ -38,6 +41,7 @@ impl Rocket {
         if let Some(nose) = &self.nose {
             println!("Nosecone {} with {}m length and {}m diameter and {}", nose.core.name, nose.length, nose.diameter, nose.fuselage.name)
         }
+        println!("Fuel: {}", self.fuel);
     }
 }
 
