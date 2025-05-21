@@ -19,6 +19,34 @@ fn read(text: &str) -> String {
     return input.trim().to_owned();
 }
 
+fn handle_output(mass: f64, target_delta_v: f64, minimum_twr: f64, calculator: &mut Calculator) {
+    let (mut nose_plus_cylinder_results, mut cylinder_results, mut nose_results) = calculator.calculate();
+        let mut output: Vec<Rocket> = Vec::with_capacity(nose_plus_cylinder_results.len() + cylinder_results.len() + nose_results.len());
+        output.append(&mut nose_plus_cylinder_results.clone());
+        output.append(&mut cylinder_results.clone());
+        output.append(&mut nose_results.clone());
+        output.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        let mut outputs: Vec<Option<Rocket>> = Vec::new();
+
+        if output.len() == 0 {
+            outputs.push(None);
+            println!("No rockets found");
+        }else{
+            outputs.push(Some(output[0].clone()));
+        }
+
+        println!("\n\nStarting mass: {}", mass);
+        println!("Target dv: {}", target_delta_v);
+        println!("Minimum TWR: {}", minimum_twr);
+        println!("Available rockets:");
+        for (o, size) in outputs.iter().zip(SIZE_STRS.iter()) {
+            if o.is_some() {
+                println!("\nSize: {}", size);
+                o.as_ref().unwrap().print();
+            }
+        }
+}
+
 const SIZES: [Size; 5] = [Size::Xs, Size::Sm, Size::Md, Size::Lg, Size::Xl];
 const SIZE_STRS: [&str; 5] = ["xs", "sm", "md", "lg", "xl"];
 fn main() {
@@ -27,7 +55,7 @@ fn main() {
     let mut continue_building: Option<f64> = None;
     loop {
         // get the mass from the user, or continue with the mass of the last rocket being built
-        let mass: f64 = if continue_building.as_ref().is_none() {
+        let mut mass: f64 = if continue_building.as_ref().is_none() {
             let m = read("Enter the mass of your payload in tonnes > ");
             if &m == "exit" {
                 break;
@@ -43,14 +71,14 @@ fn main() {
         if &target_delta_v == "exit" {
             break;
         }
-        let target_delta_v: f64 = target_delta_v.parse().expect("Failed to parse target_delta_v");
+        let mut target_delta_v: f64 = target_delta_v.parse().expect("Failed to parse target_delta_v");
 
         let minimum_twr = read("Enter the minimum TWR > ");
         if &minimum_twr == "exit" {
             break;
         }
-        let minimum_twr: f64 = minimum_twr.parse().expect("Failed to parse minimum_twr");
-        let maximum_twr: f64 = match read("Enter the maximum TWR > ").parse::<f64>() {
+        let mut minimum_twr: f64 = minimum_twr.parse().expect("Failed to parse minimum_twr");
+        let mut maximum_twr: f64 = match read("Enter the maximum TWR > ").parse::<f64>() {
             Ok(v) => v,
             Err(_) => break
         };
@@ -73,7 +101,7 @@ fn main() {
             "n" => false,
             _ => break
         };
-        let diameter = match read("Enter the payload's diameter in meters > ").parse::<f64>() {
+        let mut diameter = match read("Enter the payload's diameter in meters > ").parse::<f64>() {
             Ok(v) => v,
             Err(_) => break
         };
@@ -84,41 +112,44 @@ fn main() {
             _ => Size::Sm,
         };
         let unlocked_fuselages = read("Enter your unlocked fuselages separated by commas and excluding HP prefixes > ").to_string();
-        let mut outputs: Vec<Option<Rocket>> = Vec::new();
-        calculator.init(mass, target_delta_v, minimum_twr, needs_gimballing, is_vacuum, use_nosecone, size, unlocked_fuselages.clone());
-        let (mut nose_plus_cylinder_results, mut cylinder_results, mut nose_results) = calculator.calculate();
-        let mut output: Vec<Rocket> = Vec::with_capacity(nose_plus_cylinder_results.len() + cylinder_results.len() + nose_results.len());
-        output.append(&mut nose_plus_cylinder_results.clone());
-        output.append(&mut cylinder_results.clone());
-        output.append(&mut nose_results.clone());
-        output.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        calculator.init(mass, target_delta_v, minimum_twr, maximum_twr, needs_gimballing, is_vacuum, use_nosecone, size, unlocked_fuselages.clone());
+        
+        handle_output(mass, target_delta_v, minimum_twr, &mut calculator);
 
-        if output.len() == 0 {
-            outputs.push(None);
-            println!("No rockets found");
-        }else{
-            outputs.push(Some(output[0].clone()));
-        }
-
-        println!("\n\nStarting mass: {}", mass);
-        println!("Target dv: {}", target_delta_v);
-        println!("Minimum TWR: {}", minimum_twr);
-        println!("Available rockets:");
-        for (o, size) in outputs.iter().zip(SIZE_STRS.iter()) {
-            if o.is_some() {
-                println!("\nSize: {}", size);
-                o.as_ref().unwrap().print();
+        loop {
+            match read("Choose an action:\n1) Change target delta-v\n2) Change payload mass\n3) Change minimum twr\n4) Change maximum twr").as_str() {
+                "1" => {
+                    let dv = match read("Enter the new delta-v for this stage > ").parse::<f64>() {
+                        Ok(v) => v,
+                        Err(_) => break
+                    };
+                    target_delta_v = dv;
+                    calculator.change_target_delta_v(dv);
+                    handle_output(mass, target_delta_v, minimum_twr, &mut calculator);
+                },
+                "2" => {
+                    let m = match read("Enter the new mass for this stage in tons > ").parse::<f64>() {
+                        Ok(v) => v,
+                        Err(_) => break
+                    };
+                    mass = m;
+                    calculator.change_mass(mass);
+                    handle_output(mass, target_delta_v, minimum_twr, &mut calculator);
+                },
+                "3" => {
+                    minimum_twr = match read("Enter the new minimum twr for this stage > ").parse() {
+                        Ok(v) => v,
+                        Err(_) => break
+                    };
+                    calculator.change_minimum_twr(minimum_twr);
+                    handle_output(mass, target_delta_v, minimum_twr, &mut calculator);
+                },
+                "4" => maximum_twr = match read("Enter the new maximum twr for this stage > ").parse() {
+                    Ok(v) => v,
+                    Err(_) => break
+                },
+                _ => break
             }
         }
-        
-        continue_building = match read("Select a rocket to use by typing the corresponding size, or type 'new' to try again > ").as_str() {
-            "xs" => Some(outputs[0].as_ref().unwrap().mass),
-            "sm" => Some(outputs[1].as_ref().unwrap().mass),
-            "md" => Some(outputs[2].as_ref().unwrap().mass),
-            "lg" => Some(outputs[3].as_ref().unwrap().mass),
-            "xl" => Some(outputs[4].as_ref().unwrap().mass),
-            "new" => None,
-            _ => break
-        };
     }
 }
