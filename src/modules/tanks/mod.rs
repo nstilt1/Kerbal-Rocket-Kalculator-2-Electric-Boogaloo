@@ -2,8 +2,8 @@ pub mod tanks;
 use std::collections::HashMap;
 
 pub use tanks::*;
-pub mod nose_tanks;
 pub mod cylindrical_tanks;
+pub mod nose_tanks;
 
 pub enum TankType {
     Cylindrical,
@@ -21,14 +21,17 @@ pub trait Tanks {
     fn min_height(&self, diameter: f64) -> f64 {
         match Self::TANK_TYPE {
             TankType::Cylindrical => Self::MIN_VSA * diameter,
-            TankType::Nosecone => 0.25 * diameter
+            TankType::Nosecone => 0.25 * diameter,
         }
     }
 
     /// Initializes fuselage types as a pair of hashmaps.
-    /// 
+    ///
     /// (HP Map<Name, (density, utilization)>, Non-HP Map<Name, (density, utilization)>)
-    fn init_fuselage_types() -> (HashMap<&'static str, Fuselage>, HashMap<&'static str, Fuselage>);
+    fn init_fuselage_types() -> (
+        HashMap<&'static str, Fuselage>,
+        HashMap<&'static str, Fuselage>,
+    );
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]

@@ -1,4 +1,4 @@
-use super::super::{size::Size, fuel_type::FuelType};
+use super::super::{fuel_type::FuelType, size::Size};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Tank {
@@ -31,13 +31,17 @@ impl TankType {
 pub struct FuelStack {
     pub tanks: Vec<Tank>,
     pub size: Size,
-    pub fuel_type: FuelType
+    pub fuel_type: FuelType,
 }
 impl FuelStack {
     pub fn new(tanks: Vec<Tank>) -> Self {
         let t = tanks[0].to_owned();
         let size = t.size;
-        FuelStack {tanks, size, fuel_type: t.fuel_type}
+        FuelStack {
+            tanks,
+            size,
+            fuel_type: t.fuel_type,
+        }
     }
 
     pub fn multiple(tank: &Tank, count: u8) -> Self {
@@ -50,7 +54,14 @@ impl FuelStack {
 }
 
 impl Tank {
-    fn new(name: &str, wet_mass: f64, dry_mass: f64, size: Size, cost: i64, fuel_type: FuelType) -> Self {
+    fn new(
+        name: &str,
+        wet_mass: f64,
+        dry_mass: f64,
+        size: Size,
+        cost: i64,
+        fuel_type: FuelType,
+    ) -> Self {
         return Tank {
             name: name.to_owned(),
             wet_mass,
@@ -61,7 +72,7 @@ impl Tank {
             tank_type: TankType::CylindricalTank,
         };
     }
-    
+
     /// Define the tank configurations we will consider in our calculations. It seems very difficult to make this a const
     pub fn init_tanks() -> Vec<FuelStack> {
         let mut tanks: Vec<Tank> = Vec::new();
@@ -86,10 +97,8 @@ impl Tank {
         // tanks.push(Tank::new("S4-25600", 144.0, 16.0, Size::Xl, 0, FuelType::RP1));
         // tanks.push(Tank::new("S4-53200", 288.0, 32.0, Size::Xl, 0, FuelType::RP1));
 
-
         // get configs
         let mut result: Vec<FuelStack> = Vec::new();
-
 
         // Add 16 oscars for max amount
         //let oscar = Tank::new("Oscar-B", 0.1, 0.01, Size::Xs, 0, FuelType::RP1);
@@ -97,26 +106,68 @@ impl Tank {
         // for i in 1..=16 {
         //     result.push(FuelStack::multiple(&oscar, i));
         // }
-        
+
         // Add all of the different combinations of tanks
-        for i in 0..tanks.len()/4 {
-            let size = i *4;
+        for i in 0..tanks.len() / 4 {
+            let size = i * 4;
             result.push(FuelStack::new(vec![tanks[size].to_owned()]));
             result.push(FuelStack::new(vec![tanks[size + 1].to_owned()]));
-            result.push(FuelStack::new(vec![tanks[size].to_owned(), tanks[size + 1].to_owned()]));
+            result.push(FuelStack::new(vec![
+                tanks[size].to_owned(),
+                tanks[size + 1].to_owned(),
+            ]));
             result.push(FuelStack::new(vec![tanks[size + 2].to_owned()]));
-            result.push(FuelStack::new(vec![tanks[size].to_owned(), tanks[size + 2].to_owned()]));
-            result.push(FuelStack::new(vec![tanks[size + 1].to_owned(), tanks[size + 2].to_owned()]));
-            result.push(FuelStack::new(vec![tanks[size].to_owned(), tanks[size + 1].to_owned(), tanks[size + 2].to_owned()]));
+            result.push(FuelStack::new(vec![
+                tanks[size].to_owned(),
+                tanks[size + 2].to_owned(),
+            ]));
+            result.push(FuelStack::new(vec![
+                tanks[size + 1].to_owned(),
+                tanks[size + 2].to_owned(),
+            ]));
+            result.push(FuelStack::new(vec![
+                tanks[size].to_owned(),
+                tanks[size + 1].to_owned(),
+                tanks[size + 2].to_owned(),
+            ]));
             result.push(FuelStack::new(vec![tanks[size + 3].to_owned()]));
-            result.push(FuelStack::new(vec![tanks[size].to_owned(), tanks[size + 3].to_owned()]));
-            result.push(FuelStack::new(vec![tanks[size + 1].to_owned(), tanks[size + 3].to_owned()]));
-            result.push(FuelStack::new(vec![tanks[size].to_owned(), tanks[size + 1].to_owned(), tanks[size + 3].to_owned()]));
-            result.push(FuelStack::new(vec![tanks[size + 2].to_owned(), tanks[size + 3].to_owned()]));
-            result.push(FuelStack::new(vec![tanks[size].to_owned(), tanks[size + 2].to_owned(), tanks[size + 3].to_owned()]));
-            result.push(FuelStack::new(vec![tanks[size + 1].to_owned(), tanks[size + 2].to_owned(), tanks[size + 3].to_owned()]));
-            result.push(FuelStack::new(vec![tanks[size].to_owned(), tanks[size + 1].to_owned(), tanks[size + 2].to_owned(), tanks[size + 3].to_owned()]));
-            result.push(FuelStack::new(vec![tanks[size + 3].to_owned(), tanks[size + 3].to_owned()]));
+            result.push(FuelStack::new(vec![
+                tanks[size].to_owned(),
+                tanks[size + 3].to_owned(),
+            ]));
+            result.push(FuelStack::new(vec![
+                tanks[size + 1].to_owned(),
+                tanks[size + 3].to_owned(),
+            ]));
+            result.push(FuelStack::new(vec![
+                tanks[size].to_owned(),
+                tanks[size + 1].to_owned(),
+                tanks[size + 3].to_owned(),
+            ]));
+            result.push(FuelStack::new(vec![
+                tanks[size + 2].to_owned(),
+                tanks[size + 3].to_owned(),
+            ]));
+            result.push(FuelStack::new(vec![
+                tanks[size].to_owned(),
+                tanks[size + 2].to_owned(),
+                tanks[size + 3].to_owned(),
+            ]));
+            result.push(FuelStack::new(vec![
+                tanks[size + 1].to_owned(),
+                tanks[size + 2].to_owned(),
+                tanks[size + 3].to_owned(),
+            ]));
+            result.push(FuelStack::new(vec![
+                tanks[size].to_owned(),
+                tanks[size + 1].to_owned(),
+                tanks[size + 2].to_owned(),
+                tanks[size + 3].to_owned(),
+            ]));
+            result.push(FuelStack::new(vec![
+                tanks[size + 3].to_owned(),
+                tanks[size + 3].to_owned(),
+            ]));
         }
 
         let mut h_tanks: Vec<Tank> = Vec::new();
@@ -159,7 +210,6 @@ impl FuelStack {
         result
     }
 }
-
 
 #[cfg(test)]
 mod tests {

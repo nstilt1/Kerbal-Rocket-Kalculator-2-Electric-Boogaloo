@@ -3,7 +3,7 @@
 #[cfg(target_arch = "wasm32")]
 use js_sys::Array;
 #[allow(unused)]
-use modules::{calculator::Calculator};
+use modules::calculator::Calculator;
 use wasm_bindgen::prelude::*;
 
 pub mod modules;
@@ -15,11 +15,11 @@ pub const TECH_TREE: &[&'static str] = &[
     "Post-War Rocketry Testing",
     "Early Rocketry",
     "Basic Rocketry",
-    "1956-1957 Orbital Rocketry"
+    "1956-1957 Orbital Rocketry",
 ];
 
 #[wasm_bindgen]
-#[cfg(target_arch="wasm32")]
+#[cfg(target_arch = "wasm32")]
 pub fn calculate(
     mass: f64,
     target_delta_v: f64,
@@ -41,14 +41,32 @@ pub fn calculate(
         1.3 => Size::Sm,
         _ => Size::Sm,
     };
-    let unlocked_fuselages: Vec<String> = unlocked_fuselages.iter().map(|v| v.as_string().expect("Should be a string")).collect();
-    let unlocked_tech: Vec<String> = unlocked_tech.iter().map(|v| v.as_string().expect("Should be a string")).collect();
+    let unlocked_fuselages: Vec<String> = unlocked_fuselages
+        .iter()
+        .map(|v| v.as_string().expect("Should be a string"))
+        .collect();
+    let unlocked_tech: Vec<String> = unlocked_tech
+        .iter()
+        .map(|v| v.as_string().expect("Should be a string"))
+        .collect();
     let unlocked_fuselages: String = unlocked_fuselages.join(",");
     let unlocked_tech: String = unlocked_tech.join(",");
-    calculator.init(mass, target_delta_v, minimum_twr, maximum_twr, needs_gimballing, in_vacuum, use_nosecone, size, unlocked_fuselages, unlocked_tech);
+    calculator.init(
+        mass,
+        target_delta_v,
+        minimum_twr,
+        maximum_twr,
+        needs_gimballing,
+        in_vacuum,
+        use_nosecone,
+        size,
+        unlocked_fuselages,
+        unlocked_tech,
+    );
 
     let (mut nose_plus_cyl_results, mut cyl_results, mut nose_results) = calculator.calculate()?;
-    let mut output: Vec<Rocket> = Vec::with_capacity(nose_plus_cyl_results.len() + cyl_results.len() + nose_results.len());
+    let mut output: Vec<Rocket> =
+        Vec::with_capacity(nose_plus_cyl_results.len() + cyl_results.len() + nose_results.len());
     output.append(&mut nose_plus_cyl_results);
     output.append(&mut cyl_results);
     output.append(&mut nose_results);
@@ -62,6 +80,4 @@ pub fn calculate(
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub mod test_utils {
-
-}
+pub mod test_utils {}

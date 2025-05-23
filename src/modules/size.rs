@@ -4,7 +4,7 @@ pub enum Size {
     Sm,
     Md,
     Lg,
-    Xl
+    Xl,
 }
 
 impl Size {

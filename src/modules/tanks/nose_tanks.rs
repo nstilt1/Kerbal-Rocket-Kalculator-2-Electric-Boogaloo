@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use super::{Fuselage, Tanks, fuselage_names::*};
+use super::{fuselage_names::*, Fuselage, Tanks};
 
 const NOSE_1_CORRECTION_COEF: f64 = 1.34180454434038853861466122907586;
 const NOSE_2_CORRECTION_COEF: f64 = 1.62346946577909534425998572260141;
@@ -52,7 +52,10 @@ pub struct NoseCone {
 
 impl NoseCone {
     pub fn display(&self) -> String {
-        format!("\nCore: {}\nLength: {}\nDiameter: {}\nFuselage: {}", self.core.name, self.length, self.diameter, self.fuselage.name)
+        format!(
+            "\nCore: {}\nLength: {}\nDiameter: {}\nFuselage: {}",
+            self.core.name, self.length, self.diameter, self.fuselage.name
+        )
     }
 }
 
@@ -66,23 +69,72 @@ impl Tanks for NoseConeVariant {
     const MIN_VSA: f64 = 0.25;
     const MAX_VSA: f64 = 4.0;
 
-    fn init_fuselage_types() -> (HashMap<&'static str, Fuselage>, HashMap<&'static str, Fuselage>) {
+    fn init_fuselage_types() -> (
+        HashMap<&'static str, Fuselage>,
+        HashMap<&'static str, Fuselage>,
+    ) {
         let mut hp_tanks: HashMap<&str, Fuselage> = HashMap::with_capacity(7);
         let mut non_hp_tanks: HashMap<&str, Fuselage> = HashMap::with_capacity(7);
-        hp_tanks.insert(HP_STEEL_FUSELAGE_NAME, Fuselage::new(HP_STEEL_FUSELAGE_NAME, HP_STEEL_FUSELAGE_DENSITY, HP_STEEL_FUSELAGE_UTIL_PERCENT));
-        hp_tanks.insert(HP_AL_FUSELAGE_NAME, Fuselage::new(HP_AL_FUSELAGE_NAME, 1.6430042237, 0.84));
-        hp_tanks.insert(HP_AL_STRINGER_TANK_NAME, Fuselage::new(HP_AL_STRINGER_TANK_NAME, 2.3393934028, 0.90));
-        hp_tanks.insert(HP_REFINED_AL_STRINGER_TANK_NAME, Fuselage::new(HP_REFINED_AL_STRINGER_TANK_NAME, 1.7487016847, 0.90));
-        hp_tanks.insert(HP_AL_LI_STRINGER_TANK_NAME, Fuselage::new(HP_AL_LI_STRINGER_TANK_NAME, 2.6723521459, 0.96));
-        hp_tanks.insert(HP_REFINED_AL_LI_STRINGER_TANK_NAME, Fuselage::new(HP_REFINED_AL_LI_STRINGER_TANK_NAME, 2.3157513557, 0.96));
-        hp_tanks.insert(HP_STEEL_STIR_WELDED_TANK_NAME, Fuselage::new(HP_STEEL_STIR_WELDED_TANK_NAME, 3.9418707664, 0.96));
-        non_hp_tanks.insert(STEEL_FUSELAGE_NAME, Fuselage::new(STEEL_FUSELAGE_NAME, 0.7050215444, 0.83));
-        non_hp_tanks.insert(AL_FUSELAGE_NAME, Fuselage::new(AL_FUSELAGE_NAME, 0.5997974356, 0.87));
-        non_hp_tanks.insert(AL_STRINGER_TANK_NAME, Fuselage::new(AL_STRINGER_TANK_NAME, 0.7186757557, 0.92));
-        non_hp_tanks.insert(REFINED_AL_STRINGER_TANK_NAME, Fuselage::new(REFINED_AL_STRINGER_TANK_NAME, 0.5319629752, 0.92));
-        non_hp_tanks.insert(AL_LI_STRINGER_TANK_NAME, Fuselage::new(AL_LI_STRINGER_TANK_NAME, 1.1897409303, 0.97));
-        non_hp_tanks.insert(REFINED_AL_LI_STRINGER_TANK_NAME, Fuselage::new(REFINED_AL_LI_STRINGER_TANK_NAME, 1.1121288578, 0.97));
-        non_hp_tanks.insert(STEEL_STIR_WELDED_TANK_NAME, Fuselage::new(STEEL_STIR_WELDED_TANK_NAME, 1.3803043213, 0.97));
+        hp_tanks.insert(
+            HP_STEEL_FUSELAGE_NAME,
+            Fuselage::new(
+                HP_STEEL_FUSELAGE_NAME,
+                HP_STEEL_FUSELAGE_DENSITY,
+                HP_STEEL_FUSELAGE_UTIL_PERCENT,
+            ),
+        );
+        hp_tanks.insert(
+            HP_AL_FUSELAGE_NAME,
+            Fuselage::new(HP_AL_FUSELAGE_NAME, 1.6430042237, 0.84),
+        );
+        hp_tanks.insert(
+            HP_AL_STRINGER_TANK_NAME,
+            Fuselage::new(HP_AL_STRINGER_TANK_NAME, 2.3393934028, 0.90),
+        );
+        hp_tanks.insert(
+            HP_REFINED_AL_STRINGER_TANK_NAME,
+            Fuselage::new(HP_REFINED_AL_STRINGER_TANK_NAME, 1.7487016847, 0.90),
+        );
+        hp_tanks.insert(
+            HP_AL_LI_STRINGER_TANK_NAME,
+            Fuselage::new(HP_AL_LI_STRINGER_TANK_NAME, 2.6723521459, 0.96),
+        );
+        hp_tanks.insert(
+            HP_REFINED_AL_LI_STRINGER_TANK_NAME,
+            Fuselage::new(HP_REFINED_AL_LI_STRINGER_TANK_NAME, 2.3157513557, 0.96),
+        );
+        hp_tanks.insert(
+            HP_STEEL_STIR_WELDED_TANK_NAME,
+            Fuselage::new(HP_STEEL_STIR_WELDED_TANK_NAME, 3.9418707664, 0.96),
+        );
+        non_hp_tanks.insert(
+            STEEL_FUSELAGE_NAME,
+            Fuselage::new(STEEL_FUSELAGE_NAME, 0.7050215444, 0.83),
+        );
+        non_hp_tanks.insert(
+            AL_FUSELAGE_NAME,
+            Fuselage::new(AL_FUSELAGE_NAME, 0.5997974356, 0.87),
+        );
+        non_hp_tanks.insert(
+            AL_STRINGER_TANK_NAME,
+            Fuselage::new(AL_STRINGER_TANK_NAME, 0.7186757557, 0.92),
+        );
+        non_hp_tanks.insert(
+            REFINED_AL_STRINGER_TANK_NAME,
+            Fuselage::new(REFINED_AL_STRINGER_TANK_NAME, 0.5319629752, 0.92),
+        );
+        non_hp_tanks.insert(
+            AL_LI_STRINGER_TANK_NAME,
+            Fuselage::new(AL_LI_STRINGER_TANK_NAME, 1.1897409303, 0.97),
+        );
+        non_hp_tanks.insert(
+            REFINED_AL_LI_STRINGER_TANK_NAME,
+            Fuselage::new(REFINED_AL_LI_STRINGER_TANK_NAME, 1.1121288578, 0.97),
+        );
+        non_hp_tanks.insert(
+            STEEL_STIR_WELDED_TANK_NAME,
+            Fuselage::new(STEEL_STIR_WELDED_TANK_NAME, 1.3803043213, 0.97),
+        );
         (hp_tanks, non_hp_tanks)
     }
 }
@@ -116,7 +168,11 @@ pub struct NoseTankCore {
 impl NoseTankCore {
     /// Create a new NoseTank with the given name and base length.
     pub const fn new(name: &'static str, base_length: f64, correction_coefficient: f64) -> Self {
-        NoseTankCore { name, base_length, correction_coefficient }
+        NoseTankCore {
+            name,
+            base_length,
+            correction_coefficient,
+        }
     }
 }
 
@@ -129,14 +185,14 @@ pub fn calculate_corrected_volume(diameter: f64, height: f64, correction_coeffic
     corrected_volume
 }
 
-/// Calculate the dry mass for a nose tank based on the diameter, height, and 
+/// Calculate the dry mass for a nose tank based on the diameter, height, and
 /// the coefficient.
 pub fn calculate_nose_dry_mass(
-    diameter: f64, 
-    height: f64, 
-    density: f64, 
-    max_utilization: f64, 
-    correction_coefficient: f64
+    diameter: f64,
+    height: f64,
+    density: f64,
+    max_utilization: f64,
+    correction_coefficient: f64,
 ) -> f64 {
     let volume = calculate_corrected_volume(diameter, height, correction_coefficient);
     let structural_volume = volume / max_utilization * (100.0 - max_utilization);
@@ -160,10 +216,10 @@ mod tests {
     // using a const since you can't easily pass arguments to `cargo test`
     const PRINT_STATS: bool = true;
 
-    /// Calculate the correction coefficient for the tank volume based on sample 
+    /// Calculate the correction coefficient for the tank volume based on sample
     /// measurements.
-    /// 
-    /// The samples are tuples of 
+    ///
+    /// The samples are tuples of
     /// * (`diameter_meters`, `height_meters`, `actual_volume_liters`)
     fn calculate_correction_coefficient(samples: &[(f64, f64, f64)]) -> f64 {
         let mut sum_ratio = 0.0;
@@ -171,7 +227,8 @@ mod tests {
 
         for &(diameter, height, actual_volume) in samples {
             let radius = diameter / 2.0;
-            let estimated_volume_liters = ((std::f64::consts::PI * radius.powi(2) * height) / 3.0) * 1000.0;
+            let estimated_volume_liters =
+                ((std::f64::consts::PI * radius.powi(2) * height) / 3.0) * 1000.0;
             let correction_factor = actual_volume / estimated_volume_liters;
 
             sum_ratio += correction_factor;
@@ -190,21 +247,30 @@ mod tests {
             }
         };
     }
-    
 
-    /// Generate tests for nosecone tanks based on the provided samples and test 
+    /// Generate tests for nosecone tanks based on the provided samples and test
     /// samples.
     macro_rules! impl_nosecone_test {
         ($name:ident, $core:literal, $samples:expr, $test_samples:expr) => {
             #[test]
             fn $name() {
                 let correction_coefficient = calculate_correction_coefficient($samples);
-                cprintln!("\nCorrection coefficient for core '{}': {:.32}\n", $core, correction_coefficient);
+                cprintln!(
+                    "\nCorrection coefficient for core '{}': {:.32}\n",
+                    $core,
+                    correction_coefficient
+                );
 
                 for (i, &(diameter, height, expected, error)) in $test_samples.iter().enumerate() {
-                    let corrected_volume = calculate_corrected_volume(diameter, height, correction_coefficient);
+                    let corrected_volume =
+                        calculate_corrected_volume(diameter, height, correction_coefficient);
                     let diff = (corrected_volume - expected).abs();
-                    assert!(diff < error, "\nDifference for sample {} is too large: {}\n", i + 1, diff);
+                    assert!(
+                        diff < error,
+                        "\nDifference for sample {} is too large: {}\n",
+                        i + 1,
+                        diff
+                    );
                 }
             }
         };
@@ -214,27 +280,27 @@ mod tests {
         tank_volume_correction_core_nose_1,
         "nose-1",
         &[
-            (1.3, 0.4098, 243.2632),    // V.ScaleAdj = 0.2500
+            (1.3, 0.4098, 243.2632), // V.ScaleAdj = 0.2500
             //(1.3, 0.6556, 389.2212),    // V.ScaleAdj = 0.4000
-            (1.3, 0.8195, 486.5264),    // V.ScaleAdj = 0.5000
+            (1.3, 0.8195, 486.5264), // V.ScaleAdj = 0.5000
             //(1.3, 0.9834, 583.83169999),// V.ScaleAdj = 0.6000
-            (1.3, 1.2293, 729.7897),    // V.ScaleAdj = 0.7500
+            (1.3, 1.2293, 729.7897), // V.ScaleAdj = 0.7500
             //(1.3, 1.4751, 875.7475999), // V.ScaleAdj = 0.9000
-            (1.3, 1.639, 973.0528),     // V.ScaleAdj = 1.0000
+            (1.3, 1.639, 973.0528), // V.ScaleAdj = 1.0000
             //(1.3, 1.721, 1021.7055),    // V.ScaleAdj = 1.0500
-            (1.3, 2.2127, 1313.6213),   // V.ScaleAdj = 1.3500
-            (1.3, 2.8683, 1702.8424),   // V.ScaleAdj = 1.7500
-            (1.3, 3.2781, 1946.1054),   // V.ScaleAdj = 2.0000
-            (1.3, 4.0976, 2432.6318),   // V.ScaleAdj = 2.5000
-            (1.3, 4.9171, 2919.1586),   // V.ScaleAdj = 3.0000
-            (1.3, 5.7366, 3405.6849),   // V.ScaleAdj = 3.5000
-            (1.3, 6.5562, 3892.2112999),// V.ScaleAdj = 4.0000
+            (1.3, 2.2127, 1313.6213),    // V.ScaleAdj = 1.3500
+            (1.3, 2.8683, 1702.8424),    // V.ScaleAdj = 1.7500
+            (1.3, 3.2781, 1946.1054),    // V.ScaleAdj = 2.0000
+            (1.3, 4.0976, 2432.6318),    // V.ScaleAdj = 2.5000
+            (1.3, 4.9171, 2919.1586),    // V.ScaleAdj = 3.0000
+            (1.3, 5.7366, 3405.6849),    // V.ScaleAdj = 3.5000
+            (1.3, 6.5562, 3892.2112999), // V.ScaleAdj = 4.0000
         ],
         &[
             (1.3, 0.6556, 389.2212, 0.02),    // V.ScaleAdj = 0.4000
             (1.3, 2.2947, 1362.274, 0.02),    // V.ScaleAdj = 1.3500
             (3.0, 5.2954, 16741.6431, 0.05),  // V.ScaleAdj = 2.0000
-            (5.0, 12.6080, 110725.1485, 0.6),// V.ScaleAdj = 3.5000
+            (5.0, 12.6080, 110725.1485, 0.6), // V.ScaleAdj = 3.5000
         ]
     );
     // nose-2
@@ -242,21 +308,21 @@ mod tests {
         tank_volume_correction_core_nose_2,
         "nose-2",
         &[
-            (1.3, 0.4406, 316.5162),        // V.ScaleAdj = 0.2500
-            (1.3, 0.8813, 633.032299999),   // V.ScaleAdj = 0.5000
-            (1.3, 1.3219, 949.548599999),   // V.ScaleAdj = 0.7500
-            (1.3, 1.7625, 1266.0646),       // V.ScaleAdj = 1.0000
-            (1.3, 2.2032, 1582.5808),       // V.ScaleAdj = 1.2500
-            (1.3, 2.6438, 1899.0973),       // V.ScaleAdj = 1.5000
-            (1.3, 3.0844, 2215.6133),       // V.ScaleAdj = 1.7500
-            (1.3, 3.5251, 2531.1292),       // V.ScaleAdj = 2.0000
+            (1.3, 0.4406, 316.5162),      // V.ScaleAdj = 0.2500
+            (1.3, 0.8813, 633.032299999), // V.ScaleAdj = 0.5000
+            (1.3, 1.3219, 949.548599999), // V.ScaleAdj = 0.7500
+            (1.3, 1.7625, 1266.0646),     // V.ScaleAdj = 1.0000
+            (1.3, 2.2032, 1582.5808),     // V.ScaleAdj = 1.2500
+            (1.3, 2.6438, 1899.0973),     // V.ScaleAdj = 1.5000
+            (1.3, 3.0844, 2215.6133),     // V.ScaleAdj = 1.7500
+            (1.3, 3.5251, 2531.1292),     // V.ScaleAdj = 2.0000
         ],
         &[
-            (1.3, 2.3794, 1709.1875, 0.09), // V.ScaleAdj = 1.3500
-            (1.3, 7.0502, 5064.25849, 0.18),// V.ScaleAdj = 4.0000
-            (3.0, 4.0674, 15559.2816, 0.64),// V.ScaleAdj = 1.0000
-            (3.0, 12.2022, 46677.84629, 1.88),//VScaleAdj = 3.0000
-            (5.0, 20.3370, 216101.1182, 8.65),//V.ScaleAdj = 3.0000
+            (1.3, 2.3794, 1709.1875, 0.09),    // V.ScaleAdj = 1.3500
+            (1.3, 7.0502, 5064.25849, 0.18),   // V.ScaleAdj = 4.0000
+            (3.0, 4.0674, 15559.2816, 0.64),   // V.ScaleAdj = 1.0000
+            (3.0, 12.2022, 46677.84629, 1.88), //VScaleAdj = 3.0000
+            (5.0, 20.3370, 216101.1182, 8.65), //V.ScaleAdj = 3.0000
         ]
     );
     // nose-3
@@ -264,29 +330,29 @@ mod tests {
         tank_volume_correction_core_nose_3,
         "nose-3",
         &[
-            (1.3, 0.2081, 125.1712),        // VSA = 0.25
-            (1.3, 0.4161, 250.3423999),     // VSA = 0.50
-            (1.3, 0.6242, 375.5136999),     // VSA = 0.75
-            (1.3, 0.8323, 500.6848999),     // VSA = 1.00
+            (1.3, 0.2081, 125.1712),    // VSA = 0.25
+            (1.3, 0.4161, 250.3423999), // VSA = 0.50
+            (1.3, 0.6242, 375.5136999), // VSA = 0.75
+            (1.3, 0.8323, 500.6848999), // VSA = 1.00
             //(1.3, 1.0403, 625.8560999),     // VSA = 1.25
-            (1.3, 1.2484, 751.0273999),     // VSA = 1.50
+            (1.3, 1.2484, 751.0273999), // VSA = 1.50
             //(1.3, 1.4565, 876.1985999),     // VSA = 1.75
-            (1.3, 1.6645, 1001.3697),       // VSA = 2.00
+            (1.3, 1.6645, 1001.3697), // VSA = 2.00
             //(1.3, 1.8726, 1126.541),        // VSA = 2.25
-            (1.3, 2.0807, 1251.7121),       // VSA = 2.50
-            (1.3, 2.4968, 1502.0548),       // VSA = 3.00
-            (1.3, 2.9129, 1752.3972),       // VSA = 3.50
-            (1.3, 3.3290, 2002.7394),       // VSA = 4.00
-            (3.0, 4.8015, 15382.8958),      // VSA = 2.50
-            (3.0, 6.7221, 21536.0562999),   // VSA = 3.50
+            (1.3, 2.0807, 1251.7121),     // VSA = 2.50
+            (1.3, 2.4968, 1502.0548),     // VSA = 3.00
+            (1.3, 2.9129, 1752.3972),     // VSA = 3.50
+            (1.3, 3.3290, 2002.7394),     // VSA = 4.00
+            (3.0, 4.8015, 15382.8958),    // VSA = 2.50
+            (3.0, 6.7221, 21536.0562999), // VSA = 3.50
         ],
         &[
-            (1.3, 0.5410, 325.4451999, 0.02),// VSA = 0.65
-            (1.3, 1.1236, 675.9245999, 0.022),// VSA = 1.35
-            (3.0, 1.9206, 6153.158999, 0.09),// VSA = 1.00
-            (3.0, 5.7618, 18459.4769, 0.26),// VSA = 3.00
-            (5.0, 3.2010, 28486.844, 0.39), // VSA = 1.00
-            (5.0, 9.6030, 85460.528, 1.2), // VSA = 3.00
+            (1.3, 0.5410, 325.4451999, 0.02),  // VSA = 0.65
+            (1.3, 1.1236, 675.9245999, 0.022), // VSA = 1.35
+            (3.0, 1.9206, 6153.158999, 0.09),  // VSA = 1.00
+            (3.0, 5.7618, 18459.4769, 0.26),   // VSA = 3.00
+            (5.0, 3.2010, 28486.844, 0.39),    // VSA = 1.00
+            (5.0, 9.6030, 85460.528, 1.2),     // VSA = 3.00
         ]
     );
     // nose-4
@@ -294,18 +360,18 @@ mod tests {
         tank_volume_correction_core_nose_4,
         "nose-4",
         &[
-            (1.3, 0.1272, 91.45089999),         // VSA = 0.25
-            (1.3, 0.5088, 365.8034999),         // VSA = 1.00
-            (1.3, 1.0176, 731.6069999),         // VSA = 2.00
+            (1.3, 0.1272, 91.45089999), // VSA = 0.25
+            (1.3, 0.5088, 365.8034999), // VSA = 1.00
+            (1.3, 1.0176, 731.6069999), // VSA = 2.00
         ],
         &[
-            (1.3, 0.3053, 219.4820999, 0.02),       // VSA = 0.60
-            (1.3, 0.7632, 548.7052999, 0.02),       // VSA = 1.50
-            (1.3, 1.9081, 1371.7632, 0.075),        // VSA = 3.75
-            (3.0, 1.1742, 4495.535999, 0.20),       // VSA = 1.00
-            (3.0, 3.5226, 13486.6087, 0.54),        // VSA = 3.00
-            (5.0, 0.9785, 10406.3327, 0.42),        // VSA = 0.50
-            (5.0, 6.8495, 72844.328999, 2.89),      // VSA = 3.50
+            (1.3, 0.3053, 219.4820999, 0.02),  // VSA = 0.60
+            (1.3, 0.7632, 548.7052999, 0.02),  // VSA = 1.50
+            (1.3, 1.9081, 1371.7632, 0.075),   // VSA = 3.75
+            (3.0, 1.1742, 4495.535999, 0.20),  // VSA = 1.00
+            (3.0, 3.5226, 13486.6087, 0.54),   // VSA = 3.00
+            (5.0, 0.9785, 10406.3327, 0.42),   // VSA = 0.50
+            (5.0, 6.8495, 72844.328999, 2.89), // VSA = 3.50
         ]
     );
     // nose-5
@@ -313,14 +379,14 @@ mod tests {
         tank_volume_correction_core_nose_5,
         "nose-5",
         &[
-            (1.0, 1.2148, 404.5950999),         // VSA = 1.00
-            (5.0, 18.2220, 151723.1667),        // VSA = 3.00
+            (1.0, 1.2148, 404.5950999),  // VSA = 1.00
+            (5.0, 18.2220, 151723.1667), // VSA = 3.00
         ],
         &[
-            (1.0, 0.6074, 202.2976, 0.00005),       // VSA = 0.50
-            (1.3, 4.7377, 2666.6870999, 0.02),      // VSA = 3.00
-            (3.0, 9.1110, 27310.170599, 0.001),     // VSA = 2.50
-            (5.0, 15.185, 126435.9659, 0.005),      // VSA = 2.50
+            (1.0, 0.6074, 202.2976, 0.00005),   // VSA = 0.50
+            (1.3, 4.7377, 2666.6870999, 0.02),  // VSA = 3.00
+            (3.0, 9.1110, 27310.170599, 0.001), // VSA = 2.50
+            (5.0, 15.185, 126435.9659, 0.005),  // VSA = 2.50
         ]
     );
     // nose-12
@@ -328,14 +394,14 @@ mod tests {
         tank_volume_correction_core_nose_12,
         "nose-12",
         &[
-            (1.0, 5.0000, 1665.1993),               // VSA = 1.00
-            (5.0, 100.0, 832599.5758),              // VSA = 4.00
+            (1.0, 5.0000, 1665.1993),  // VSA = 1.00
+            (5.0, 100.0, 832599.5758), // VSA = 4.00
         ],
         &[
-            (1.3, 3.2500, 1829.2216, 0.0003),       // VSA = 0.50
-            (1.3, 9.7500, 5487.6655, 0.002),        // VSA = 1.50
-            (1.3, 19.500, 10975.3311, 0.004),       // VSA = 3.00
-            (3.0, 45.000, 134881.1424, 0.006),      // VSA = 3.00
+            (1.3, 3.2500, 1829.2216, 0.0003),  // VSA = 0.50
+            (1.3, 9.7500, 5487.6655, 0.002),   // VSA = 1.50
+            (1.3, 19.500, 10975.3311, 0.004),  // VSA = 3.00
+            (3.0, 45.000, 134881.1424, 0.006), // VSA = 3.00
         ]
     );
 
@@ -344,15 +410,15 @@ mod tests {
         tank_volume_correction_core_nose_13,
         "nose-13",
         &[
-            (1.0, 3.7760, 1326.4132),               // VSA = 1.0
-            (5.0, 75.520, 663206.5253),             // VSA = 4.0
+            (1.0, 3.7760, 1326.4132),   // VSA = 1.0
+            (5.0, 75.520, 663206.5253), // VSA = 4.0
         ],
         &[
-            (1.3, 2.4544, 1457.0651, 0.0003),         // VSA = 0.50
-            (1.3, 7.3632, 4371.1954, 0.001),         // VSA = 1.50
-            (3.0, 11.3280, 35813.1556, 0.0013),       // VSA = 1.00
-            (3.0, 28.3200, 89532.8875, 0.0016),       // VSA = 2.50
-            (5.0, 37.7600, 331603.2626, 0.019),      // VSA = 2.00
+            (1.3, 2.4544, 1457.0651, 0.0003),   // VSA = 0.50
+            (1.3, 7.3632, 4371.1954, 0.001),    // VSA = 1.50
+            (3.0, 11.3280, 35813.1556, 0.0013), // VSA = 1.00
+            (3.0, 28.3200, 89532.8875, 0.0016), // VSA = 2.50
+            (5.0, 37.7600, 331603.2626, 0.019), // VSA = 2.00
         ]
     );
 
@@ -360,20 +426,20 @@ mod tests {
     fn calculate_dry_mass_coefficient(samples: &[(f64, f64, f64, f64, f64)]) -> f64 {
         let mut sum_density = 0.0;
         let mut count = 0;
-    
+
         for &(diameter, height, dry_mass, max_utilization, correction_coefficient) in samples {
             let volume = calculate_corrected_volume(diameter, height, correction_coefficient);
             let structural_volume = volume / max_utilization * (100.0 - max_utilization);
-            
+
             let density = dry_mass / structural_volume;
             sum_density += density;
             count += 1;
         }
-    
+
         sum_density / count as f64 // Returns the average coefficient
     }
-    
-    /// Implements some tests for finding the dry mass coefficient and validates 
+
+    /// Implements some tests for finding the dry mass coefficient and validates
     /// that the coefficient is correct.
     macro_rules! impl_nosecone_mass_test {
         ($name:ident, $core:literal, $tank_type:literal, $samples:expr, $test_samples:expr) => {
@@ -396,18 +462,18 @@ mod tests {
         "Nose-1",
         "Steel Fuselage",
         &[
-            (0.1, 0.0315, 0.016, 83.0, NOSE_1_CORRECTION_COEF),//VSA = 0.25
-            (0.1, 0.1261, 0.0639, 83.0, NOSE_1_CORRECTION_COEF),//VSA = 1.00
-            (1.0, 0.3152, 16.0, 83.0, NOSE_1_CORRECTION_COEF),//VSA = 0.25
-            (1.0, 0.3782, 19.2, 83.0, NOSE_1_CORRECTION_COEF),//VSA = 0.30
-            (1.0, 1.2608, 63.9, 83.0, NOSE_1_CORRECTION_COEF),//VSA = 1.00
-            (1.3, 0.8195, 70.2, 83.0, NOSE_1_CORRECTION_COEF),// VSA = 0.50
-            (1.3, 5.7366, 492.0, 83.0, NOSE_1_CORRECTION_COEF),//VSA = 3.50
-            (3.0, 13.2384, 6040.0, 83.0, NOSE_1_CORRECTION_COEF),// VSA = 3.50
+            (0.1, 0.0315, 0.016, 83.0, NOSE_1_CORRECTION_COEF), //VSA = 0.25
+            (0.1, 0.1261, 0.0639, 83.0, NOSE_1_CORRECTION_COEF), //VSA = 1.00
+            (1.0, 0.3152, 16.0, 83.0, NOSE_1_CORRECTION_COEF),  //VSA = 0.25
+            (1.0, 0.3782, 19.2, 83.0, NOSE_1_CORRECTION_COEF),  //VSA = 0.30
+            (1.0, 1.2608, 63.9, 83.0, NOSE_1_CORRECTION_COEF),  //VSA = 1.00
+            (1.3, 0.8195, 70.2, 83.0, NOSE_1_CORRECTION_COEF),  // VSA = 0.50
+            (1.3, 5.7366, 492.0, 83.0, NOSE_1_CORRECTION_COEF), //VSA = 3.50
+            (3.0, 13.2384, 6040.0, 83.0, NOSE_1_CORRECTION_COEF), // VSA = 3.50
         ],
         &[
-            (3.0, 7.5648, 3450.0, 4.3, 83.0, NOSE_1_CORRECTION_COEF),//VSA = 2.0
-            (4.0, 10.0864, 8180.0, 6.3, 83.0, NOSE_1_CORRECTION_COEF),// VSA = 2.0
+            (3.0, 7.5648, 3450.0, 4.3, 83.0, NOSE_1_CORRECTION_COEF), //VSA = 2.0
+            (4.0, 10.0864, 8180.0, 6.3, 83.0, NOSE_1_CORRECTION_COEF), // VSA = 2.0
         ]
     );
 
@@ -416,9 +482,9 @@ mod tests {
         "Nose-2",
         "Steel Fuselage",
         &[
-            (0.1, 0.0339, 0.0208, 83.0, NOSE_2_CORRECTION_COEF),// VSA = 0.25
-            (0.1, 0.1356, 0.0832, 83.0, NOSE_2_CORRECTION_COEF),// VSA = 1.0
-            (1.0, 0.3390, 20.8, 83.0, NOSE_2_CORRECTION_COEF),// VSA = 0.25
+            (0.1, 0.0339, 0.0208, 83.0, NOSE_2_CORRECTION_COEF), // VSA = 0.25
+            (0.1, 0.1356, 0.0832, 83.0, NOSE_2_CORRECTION_COEF), // VSA = 1.0
+            (1.0, 0.3390, 20.8, 83.0, NOSE_2_CORRECTION_COEF),   // VSA = 0.25
         ],
         &[
             (3.0, 4.0674, 2250.0, 3.94, 83.0, NOSE_2_CORRECTION_COEF),// VSA = 1.0
@@ -430,14 +496,14 @@ mod tests {
         "Nose-1",
         "HP Steel Fuselage",
         &[
-            (0.1, 0.0315, 0.0387, 75.0, NOSE_1_CORRECTION_COEF),//VSA = 0.25
-            (0.1, 0.1261, 0.155, 75.0, NOSE_1_CORRECTION_COEF),// VSA = 1.0
-            (1.0, 0.3152, 38.7, 75.0, NOSE_1_CORRECTION_COEF),// VSA = 0.25
-            (1.0, 1.2608, 155.0, 75.0, NOSE_1_CORRECTION_COEF),// VSA = 1.0
+            (0.1, 0.0315, 0.0387, 75.0, NOSE_1_CORRECTION_COEF), //VSA = 0.25
+            (0.1, 0.1261, 0.155, 75.0, NOSE_1_CORRECTION_COEF),  // VSA = 1.0
+            (1.0, 0.3152, 38.7, 75.0, NOSE_1_CORRECTION_COEF),   // VSA = 0.25
+            (1.0, 1.2608, 155.0, 75.0, NOSE_1_CORRECTION_COEF),  // VSA = 1.0
         ],
         &[
-            (3.0, 7.5648, 8360.0, 5.6, 75.0, NOSE_1_CORRECTION_COEF),// VSA = 2.0
-            (5.0, 12.6080, 38700.0, 29.7, 75.0, NOSE_1_CORRECTION_COEF),// VSA = 2.0
+            (3.0, 7.5648, 8360.0, 5.6, 75.0, NOSE_1_CORRECTION_COEF), // VSA = 2.0
+            (5.0, 12.6080, 38700.0, 29.7, 75.0, NOSE_1_CORRECTION_COEF), // VSA = 2.0
         ]
     );
 
@@ -446,14 +512,14 @@ mod tests {
         "Nose-1",
         "Al Fuselage",
         &[
-            (0.1, 0.0315, 0.00992, 87.0, N1),// VSA = 0.25
-            (0.1, 0.1261, 0.0397, 87.0, N1),// VSA = 1.0
-            (1.0, 0.3152, 9.92, 87.0, N1),// VSA = 0.25
-            (1.0, 1.2608, 39.7, 87.0, N1),// VSA = 1.0
+            (0.1, 0.0315, 0.00992, 87.0, N1), // VSA = 0.25
+            (0.1, 0.1261, 0.0397, 87.0, N1),  // VSA = 1.0
+            (1.0, 0.3152, 9.92, 87.0, N1),    // VSA = 0.25
+            (1.0, 1.2608, 39.7, 87.0, N1),    // VSA = 1.0
         ],
         &[
-            (3.0, 7.5648, 2140.0, 3.6, 87.0, N1),// VSA = 2.0
-            (5.0, 12.6080, 9920.0, 3.7, 87.0, N1),// VSA = 2.0
+            (3.0, 7.5648, 2140.0, 3.6, 87.0, N1),  // VSA = 2.0
+            (5.0, 12.6080, 9920.0, 3.7, 87.0, N1), // VSA = 2.0
         ]
     );
 
@@ -468,151 +534,171 @@ mod tests {
                 "Nose-1",
                 $fuselage,
                 &[
-                    (0.1, 0.0315, $mass_1, $utilization, N1),// VSA = 0.25
-                    (0.1, 0.1261, $mass_2, $utilization, N1),// VSA = 1.0
-                    (0.5, 0.3152, $mass_3, $utilization, N1),// VSA = 0.5
-                    (1.0, 0.3152, $mass_4, $utilization, N1),// VSA = 0.25
-                    //(1.0, 1.2608, $mass_4, $utilization, N1),// VSA = 1.0
-                    //(2.0, 5.0432, $mass_5, $utilization, N1),// VSA = 2.0
+                    (0.1, 0.0315, $mass_1, $utilization, N1), // VSA = 0.25
+                    (0.1, 0.1261, $mass_2, $utilization, N1), // VSA = 1.0
+                    (0.5, 0.3152, $mass_3, $utilization, N1), // VSA = 0.5
+                    (1.0, 0.3152, $mass_4, $utilization, N1), // VSA = 0.25
+                                                              //(1.0, 1.2608, $mass_4, $utilization, N1),// VSA = 1.0
+                                                              //(2.0, 5.0432, $mass_5, $utilization, N1),// VSA = 2.0
                 ],
                 &[
-                    (3.0, 7.5648, $expct_mass_1, $error_1, $utilization, N1),// VSA = 2.0
-                    (5.0, 12.6080, $expct_mass_2, $error_2, $utilization, N1),// VSA = 2.0
+                    (3.0, 7.5648, $expct_mass_1, $error_1, $utilization, N1), // VSA = 2.0
+                    (5.0, 12.6080, $expct_mass_2, $error_2, $utilization, N1), // VSA = 2.0
                 ]
             );
         };
     }
-    get_fuselage_densities!(tank_dry_mass_core_nose_1_hp_al_fuselage, "HP Al Fuselage", 84.0, 0.0346, 0.139, 8.66, 34.6, 7480.0, 34600.0, 4.8, 51.7);
-    get_fuselage_densities!(tank_dry_mass_core_nose_1_al_stringer_tank, "Al Stringer Tank", 92.0, 0.00691, 0.0277, 1.73, 6.92, 1490.0, 6920.0, 4.7, 0.43);
     get_fuselage_densities!(
-        tank_dry_mass_core_nose_1_hp_al_stringer_tank, 
-        "HP Al Stringer Tank", 
-        90.0,       // Utilization 
-        0.0288,     // D=0.1 VSA=0.25
-        0.115,      // D=0.1 VSA=1.00
-        7.19,       // D=0.5 VSA=0.50
-        28.8,       // D=1.0 VSA=0.25
-        6210.0,     // D=3.0 VSA=2.00
-        28800.0,    // D=5.0 VSA=2.00
-        6.7,        // Error for sample 1
-        19.1        // Error for sample 2
+        tank_dry_mass_core_nose_1_hp_al_fuselage,
+        "HP Al Fuselage",
+        84.0,
+        0.0346,
+        0.139,
+        8.66,
+        34.6,
+        7480.0,
+        34600.0,
+        4.8,
+        51.7
     );
     get_fuselage_densities!(
-        tank_dry_mass_core_nose_1_refined_al_stringer_tank, 
-        "Refined Al Stringer Tank", 
-        92.0,       // Utilization 
-        0.00512,     // D=0.1 VSA=0.25
-        0.0205,      // D=0.1 VSA=1.00
-        1.28,       // D=0.5 VSA=0.50
-        5.12,       // D=1.0 VSA=0.25
-        1110.0,     // D=3.0 VSA=2.00
-        5120.0,    // D=5.0 VSA=2.00
-        3.7,        // Error for sample 1
-        1.9        // Error for sample 2
+        tank_dry_mass_core_nose_1_al_stringer_tank,
+        "Al Stringer Tank",
+        92.0,
+        0.00691,
+        0.0277,
+        1.73,
+        6.92,
+        1490.0,
+        6920.0,
+        4.7,
+        0.43
     );
     get_fuselage_densities!(
-        tank_dry_mass_core_nose_1_hp_refined_al_stringer_tank, 
-        "HP Refined Al Stringer Tank", 
-        90.0,       // Utilization 
-        0.0215,     // D=0.1 VSA=0.25
-        0.0861,      // D=0.1 VSA=1.00
-        5.38,       // D=0.5 VSA=0.50
-        21.5,       // D=1.0 VSA=0.25
-        4650.0,     // D=3.0 VSA=2.00
-        21500.0,    // D=5.0 VSA=2.00
-        3.1,        // Error for sample 1
-        13.9        // Error for sample 2
+        tank_dry_mass_core_nose_1_hp_al_stringer_tank,
+        "HP Al Stringer Tank",
+        90.0,    // Utilization
+        0.0288,  // D=0.1 VSA=0.25
+        0.115,   // D=0.1 VSA=1.00
+        7.19,    // D=0.5 VSA=0.50
+        28.8,    // D=1.0 VSA=0.25
+        6210.0,  // D=3.0 VSA=2.00
+        28800.0, // D=5.0 VSA=2.00
+        6.7,     // Error for sample 1
+        19.1     // Error for sample 2
     );
     get_fuselage_densities!(
-        tank_dry_mass_core_nose_1_al_li_stringer_tank, 
-        "Al-Li Stringer Tank", 
-        97.0,       // Utilization 
-        0.00407,     // D=0.1 VSA=0.25
-        0.0163,      // D=0.1 VSA=1.00
-        1.02,       // D=0.5 VSA=0.50
-        4.07,       // D=1.0 VSA=0.25
-        880.0,     // D=3.0 VSA=2.00
-        4070.0,    // D=5.0 VSA=2.00
-        0.04,        // Error for sample 1
-        4.3        // Error for sample 2
+        tank_dry_mass_core_nose_1_refined_al_stringer_tank,
+        "Refined Al Stringer Tank",
+        92.0,    // Utilization
+        0.00512, // D=0.1 VSA=0.25
+        0.0205,  // D=0.1 VSA=1.00
+        1.28,    // D=0.5 VSA=0.50
+        5.12,    // D=1.0 VSA=0.25
+        1110.0,  // D=3.0 VSA=2.00
+        5120.0,  // D=5.0 VSA=2.00
+        3.7,     // Error for sample 1
+        1.9      // Error for sample 2
     );
     get_fuselage_densities!(
-        tank_dry_mass_core_nose_1_hp_al_li_stringer_tank, 
-        "HP Al-Li Stringer Tank", 
-        96.0,       // Utilization 
-        0.0123,     // D=0.1 VSA=0.25
-        0.0494,      // D=0.1 VSA=1.00
-        3.09,       // D=0.5 VSA=0.50
-        12.3,       // D=1.0 VSA=0.25
-        2670.0,     // D=3.0 VSA=2.00
-        12300.0,    // D=5.0 VSA=2.00
-        7.0,        // Error for sample 1
-        29.0        // Error for sample 2
+        tank_dry_mass_core_nose_1_hp_refined_al_stringer_tank,
+        "HP Refined Al Stringer Tank",
+        90.0,    // Utilization
+        0.0215,  // D=0.1 VSA=0.25
+        0.0861,  // D=0.1 VSA=1.00
+        5.38,    // D=0.5 VSA=0.50
+        21.5,    // D=1.0 VSA=0.25
+        4650.0,  // D=3.0 VSA=2.00
+        21500.0, // D=5.0 VSA=2.00
+        3.1,     // Error for sample 1
+        13.9     // Error for sample 2
     );
     get_fuselage_densities!(
-        tank_dry_mass_core_nose_1_refined_al_li_stringer_tank, 
-        "Refined Al-Li Stringer Tank", 
-        97.0,       // Utilization 
-        0.00381,     // D=0.1 VSA=0.25
-        0.0152,      // D=0.1 VSA=1.00
-        0.953,       // D=0.5 VSA=0.50
-        3.81,       // D=1.0 VSA=0.25
-        823.0,     // D=3.0 VSA=2.00
-        3810.0,    // D=5.0 VSA=2.00
-        0.4,        // Error for sample 1
-        1.6        // Error for sample 2
+        tank_dry_mass_core_nose_1_al_li_stringer_tank,
+        "Al-Li Stringer Tank",
+        97.0,    // Utilization
+        0.00407, // D=0.1 VSA=0.25
+        0.0163,  // D=0.1 VSA=1.00
+        1.02,    // D=0.5 VSA=0.50
+        4.07,    // D=1.0 VSA=0.25
+        880.0,   // D=3.0 VSA=2.00
+        4070.0,  // D=5.0 VSA=2.00
+        0.04,    // Error for sample 1
+        4.3      // Error for sample 2
     );
     get_fuselage_densities!(
-        tank_dry_mass_core_nose_1_hp_refined_al_li_stringer_tank, 
-        "HP Refined Al-Li Stringer Tank", 
-        96.0,       // Utilization 
-        0.0107,     // D=0.1 VSA=0.25
-        0.0426,      // D=0.1 VSA=1.00
-        2.67,       // D=0.5 VSA=0.50
-        10.7,       // D=1.0 VSA=0.25
-        2300.0,     // D=3.0 VSA=2.00
-        10700.0,    // D=5.0 VSA=2.00
-        7.7,        // Error for sample 1
-        16.3        // Error for sample 2
+        tank_dry_mass_core_nose_1_hp_al_li_stringer_tank,
+        "HP Al-Li Stringer Tank",
+        96.0,    // Utilization
+        0.0123,  // D=0.1 VSA=0.25
+        0.0494,  // D=0.1 VSA=1.00
+        3.09,    // D=0.5 VSA=0.50
+        12.3,    // D=1.0 VSA=0.25
+        2670.0,  // D=3.0 VSA=2.00
+        12300.0, // D=5.0 VSA=2.00
+        7.0,     // Error for sample 1
+        29.0     // Error for sample 2
     );
     get_fuselage_densities!(
-        tank_dry_mass_core_nose_1_steel_stir_welded_tank, 
-        "Steel Stir Welded Tank", 
-        97.0,       // Utilization 
-        0.00473,     // D=0.1 VSA=0.25
-        0.0189,      // D=0.1 VSA=1.00
-        1.18,       // D=0.5 VSA=0.50
-        4.73,       // D=1.0 VSA=0.25
-        1020.0,     // D=3.0 VSA=2.00
-        4730.0,    // D=5.0 VSA=2.00
-        1.0,        // Error for sample 1
-        3.2        // Error for sample 2
+        tank_dry_mass_core_nose_1_refined_al_li_stringer_tank,
+        "Refined Al-Li Stringer Tank",
+        97.0,    // Utilization
+        0.00381, // D=0.1 VSA=0.25
+        0.0152,  // D=0.1 VSA=1.00
+        0.953,   // D=0.5 VSA=0.50
+        3.81,    // D=1.0 VSA=0.25
+        823.0,   // D=3.0 VSA=2.00
+        3810.0,  // D=5.0 VSA=2.00
+        0.4,     // Error for sample 1
+        1.6      // Error for sample 2
     );
     get_fuselage_densities!(
-        tank_dry_mass_core_nose_1_hp_steel_stir_welded_tank, 
-        "HP Steel Stir Welded Tank", 
-        96.0,       // Utilization 
-        0.0182,     // D=0.1 VSA=0.25
-        0.0727,      // D=0.1 VSA=1.00
-        4.54,       // D=0.5 VSA=0.50
-        18.2,       // D=1.0 VSA=0.25
-        3920.0,     // D=3.0 VSA=2.00
-        18200.0,    // D=5.0 VSA=2.00
-        8.16,        // Error for sample 1
-        14.1        // Error for sample 2
+        tank_dry_mass_core_nose_1_hp_refined_al_li_stringer_tank,
+        "HP Refined Al-Li Stringer Tank",
+        96.0,    // Utilization
+        0.0107,  // D=0.1 VSA=0.25
+        0.0426,  // D=0.1 VSA=1.00
+        2.67,    // D=0.5 VSA=0.50
+        10.7,    // D=1.0 VSA=0.25
+        2300.0,  // D=3.0 VSA=2.00
+        10700.0, // D=5.0 VSA=2.00
+        7.7,     // Error for sample 1
+        16.3     // Error for sample 2
     );
-    /// Determines that fuselage densities are the same across different nose 
+    get_fuselage_densities!(
+        tank_dry_mass_core_nose_1_steel_stir_welded_tank,
+        "Steel Stir Welded Tank",
+        97.0,    // Utilization
+        0.00473, // D=0.1 VSA=0.25
+        0.0189,  // D=0.1 VSA=1.00
+        1.18,    // D=0.5 VSA=0.50
+        4.73,    // D=1.0 VSA=0.25
+        1020.0,  // D=3.0 VSA=2.00
+        4730.0,  // D=5.0 VSA=2.00
+        1.0,     // Error for sample 1
+        3.2      // Error for sample 2
+    );
+    get_fuselage_densities!(
+        tank_dry_mass_core_nose_1_hp_steel_stir_welded_tank,
+        "HP Steel Stir Welded Tank",
+        96.0,    // Utilization
+        0.0182,  // D=0.1 VSA=0.25
+        0.0727,  // D=0.1 VSA=1.00
+        4.54,    // D=0.5 VSA=0.50
+        18.2,    // D=1.0 VSA=0.25
+        3920.0,  // D=3.0 VSA=2.00
+        18200.0, // D=5.0 VSA=2.00
+        8.16,    // Error for sample 1
+        14.1     // Error for sample 2
+    );
+    /// Determines that fuselage densities are the same across different nose
     /// cores.
     #[test]
     fn noses_with_const_density() {
         let density = 0.7050215444;
 
         {
-            let volume_n2 = calculate_corrected_volume(
-                3.0, 
-                4.0674, 
-                NOSE_2_CORRECTION_COEF
-            );
+            let volume_n2 = calculate_corrected_volume(3.0, 4.0674, NOSE_2_CORRECTION_COEF);
             let struct_vol = volume_n2 / 83.0 * (100.0 - 83.0);
             let expected_dry_mass = 2250.0;
             let dry_mass = density * struct_vol;
@@ -622,11 +708,7 @@ mod tests {
 
         // nose-3
         {
-            let volume_n3 = calculate_corrected_volume(
-                3.0, 
-                3.8412, 
-                NOSE_3_CORRECTION_COEF
-            );
+            let volume_n3 = calculate_corrected_volume(3.0, 3.8412, NOSE_3_CORRECTION_COEF);
             let actual_volume = 12306.3179;
             let diff = (volume_n3 - actual_volume).abs();
             assert!(diff < 0.2, "\nVolume diff was {}\n", diff);
@@ -634,15 +716,17 @@ mod tests {
             let expected_dry_mass = 1780.0;
             let dry_mass = density * struct_vol;
             let diff = (expected_dry_mass - dry_mass).abs();
-            assert!(diff < 3.0, "\nDry mass diff was {}\nDry mass = {}\nExpected = {}", diff, dry_mass, expected_dry_mass);
+            assert!(
+                diff < 3.0,
+                "\nDry mass diff was {}\nDry mass = {}\nExpected = {}",
+                diff,
+                dry_mass,
+                expected_dry_mass
+            );
         }
 
         {
-            let volume_n3 = calculate_corrected_volume(
-                3.0, 
-                1.9206, 
-                NOSE_3_CORRECTION_COEF
-            );
+            let volume_n3 = calculate_corrected_volume(3.0, 1.9206, NOSE_3_CORRECTION_COEF);
             let actual_volume = 6153.159;
             let diff = (volume_n3 - actual_volume).abs();
             assert!(diff < 0.3, "\nVolume diff was {}\n", diff);
@@ -650,16 +734,18 @@ mod tests {
             let expected_dry_mass = 888.0;
             let dry_mass = density * struct_vol;
             let diff = (expected_dry_mass - dry_mass).abs();
-            assert!(diff < 1.0, "\nDry mass diff was {}\nDry mass = {}\nExpected = {}", diff, dry_mass, expected_dry_mass);
+            assert!(
+                diff < 1.0,
+                "\nDry mass diff was {}\nDry mass = {}\nExpected = {}",
+                diff,
+                dry_mass,
+                expected_dry_mass
+            );
         }
 
         // nose-4
         {
-            let volume_n4 = calculate_corrected_volume(
-                3.0, 
-                1.1742, 
-                NOSE_4_CORRECTION_COEF
-            );
+            let volume_n4 = calculate_corrected_volume(3.0, 1.1742, NOSE_4_CORRECTION_COEF);
             let actual_volume = 4495.536;
             let diff = (volume_n4 - actual_volume).abs();
             assert!(diff < 0.3, "\nVolume diff was {}\n", diff);
@@ -667,16 +753,18 @@ mod tests {
             let expected_dry_mass = 649.0;
             let dry_mass = density * struct_vol;
             let diff = (expected_dry_mass - dry_mass).abs();
-            assert!(diff < 1.0, "\nDry mass diff was {}\nDry mass = {}\nExpected = {}", diff, dry_mass, expected_dry_mass);
+            assert!(
+                diff < 1.0,
+                "\nDry mass diff was {}\nDry mass = {}\nExpected = {}",
+                diff,
+                dry_mass,
+                expected_dry_mass
+            );
         }
 
         // nose-5
         {
-            let volume_n5 = calculate_corrected_volume(
-                3.0, 
-                3.6444, 
-                NOSE_5_CORRECTION_COEF
-            );
+            let volume_n5 = calculate_corrected_volume(3.0, 3.6444, NOSE_5_CORRECTION_COEF);
             let actual_volume = 10924.0687;
             let diff = (volume_n5 - actual_volume).abs();
             assert!(diff < 0.3, "\nVolume diff was {}\n", diff);
@@ -684,7 +772,13 @@ mod tests {
             let expected_dry_mass = 1580.0;
             let dry_mass = density * struct_vol;
             let diff = (expected_dry_mass - dry_mass).abs();
-            assert!(diff < 3.0, "\nDry mass diff was {}\nDry mass = {}\nExpected = {}", diff, dry_mass, expected_dry_mass);
+            assert!(
+                diff < 3.0,
+                "\nDry mass diff was {}\nDry mass = {}\nExpected = {}",
+                diff,
+                dry_mass,
+                expected_dry_mass
+            );
         }
     }
 
@@ -693,11 +787,17 @@ mod tests {
         let diameter = 5.0;
         let (base_length, min_length, max_length) = calculate_cone_lengths(diameter);
         let expected_base_length = 6.3040;
-        assert!((base_length - expected_base_length).abs() < 0.01, "Base length is incorrect");
+        assert!(
+            (base_length - expected_base_length).abs() < 0.01,
+            "Base length is incorrect"
+        );
         let diameter = 3.0;
         let (base_length, min_length, max_length) = calculate_cone_lengths(diameter);
         let expected_base_length = 3.7824;
-        assert!((base_length - expected_base_length).abs() < 0.01, "Base length is incorrect");
+        assert!(
+            (base_length - expected_base_length).abs() < 0.01,
+            "Base length is incorrect"
+        );
     }
 
     fn write_fuselage_code(samples: &[(&str, f64, f64)]) {
@@ -711,33 +811,103 @@ mod tests {
             }
         }
         for (fuselage, density, utilization) in hp_tanks {
-            println!("hp_tanks.insert({}, Fuselage::new({}, {}, {:.2}));", fuselage, fuselage, density, utilization / 100.0);
+            println!(
+                "hp_tanks.insert({}, Fuselage::new({}, {}, {:.2}));",
+                fuselage,
+                fuselage,
+                density,
+                utilization / 100.0
+            );
         }
         for (fuselage, density, utilization) in non_hp_tanks {
-            println!("non_hp_tanks.insert({}, Fuselage::new({}, {}, {:.2}));", fuselage, fuselage, density, utilization / 100.0);
+            println!(
+                "non_hp_tanks.insert({}, Fuselage::new({}, {}, {:.2}));",
+                fuselage,
+                fuselage,
+                density,
+                utilization / 100.0
+            );
         }
     }
 
     #[test]
     fn generate_code() {
-        write_fuselage_code(
-            &[
-                ("STEEL_FUSELAGE_NAME", STEEL_FUSELAGE_UTIL_PERCENT, STEEL_FUSELAGE_DENSITY),
-                ("HP_STEEL_FUSELAGE_NAME", HP_STEEL_FUSELAGE_UTIL_PERCENT, HP_STEEL_FUSELAGE_DENSITY),
-                ("AL_FUSELAGE_NAME", AL_FUSELAGE_UTIL_PERCENT, AL_FUSELAGE_DENSITY),
-                ("HP_AL_FUSELAGE_NAME", HP_AL_FUSELAGE_UTIL_PERCENT, HP_AL_FUSELAGE_DENSITY),
-                ("HP_AL_FUSELAGE_NAME", HP_AL_FUSELAGE_UTIL_PERCENT, HP_AL_FUSELAGE_DENSITY),
-                ("AL_STRINGER_TANK_NAME", AL_STRINGER_TANK_UTIL_PERCENT, AL_STRINGER_TANK_DENSITY),
-                ("HP_AL_STRINGER_TANK_NAME", HP_AL_STRINGER_TANK_UTIL_PERCENT, HP_AL_STRINGER_TANK_DENSITY),
-                ("REFINED_AL_STRINGER_TANK_NAME", REFINED_AL_STRINGER_TANK_UTIL_PERCENT, REFINED_AL_STRINGER_TANK_DENSITY),
-                ("HP_REFINED_AL_STRINGER_TANK_NAME", HP_REFINED_AL_STRINGER_TANK_UTIL_PERCENT, HP_REFINED_AL_STRINGER_TANK_DENSITY),
-                ("AL_LI_STRINGER_TANK_NAME", AL_LI_STRINGER_TANK_UTIL_PERCENT, AL_LI_STRINGER_TANK_DENSITY),
-                ("HP_AL_LI_STRINGER_TANK_NAME", HP_AL_LI_STRINGER_TANK_UTIL_PERCENT, HP_AL_LI_STRINGER_TANK_DENSITY),
-                ("REFINED_AL_LI_STRINGER_TANK_NAME", REFINED_AL_LI_STRINGER_TANK_UTIL_PERCENT, REFINED_AL_LI_STRINGER_TANK_DENSITY),
-                ("HP_REFINED_AL_LI_STRINGER_TANK_NAME", HP_REFINED_AL_LI_STRINGER_TANK_UTIL_PERCENT, HP_REFINED_AL_LI_STRINGER_TANK_DENSITY),
-                ("STEEL_STIR_WELDED_TANK_NAME", STEEL_STIR_WELDED_TANK_UTIL_PERCENT, STEEL_STIR_WELDED_TANK_DENSITY),
-                ("HP_STEEL_STIR_WELDED_TANK_NAME", HP_STEEL_STIR_WELDED_TANK_UTIL_PERCENT, HP_STEEL_STIR_WELDED_TANK_DENSITY),
-            ]
-        );
+        write_fuselage_code(&[
+            (
+                "STEEL_FUSELAGE_NAME",
+                STEEL_FUSELAGE_UTIL_PERCENT,
+                STEEL_FUSELAGE_DENSITY,
+            ),
+            (
+                "HP_STEEL_FUSELAGE_NAME",
+                HP_STEEL_FUSELAGE_UTIL_PERCENT,
+                HP_STEEL_FUSELAGE_DENSITY,
+            ),
+            (
+                "AL_FUSELAGE_NAME",
+                AL_FUSELAGE_UTIL_PERCENT,
+                AL_FUSELAGE_DENSITY,
+            ),
+            (
+                "HP_AL_FUSELAGE_NAME",
+                HP_AL_FUSELAGE_UTIL_PERCENT,
+                HP_AL_FUSELAGE_DENSITY,
+            ),
+            (
+                "HP_AL_FUSELAGE_NAME",
+                HP_AL_FUSELAGE_UTIL_PERCENT,
+                HP_AL_FUSELAGE_DENSITY,
+            ),
+            (
+                "AL_STRINGER_TANK_NAME",
+                AL_STRINGER_TANK_UTIL_PERCENT,
+                AL_STRINGER_TANK_DENSITY,
+            ),
+            (
+                "HP_AL_STRINGER_TANK_NAME",
+                HP_AL_STRINGER_TANK_UTIL_PERCENT,
+                HP_AL_STRINGER_TANK_DENSITY,
+            ),
+            (
+                "REFINED_AL_STRINGER_TANK_NAME",
+                REFINED_AL_STRINGER_TANK_UTIL_PERCENT,
+                REFINED_AL_STRINGER_TANK_DENSITY,
+            ),
+            (
+                "HP_REFINED_AL_STRINGER_TANK_NAME",
+                HP_REFINED_AL_STRINGER_TANK_UTIL_PERCENT,
+                HP_REFINED_AL_STRINGER_TANK_DENSITY,
+            ),
+            (
+                "AL_LI_STRINGER_TANK_NAME",
+                AL_LI_STRINGER_TANK_UTIL_PERCENT,
+                AL_LI_STRINGER_TANK_DENSITY,
+            ),
+            (
+                "HP_AL_LI_STRINGER_TANK_NAME",
+                HP_AL_LI_STRINGER_TANK_UTIL_PERCENT,
+                HP_AL_LI_STRINGER_TANK_DENSITY,
+            ),
+            (
+                "REFINED_AL_LI_STRINGER_TANK_NAME",
+                REFINED_AL_LI_STRINGER_TANK_UTIL_PERCENT,
+                REFINED_AL_LI_STRINGER_TANK_DENSITY,
+            ),
+            (
+                "HP_REFINED_AL_LI_STRINGER_TANK_NAME",
+                HP_REFINED_AL_LI_STRINGER_TANK_UTIL_PERCENT,
+                HP_REFINED_AL_LI_STRINGER_TANK_DENSITY,
+            ),
+            (
+                "STEEL_STIR_WELDED_TANK_NAME",
+                STEEL_STIR_WELDED_TANK_UTIL_PERCENT,
+                STEEL_STIR_WELDED_TANK_DENSITY,
+            ),
+            (
+                "HP_STEEL_STIR_WELDED_TANK_NAME",
+                HP_STEEL_STIR_WELDED_TANK_UTIL_PERCENT,
+                HP_STEEL_STIR_WELDED_TANK_DENSITY,
+            ),
+        ]);
     }
 }

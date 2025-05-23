@@ -2,15 +2,13 @@
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct FuelMix {
-    fuels: &'static [FuelType]
+    fuels: &'static [FuelType],
 }
 
 impl FuelMix {
     /// Creates a new fuel mixture.
     pub const fn new(fuels: &'static [FuelType]) -> Self {
-        Self {
-            fuels
-        }
+        Self { fuels }
     }
 
     /// Returns the density of this fuel mixture.
@@ -40,7 +38,7 @@ impl FuelMix {
         flow_rate_sum
     }
 
-    /// Returns the maximum volume of fuel that an engine can burn through in 
+    /// Returns the maximum volume of fuel that an engine can burn through in
     /// its rated burn time. Unit = liters
     pub fn max_volume(&self, rated_burn_time: f64) -> f64 {
         self.flow_rate() * rated_burn_time
@@ -149,7 +147,7 @@ impl FuelType {
         }
     }
 
-    /// Returns the maximum volume of fuel that an engine can burn through in 
+    /// Returns the maximum volume of fuel that an engine can burn through in
     /// its rated burn time. Unit: Liters
     pub fn max_volume(&self, rated_burn_time: f64) -> f64 {
         self.flow_rate() * rated_burn_time
@@ -187,7 +185,7 @@ impl FuelType {
 #[cfg(test)]
 mod tests {
     /// Calculates the density of a fuel.
-    /// 
+    ///
     /// Arguments:
     /// * `wet_mass` - the wet mass of the tank in kg
     /// * `dry_mass` - the dry mass of the tank in kg
@@ -198,7 +196,11 @@ mod tests {
     }
 
     fn calculate_density_2(name: &str, flow_rate_liters_per_sec: f64, flow_rate_mass_per_sec: f64) {
-        println!("\n{} density = {:.5}", name, flow_rate_mass_per_sec / flow_rate_liters_per_sec);
+        println!(
+            "\n{} density = {:.5}",
+            name,
+            flow_rate_mass_per_sec / flow_rate_liters_per_sec
+        );
     }
 
     #[test]

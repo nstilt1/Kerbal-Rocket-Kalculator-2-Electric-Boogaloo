@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use super::{Fuselage, TankType, Tanks, fuselage_names::*};
+use super::{fuselage_names::*, Fuselage, TankType, Tanks};
 
 const STEEL_FUSELAGE_DENSITY: f64 = 0.7046255853625588; // kg/L
 const STEEL_FUSELAGE_UTIL_PERCENT: f64 = 83.0;
@@ -46,23 +46,72 @@ impl Tanks for CylindricalTank {
     const MAX_VSA: f64 = 50.0;
     const TANK_TYPE: TankType = TankType::Cylindrical;
 
-    fn init_fuselage_types() -> (HashMap<&'static str, Fuselage>, HashMap<&'static str, Fuselage>) {
+    fn init_fuselage_types() -> (
+        HashMap<&'static str, Fuselage>,
+        HashMap<&'static str, Fuselage>,
+    ) {
         let mut hp_tanks: HashMap<&str, Fuselage> = HashMap::with_capacity(7);
         let mut non_hp_tanks: HashMap<&str, Fuselage> = HashMap::with_capacity(7);
-        hp_tanks.insert(HP_STEEL_FUSELAGE_NAME, Fuselage::new(HP_STEEL_FUSELAGE_NAME, 1.161194204449523, 0.75));
-        hp_tanks.insert(HP_AL_FUSELAGE_NAME, Fuselage::new(HP_AL_FUSELAGE_NAME, 1.6233800555626554, 0.84));
-        hp_tanks.insert(HP_AL_STRINGER_TANK_NAME, Fuselage::new(HP_AL_STRINGER_TANK_NAME, 2.1543208266760887, 0.90));
-        hp_tanks.insert(HP_REFINED_AL_STRINGER_TANK_NAME, Fuselage::new(HP_REFINED_AL_STRINGER_TANK_NAME, 1.6195603377848609, 0.90));
-        hp_tanks.insert(HP_AL_LI_STRINGER_TANK_NAME, Fuselage::new(HP_AL_LI_STRINGER_TANK_NAME, 2.3147489733434568, 0.96));
-        hp_tanks.insert(HP_REFINED_AL_LI_STRINGER_TANK_NAME, Fuselage::new(HP_REFINED_AL_LI_STRINGER_TANK_NAME, 1.9977123977865145, 0.96));
-        hp_tanks.insert(HP_STEEL_STIR_WELDED_TANK_NAME, Fuselage::new(HP_STEEL_STIR_WELDED_TANK_NAME, 3.4033685400148843, 0.96));
-        non_hp_tanks.insert(STEEL_FUSELAGE_NAME, Fuselage::new(STEEL_FUSELAGE_NAME, 0.7046255853625588, 0.83));
-        non_hp_tanks.insert(AL_FUSELAGE_NAME, Fuselage::new(AL_FUSELAGE_NAME, 0.572370017780281, 0.87));
-        non_hp_tanks.insert(AL_STRINGER_TANK_NAME, Fuselage::new(AL_STRINGER_TANK_NAME, 0.6474421633361649, 0.92));
-        non_hp_tanks.insert(REFINED_AL_STRINGER_TANK_NAME, Fuselage::new(REFINED_AL_STRINGER_TANK_NAME, 0.4793745811132077, 0.92));
-        non_hp_tanks.insert(AL_LI_STRINGER_TANK_NAME, Fuselage::new(AL_LI_STRINGER_TANK_NAME, 1.0134984503748028, 0.97));
-        non_hp_tanks.insert(REFINED_AL_LI_STRINGER_TANK_NAME, Fuselage::new(REFINED_AL_LI_STRINGER_TANK_NAME, 0.9523829659300911, 0.97));
-        non_hp_tanks.insert(STEEL_STIR_WELDED_TANK_NAME, Fuselage::new(STEEL_STIR_WELDED_TANK_NAME, 1.1815660325977602, 0.97));
+        hp_tanks.insert(
+            HP_STEEL_FUSELAGE_NAME,
+            Fuselage::new(HP_STEEL_FUSELAGE_NAME, 1.161194204449523, 0.75),
+        );
+        hp_tanks.insert(
+            HP_AL_FUSELAGE_NAME,
+            Fuselage::new(HP_AL_FUSELAGE_NAME, 1.6233800555626554, 0.84),
+        );
+        hp_tanks.insert(
+            HP_AL_STRINGER_TANK_NAME,
+            Fuselage::new(HP_AL_STRINGER_TANK_NAME, 2.1543208266760887, 0.90),
+        );
+        hp_tanks.insert(
+            HP_REFINED_AL_STRINGER_TANK_NAME,
+            Fuselage::new(HP_REFINED_AL_STRINGER_TANK_NAME, 1.6195603377848609, 0.90),
+        );
+        hp_tanks.insert(
+            HP_AL_LI_STRINGER_TANK_NAME,
+            Fuselage::new(HP_AL_LI_STRINGER_TANK_NAME, 2.3147489733434568, 0.96),
+        );
+        hp_tanks.insert(
+            HP_REFINED_AL_LI_STRINGER_TANK_NAME,
+            Fuselage::new(
+                HP_REFINED_AL_LI_STRINGER_TANK_NAME,
+                1.9977123977865145,
+                0.96,
+            ),
+        );
+        hp_tanks.insert(
+            HP_STEEL_STIR_WELDED_TANK_NAME,
+            Fuselage::new(HP_STEEL_STIR_WELDED_TANK_NAME, 3.4033685400148843, 0.96),
+        );
+        non_hp_tanks.insert(
+            STEEL_FUSELAGE_NAME,
+            Fuselage::new(STEEL_FUSELAGE_NAME, 0.7046255853625588, 0.83),
+        );
+        non_hp_tanks.insert(
+            AL_FUSELAGE_NAME,
+            Fuselage::new(AL_FUSELAGE_NAME, 0.572370017780281, 0.87),
+        );
+        non_hp_tanks.insert(
+            AL_STRINGER_TANK_NAME,
+            Fuselage::new(AL_STRINGER_TANK_NAME, 0.6474421633361649, 0.92),
+        );
+        non_hp_tanks.insert(
+            REFINED_AL_STRINGER_TANK_NAME,
+            Fuselage::new(REFINED_AL_STRINGER_TANK_NAME, 0.4793745811132077, 0.92),
+        );
+        non_hp_tanks.insert(
+            AL_LI_STRINGER_TANK_NAME,
+            Fuselage::new(AL_LI_STRINGER_TANK_NAME, 1.0134984503748028, 0.97),
+        );
+        non_hp_tanks.insert(
+            REFINED_AL_LI_STRINGER_TANK_NAME,
+            Fuselage::new(REFINED_AL_LI_STRINGER_TANK_NAME, 0.9523829659300911, 0.97),
+        );
+        non_hp_tanks.insert(
+            STEEL_STIR_WELDED_TANK_NAME,
+            Fuselage::new(STEEL_STIR_WELDED_TANK_NAME, 1.1815660325977602, 0.97),
+        );
         (hp_tanks, non_hp_tanks)
     }
 }
@@ -79,12 +128,12 @@ fn ellipsoid_volume(a: f64, b: f64, c: f64) -> f64 {
 const K: f64 = 392.69893495497905;
 //const N: f64 = 3.0000008452405535;
 
-/// Calculates the volume of a tank with no nose or mount. Applies a correction 
+/// Calculates the volume of a tank with no nose or mount. Applies a correction
 /// factor discovered during testing.
 pub fn tank_volume(diameter: f64, height: f64) -> f64 {
     let r = diameter / 2.0;
     // (ellipsoid_volume(r, r, r/2.0) + cylinder_volume(r, height)) * 1000.0 - 392.6991174
-    let base_volume = (ellipsoid_volume(r, r, r/2.0) + cylinder_volume(r, height)) * 1000.0;
+    let base_volume = (ellipsoid_volume(r, r, r / 2.0) + cylinder_volume(r, height)) * 1000.0;
     let correction_factor = K * diameter.powi(3);
     base_volume - correction_factor
 }
@@ -107,12 +156,18 @@ mod tests {
         for (i, &(diameter, height, volume)) in samples.iter().enumerate() {
             let volume = volume / 83.0 * 100.0;
             let estimate = tank_volume(diameter, height);
-            println!("Sample {} - Estimate: {:.5} Actual: {:.5} Error: {:.10}", i, estimate, volume, volume - estimate);
+            println!(
+                "Sample {} - Estimate: {:.5} Actual: {:.5} Error: {:.10}",
+                i,
+                estimate,
+                volume,
+                volume - estimate
+            );
         }
     }
 
     /// Calculates correction parameters for cylindrical tanks. Applied as:
-    /// 
+    ///
     /// correction_factor = k * diameter^n
     fn estimate_correction_params(samples: &[(f64, f64)]) -> (f64, f64) {
         let mut sum_log_d = 0.0;
@@ -131,8 +186,8 @@ mod tests {
             sum_log_d_log_error += log_d * log_error;
         }
 
-        let n = (n_samples * sum_log_d_log_error - sum_log_d * sum_log_error) /
-                (n_samples * sum_log_d_sq - sum_log_d * sum_log_d);
+        let n = (n_samples * sum_log_d_log_error - sum_log_d * sum_log_error)
+            / (n_samples * sum_log_d_sq - sum_log_d * sum_log_d);
 
         let k = (sum_log_error - n * sum_log_d) / n_samples;
 
@@ -149,7 +204,6 @@ mod tests {
         let (k, n) = estimate_correction_params(samples);
         println!("k = {}\nn = {}", k, n);
     }
-
 
     #[test]
     fn cylindrical_tank_constants() {
@@ -180,7 +234,13 @@ mod tests {
             let actual_volume = actual_volume;
             let v = tank_volume(diameter, height) * 0.83;
             if (v - actual_volume).abs() > 0.001 {
-                println!("\nEstimate: {:.5}\nActual: {:.5}\nSample: {:.5}\nError: {:.10}", v, actual_volume, i, actual_volume - v);
+                println!(
+                    "\nEstimate: {:.5}\nActual: {:.5}\nSample: {:.5}\nError: {:.10}",
+                    v,
+                    actual_volume,
+                    i,
+                    actual_volume - v
+                );
             }
         }
     }
@@ -195,7 +255,7 @@ mod tests {
             let actual_volume = actual_volume / 83.0 * 100.0;
             let estimated_volume_liters = std::f64::consts::PI * radius.powi(2) * height * 1000.0;
             let correction_factor = actual_volume / estimated_volume_liters;
-            
+
             sum_ratio += correction_factor;
             count += 1;
         }
@@ -207,16 +267,16 @@ mod tests {
     fn calculate_dry_mass_coefficient(samples: &[(f64, f64, f64, f64, f64)]) -> f64 {
         let mut sum_density = 0.0;
         let mut count = 0;
-    
+
         for &(diameter, height, dry_mass, max_utilization, correction_coefficient) in samples {
             let volume = tank_volume(diameter, height);
             let structural_volume = volume / max_utilization * (100.0 - max_utilization);
-            
+
             let density = dry_mass / structural_volume;
             sum_density += density;
             count += 1;
         }
-    
+
         sum_density / count as f64 // Returns the average coefficient
     }
     /// Conditionally calls `println!` if --print-nose-tank-stats is present.
@@ -228,7 +288,7 @@ mod tests {
             }
         };
     }
-    /// Generate tests for cylindrical tanks based on the provided samples and test 
+    /// Generate tests for cylindrical tanks based on the provided samples and test
     /// samples.
     macro_rules! impl_cylindrical_tank_test {
         ($name:ident, $core:literal, $samples:expr, $test_samples:expr) => {
@@ -282,30 +342,100 @@ mod tests {
                     let unutilization = (100.0 - utilization) / 100.0;
                     let unused_mass = volume * unutilization * density;
                     let diff = unused_mass - expected;
-                    assert!(diff.abs() < error, "Diff for sample {} = {}\nExpected = {}\nEstimation = {}", i + 1, diff, expected, unused_mass);
+                    assert!(
+                        diff.abs() < error,
+                        "Diff for sample {} = {}\nExpected = {}\nEstimation = {}",
+                        i + 1,
+                        diff,
+                        expected,
+                        unused_mass
+                    );
                 }
             }
         };
     }
 
-    dry_mass_test!(
-        &[
-            (STEEL_FUSELAGE_UTIL_PERCENT, STEEL_FUSELAGE_DENSITY, 9800.0, 100.0),
-            (HP_STEEL_FUSELAGE_UTIL_PERCENT, HP_STEEL_FUSELAGE_DENSITY, 23700.0, 100.0),
-            (AL_FUSELAGE_UTIL_PERCENT, AL_FUSELAGE_DENSITY, 6080.0, 20.0),
-            (HP_AL_FUSELAGE_UTIL_PERCENT, HP_AL_FUSELAGE_DENSITY, 21200.0, 100.0),
-            (AL_STRINGER_TANK_UTIL_PERCENT, AL_STRINGER_TANK_DENSITY, 4240.0, 20.0),
-            (HP_AL_STRINGER_TANK_UTIL_PERCENT, HP_AL_STRINGER_TANK_DENSITY, 17600.0, 100.0),
-            (REFINED_AL_STRINGER_TANK_UTIL_PERCENT, REFINED_AL_STRINGER_TANK_DENSITY, 3140.0, 10.0),
-            (HP_REFINED_AL_STRINGER_TANK_UTIL_PERCENT, HP_REFINED_AL_STRINGER_TANK_DENSITY, 13200.0, 100.0),
-            (AL_LI_STRINGER_TANK_UTIL_PERCENT, AL_LI_STRINGER_TANK_DENSITY, 2500.0, 13.0),
-            (HP_AL_LI_STRINGER_TANK_UTIL_PERCENT, HP_AL_LI_STRINGER_TANK_DENSITY, 7570.0, 10.0),
-            (REFINED_AL_LI_STRINGER_TANK_UTIL_PERCENT, REFINED_AL_LI_STRINGER_TANK_DENSITY, 2340.0, 10.0),
-            (HP_REFINED_AL_LI_STRINGER_TANK_UTIL_PERCENT, HP_REFINED_AL_LI_STRINGER_TANK_DENSITY, 6540.0, 10.0),
-            (STEEL_STIR_WELDED_TANK_UTIL_PERCENT, STEEL_STIR_WELDED_TANK_DENSITY, 2900.0, 100.0),
-            (HP_STEEL_STIR_WELDED_TANK_UTIL_PERCENT, HP_STEEL_STIR_WELDED_TANK_DENSITY, 11100.0, 100.0)
-        ]
-    );
+    dry_mass_test!(&[
+        (
+            STEEL_FUSELAGE_UTIL_PERCENT,
+            STEEL_FUSELAGE_DENSITY,
+            9800.0,
+            100.0
+        ),
+        (
+            HP_STEEL_FUSELAGE_UTIL_PERCENT,
+            HP_STEEL_FUSELAGE_DENSITY,
+            23700.0,
+            100.0
+        ),
+        (AL_FUSELAGE_UTIL_PERCENT, AL_FUSELAGE_DENSITY, 6080.0, 20.0),
+        (
+            HP_AL_FUSELAGE_UTIL_PERCENT,
+            HP_AL_FUSELAGE_DENSITY,
+            21200.0,
+            100.0
+        ),
+        (
+            AL_STRINGER_TANK_UTIL_PERCENT,
+            AL_STRINGER_TANK_DENSITY,
+            4240.0,
+            20.0
+        ),
+        (
+            HP_AL_STRINGER_TANK_UTIL_PERCENT,
+            HP_AL_STRINGER_TANK_DENSITY,
+            17600.0,
+            100.0
+        ),
+        (
+            REFINED_AL_STRINGER_TANK_UTIL_PERCENT,
+            REFINED_AL_STRINGER_TANK_DENSITY,
+            3140.0,
+            10.0
+        ),
+        (
+            HP_REFINED_AL_STRINGER_TANK_UTIL_PERCENT,
+            HP_REFINED_AL_STRINGER_TANK_DENSITY,
+            13200.0,
+            100.0
+        ),
+        (
+            AL_LI_STRINGER_TANK_UTIL_PERCENT,
+            AL_LI_STRINGER_TANK_DENSITY,
+            2500.0,
+            13.0
+        ),
+        (
+            HP_AL_LI_STRINGER_TANK_UTIL_PERCENT,
+            HP_AL_LI_STRINGER_TANK_DENSITY,
+            7570.0,
+            10.0
+        ),
+        (
+            REFINED_AL_LI_STRINGER_TANK_UTIL_PERCENT,
+            REFINED_AL_LI_STRINGER_TANK_DENSITY,
+            2340.0,
+            10.0
+        ),
+        (
+            HP_REFINED_AL_LI_STRINGER_TANK_UTIL_PERCENT,
+            HP_REFINED_AL_LI_STRINGER_TANK_DENSITY,
+            6540.0,
+            10.0
+        ),
+        (
+            STEEL_STIR_WELDED_TANK_UTIL_PERCENT,
+            STEEL_STIR_WELDED_TANK_DENSITY,
+            2900.0,
+            100.0
+        ),
+        (
+            HP_STEEL_STIR_WELDED_TANK_UTIL_PERCENT,
+            HP_STEEL_STIR_WELDED_TANK_DENSITY,
+            11100.0,
+            100.0
+        )
+    ]);
 
     #[test]
     fn dry_mass_tests() {
@@ -323,7 +453,7 @@ mod tests {
     }
 
     /// Generates code to use.
-    /// 
+    ///
     /// (fuselage: &str, utilization: f64, dry_mass_kg: f64)
     fn calculate_densities(samples: &[(&str, f64, f64)]) {
         let mut hp_tanks: Vec<(String, f64, f64)> = Vec::new();
@@ -338,19 +468,39 @@ mod tests {
                 replaced.to_ascii_uppercase()
             };
             if var_name.contains("HP") {
-                hp_tanks.push((format!("{}_NAME", var_name.to_string()), density, utilization));
+                hp_tanks.push((
+                    format!("{}_NAME", var_name.to_string()),
+                    density,
+                    utilization,
+                ));
             } else {
-                non_hp_tanks.push((format!("{}_NAME", var_name.to_string()), density, utilization));
+                non_hp_tanks.push((
+                    format!("{}_NAME", var_name.to_string()),
+                    density,
+                    utilization,
+                ));
             }
             //println!("const {}_DENSITY: f64 = {}; // kg/L", var_name, density);
             //println!("const {}_UTIL_PERCENT: f64 = {:.1};", var_name, utilization);
             println!("pub const {}_NAME: &str = \"{}\";", var_name, fuselage);
         }
         for (fuselage, density, utilization) in hp_tanks {
-            println!("hp_tanks.insert({}, Fuselage::new({}, {}, {:.2}));", fuselage, fuselage, density, utilization / 100.0);
+            println!(
+                "hp_tanks.insert({}, Fuselage::new({}, {}, {:.2}));",
+                fuselage,
+                fuselage,
+                density,
+                utilization / 100.0
+            );
         }
         for (fuselage, density, utilization) in non_hp_tanks {
-            println!("non_hp_tanks.insert({}, Fuselage::new({}, {}, {:.2}));", fuselage, fuselage, density, utilization / 100.0);
+            println!(
+                "non_hp_tanks.insert({}, Fuselage::new({}, {}, {:.2}));",
+                fuselage,
+                fuselage,
+                density,
+                utilization / 100.0
+            );
         }
     }
 

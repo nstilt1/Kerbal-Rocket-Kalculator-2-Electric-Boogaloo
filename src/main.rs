@@ -3,7 +3,7 @@
 
 use std::io::{self, Write};
 
-use crate::modules::{size::Size, calculator::Calculator, rocket_config::Rocket};
+use crate::modules::{calculator::Calculator, rocket_config::Rocket, size::Size};
 
 mod modules;
 pub const TECH_TREE: &[&'static str] = &[
@@ -11,53 +11,57 @@ pub const TECH_TREE: &[&'static str] = &[
     "Post-War Rocketry Testing",
     "Early Rocketry",
     "Basic Rocketry",
-    "1956-1957 Orbital Rocketry"
+    "1956-1957 Orbital Rocketry",
 ];
 //const G: f64 = 9.81;
 const G: f64 = 9.80665;
-#[cfg(not(target_arch="wasm32"))]
+#[cfg(not(target_arch = "wasm32"))]
 fn read(text: &str) -> String {
     let mut input = String::new();
     print!("{}", text);
     io::stdout().flush().unwrap();
 
-    io::stdin().read_line(&mut input)
+    io::stdin()
+        .read_line(&mut input)
         .expect("Failed to read line");
     return input.trim().to_owned();
 }
 
-#[cfg(not(target_arch="wasm32"))]
+#[cfg(not(target_arch = "wasm32"))]
 fn handle_output(mass: f64, target_delta_v: f64, minimum_twr: f64, calculator: &mut Calculator) {
-    let (mut nose_plus_cylinder_results, mut cylinder_results, mut nose_results) = calculator.calculate().unwrap();
-        let mut output: Vec<Rocket> = Vec::with_capacity(nose_plus_cylinder_results.len() + cylinder_results.len() + nose_results.len());
-        output.append(&mut nose_plus_cylinder_results.clone());
-        output.append(&mut cylinder_results.clone());
-        output.append(&mut nose_results.clone());
-        output.sort_by(|a, b| a.partial_cmp(b).unwrap());
-        let mut outputs: Vec<Option<Rocket>> = Vec::new();
+    let (mut nose_plus_cylinder_results, mut cylinder_results, mut nose_results) =
+        calculator.calculate().unwrap();
+    let mut output: Vec<Rocket> = Vec::with_capacity(
+        nose_plus_cylinder_results.len() + cylinder_results.len() + nose_results.len(),
+    );
+    output.append(&mut nose_plus_cylinder_results.clone());
+    output.append(&mut cylinder_results.clone());
+    output.append(&mut nose_results.clone());
+    output.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    let mut outputs: Vec<Option<Rocket>> = Vec::new();
 
-        if output.len() == 0 {
-            outputs.push(None);
-            println!("No rockets found");
-        }else{
-            outputs.push(Some(output[0].clone()));
-        }
+    if output.len() == 0 {
+        outputs.push(None);
+        println!("No rockets found");
+    } else {
+        outputs.push(Some(output[0].clone()));
+    }
 
-        println!("\n\nStarting mass: {}", mass);
-        println!("Target dv: {}", target_delta_v);
-        println!("Minimum TWR: {}", minimum_twr);
-        println!("Available rockets:");
-        for (o, size) in outputs.iter().zip(SIZE_STRS.iter()) {
-            if o.is_some() {
-                println!("\nSize: {}", size);
-                o.as_ref().unwrap().print();
-            }
+    println!("\n\nStarting mass: {}", mass);
+    println!("Target dv: {}", target_delta_v);
+    println!("Minimum TWR: {}", minimum_twr);
+    println!("Available rockets:");
+    for (o, size) in outputs.iter().zip(SIZE_STRS.iter()) {
+        if o.is_some() {
+            println!("\nSize: {}", size);
+            o.as_ref().unwrap().print();
         }
+    }
 }
 
 const SIZES: [Size; 5] = [Size::Xs, Size::Sm, Size::Md, Size::Lg, Size::Xl];
 const SIZE_STRS: [&str; 5] = ["xs", "sm", "md", "lg", "xl"];
-#[cfg(not(target_arch="wasm32"))]
+#[cfg(not(target_arch = "wasm32"))]
 fn main() {
     println!("Kerbal Kalculator 2: Electric Boogaloo! is at your service");
     let mut calculator = Calculator::new();
@@ -80,7 +84,9 @@ fn main() {
         if &target_delta_v == "exit" {
             break;
         }
-        let mut target_delta_v: f64 = target_delta_v.parse().expect("Failed to parse target_delta_v");
+        let mut target_delta_v: f64 = target_delta_v
+            .parse()
+            .expect("Failed to parse target_delta_v");
 
         let minimum_twr = read("Enter the minimum TWR > ");
         if &minimum_twr == "exit" {
@@ -89,30 +95,37 @@ fn main() {
         let mut minimum_twr: f64 = minimum_twr.parse().expect("Failed to parse minimum_twr");
         let mut maximum_twr: f64 = match read("Enter the maximum TWR > ").parse::<f64>() {
             Ok(v) => v,
-            Err(_) => break
+            Err(_) => break,
         };
 
         let is_vacuum = read("Is this stage in a vacuum? (y/n) > ");
         let is_vacuum = match is_vacuum.to_lowercase().as_str() {
             "y" => true,
             "n" => false,
-            _ => break
+            _ => break,
         };
 
-        let needs_gimballing = match read("Do you want gimballing? (y/n) > ").to_lowercase().as_str() {
+        let needs_gimballing = match read("Do you want gimballing? (y/n) > ")
+            .to_lowercase()
+            .as_str()
+        {
             "y" => true,
             "n" => false,
-            _ => break
+            _ => break,
         };
 
-        let use_nosecone = match read("Do you want the center fuel tanks to have a nosecone? (y/n> > ").to_lowercase().as_str() {
-            "y" => true,
-            "n" => false,
-            _ => break
-        };
+        let use_nosecone =
+            match read("Do you want the center fuel tanks to have a nosecone? (y/n> > ")
+                .to_lowercase()
+                .as_str()
+            {
+                "y" => true,
+                "n" => false,
+                _ => break,
+            };
         let mut diameter = match read("Enter the payload's diameter in meters > ").parse::<f64>() {
             Ok(v) => v,
-            Err(_) => break
+            Err(_) => break,
         };
         let size = match diameter {
             0.3 => Size::Xs,
@@ -120,9 +133,22 @@ fn main() {
             1.3 => Size::Sm,
             _ => Size::Sm,
         };
-        let unlocked_fuselages = read("Enter your unlocked fuselages separated by commas and excluding HP prefixes > ").to_string();
-        calculator.init(mass, target_delta_v, minimum_twr, maximum_twr, needs_gimballing, is_vacuum, use_nosecone, size, unlocked_fuselages.clone(), "start".to_string());
-        
+        let unlocked_fuselages =
+            read("Enter your unlocked fuselages separated by commas and excluding HP prefixes > ")
+                .to_string();
+        calculator.init(
+            mass,
+            target_delta_v,
+            minimum_twr,
+            maximum_twr,
+            needs_gimballing,
+            is_vacuum,
+            use_nosecone,
+            size,
+            unlocked_fuselages.clone(),
+            "start".to_string(),
+        );
+
         handle_output(mass, target_delta_v, minimum_twr, &mut calculator);
 
         loop {
@@ -163,7 +189,5 @@ fn main() {
     }
 }
 
-#[cfg(target_arch="wasm32")]
-fn main() {
-
-}
+#[cfg(target_arch = "wasm32")]
+fn main() {}
