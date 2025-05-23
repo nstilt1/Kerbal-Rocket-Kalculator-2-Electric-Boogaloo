@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use crate::{debug, G};
 
-use super::{engines::{Engine, ENGINES}, fuel_type::FuelType, rocket_config::Rocket, size::Size, tanks::{cylindrical_tanks::{cylindrical_dry_mass, tank_volume, CylindricalTank}, nose_tanks::{calculate_corrected_volume, calculate_nose_dry_mass, NoseCone, NoseConeVariant}, FuelStack, Fuselage, Tank, Tanks}};
+use super::{engines::{Engine, ENGINES}, fuel_type::FuelType, rocket_config::Rocket, size::Size, tanks::{cylindrical_tanks::{cylindrical_dry_mass, tank_volume, CylindricalTank}, nose_tanks::{calculate_corrected_volume, calculate_nose_dry_mass, NoseCone, NoseConeVariant}, FuelStack, Fuselage, Tank, Tanks}, Error};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Calculator {
@@ -15,7 +15,8 @@ pub struct Calculator {
     in_vacuum: bool,
     use_nosecone: bool,
     unlocked_fusalages: String,
-    pub tanks: Vec<FuelStack>
+    pub tanks: Vec<FuelStack>,
+    unlocked_tech: String,
 }
 
 impl Calculator {
@@ -30,7 +31,8 @@ impl Calculator {
             in_vacuum: false, 
             use_nosecone: false,
             unlocked_fusalages: "Steel Fuselage".to_string(),
-            tanks: Tank::init_tanks()
+            tanks: Tank::init_tanks(),
+            unlocked_tech: String::new(),
         }
     }
 
@@ -46,15 +48,18 @@ impl Calculator {
         use_nosecone: bool,
         size: Size,
         unlocked_fuselages: String,
+        unlocked_tech: String,
     ) {
         self.mass = mass * 1000.0;
         self.target_dv = target_dv;
         self.minimum_twr = minimum_twr;
+        self.maximum_twr = maximum_twr;
         self.needs_gimballing = needs_gimballing;
         self.in_vacuum = in_vacuum;
         self.size = size;
         self.use_nosecone = use_nosecone;
         self.unlocked_fusalages = unlocked_fuselages;
+        self.unlocked_tech = unlocked_tech;
     }
 
     pub fn change_target_delta_v(&mut self, dv: f64) {
@@ -76,11 +81,21 @@ impl Calculator {
     /// Calculates the parts required to build a rocket with specific arguments.
     /// 
     /// Returns (nose+cylinder_results, cylinder_results, nose_results)
-    pub fn calculate(&self) -> (Vec<Rocket>, Vec<Rocket>, Vec<Rocket>) {
+    pub fn calculate(&self) -> Result<(Vec<Rocket>, Vec<Rocket>, Vec<Rocket>), Error> {
         debug!("Mass = {}\ntarget_dv = {}\nminimum twr = {}\nsize = {}", self.mass, self.target_dv, self.minimum_twr, self.size.get_diameter());
         let mut result: Vec<Rocket> = Vec::new();
 
-        let engines = Engine::init_rp1_engines();
+        let mut engine_tech_map = Engine::init_all_engines(Engine::init_rp1_engines());
+        let mut engines: Vec<Engine> = Vec::with_capacity(engine_tech_map.len() * 4);
+        let unlocked_tech: Vec<&str> = self.unlocked_tech.split(',').collect();
+        for tech in unlocked_tech.iter() {
+            if let Some(vec) = engine_tech_map.get_mut(tech) {
+                engines.append(vec);
+                continue;
+            }
+            return Err(Error::MissingTech(format!("Tech '{}' was not found in the engine_tech_map", tech)))
+        }
+        
         let nosecones = NoseConeVariant::nosecones();
         let nosecone_cores = &nosecones.cores;
         let unlocked_fuselages: Vec<&str> = self.unlocked_fusalages.split(',').collect();
@@ -303,7 +318,7 @@ impl Calculator {
                 }
             }
         }
-        return (result, only_cylinder_results, only_nose_results);
+        return Ok((result, only_cylinder_results, only_nose_results));
     }
 }
 
@@ -340,8 +355,8 @@ mod tests {
     #[test]
     fn calculator_test() {
         let mut calculator = Calculator::new();
-        calculator.init(0.141, 10.0, 1.05, 20000.0, false, false, false, Size::Sm, "Steel Fuselage".to_string());
-        let (mut n_c_results, mut c_results, mut n_results) = calculator.calculate();
+        calculator.init(0.141, 10.0, 1.05, 20000.0, false, false, false, Size::Sm, "Steel Fuselage".to_string(), "start".to_string());
+        let (mut n_c_results, mut c_results, mut n_results) = calculator.calculate().unwrap();
         let mut output: Vec<Rocket> = Vec::new();
         output.append(&mut n_c_results);
         output.append(&mut n_results);

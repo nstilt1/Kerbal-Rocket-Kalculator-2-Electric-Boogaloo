@@ -74,6 +74,7 @@ pub enum FuelType {
     RP1(f64),
     PSPC,
     AnilineFurfuryl_22p(f64),
+    AnilineFurfuryl_37p(f64),
     IRFNA_III(f64),
     Nitrogen(f64),
     Kerosene(f64),
@@ -81,8 +82,13 @@ pub enum FuelType {
     Water(f64),
     NGNC(f64),
     Ethanol_75(f64),
+    Ethanol_90(f64),
     Liquid_Oxygen(f64),
     HTP(f64),
+    Hydyne(f64),
+    Helium(f64, f64), // flow_rate_Lps, flow_rate_kgps
+    Turpentine(f64, f64),
+    IWFNA(f64, f64),
 }
 
 impl FuelType {
@@ -93,6 +99,7 @@ impl FuelType {
             //Self::PSPC => 1.73874, // Measured, actual 0.00174
             Self::PSPC => 1.74,
             Self::AnilineFurfuryl_22p(_) => 1.04410,
+            Self::AnilineFurfuryl_37p(_) => 1.05827,
             //Self::IRFNA_III(_) => 1.56377, // Measured, actual 0.001658
             Self::IRFNA_III(_) => 1.658,
             //Self::Nitrogen(_) => 0.82310,
@@ -107,10 +114,15 @@ impl FuelType {
             Self::NGNC(_) => 1.6,
             //Self::Ethanol_75(_) => 0.84102, // Measured, actual: 0.00084175
             Self::Ethanol_75(_) => 0.84175,
+            Self::Ethanol_90(_) => 0.81078,
             //Self::Liquid_Oxygen(_) => 1.13967, // Measured, actual 0.001141
             Self::Liquid_Oxygen(_) => 1.141,
             //Self::HTP(_) => 1.43236, // Measured, actual 0.001431
             Self::HTP(_) => 1.431,
+            Self::Hydyne(_) => 0.85962,
+            Self::Helium(fr_liters_per_sec, fr_kg_per_sec) => fr_liters_per_sec / fr_kg_per_sec,
+            Self::Turpentine(lps, kgps) => lps / kgps,
+            Self::IWFNA(lps, kgps) => lps / kgps,
         }
     }
     /// Returns the fuel flow rate for a specific engine in L/s
@@ -118,6 +130,7 @@ impl FuelType {
         match self {
             Self::RP1(flow_rate) => *flow_rate,
             Self::AnilineFurfuryl_22p(flow_rate) => *flow_rate,
+            Self::AnilineFurfuryl_37p(flow_rate) => *flow_rate,
             Self::IRFNA_III(flow_rate) => *flow_rate,
             Self::PSPC => todo!(),
             Self::Nitrogen(flow_rate) => *flow_rate,
@@ -126,8 +139,13 @@ impl FuelType {
             Self::Water(flow_rate) => *flow_rate,
             Self::NGNC(flow_rate) => *flow_rate,
             Self::Ethanol_75(flow_rate) => *flow_rate,
+            Self::Ethanol_90(flow_rate) => *flow_rate,
             Self::Liquid_Oxygen(flow_rate) => *flow_rate,
             Self::HTP(flow_rate) => *flow_rate,
+            Self::Hydyne(flow_rate) => *flow_rate,
+            Self::Helium(flow_rate, _) => *flow_rate,
+            Self::Turpentine(flow_rate, _) => *flow_rate,
+            Self::IWFNA(flow_rate, _) => *flow_rate,
         }
     }
 
@@ -145,8 +163,10 @@ impl FuelType {
     pub fn name(&self) -> &str {
         match self {
             Self::AK20(_) => "AK20",
-            Self::AnilineFurfuryl_22p(_) => "AnilineFurfuryl_22p",
+            Self::AnilineFurfuryl_22p(_) => "Aniline-Furfuryl 22%",
+            Self::AnilineFurfuryl_37p(_) => "Aniline-Furfuryl 37%",
             Self::Ethanol_75(_) => "Ethanol 75",
+            Self::Ethanol_90(_) => "Ethanol 90",
             Self::HTP(_) => "HTP",
             Self::IRFNA_III(_) => "IRFNA_III",
             Self::Kerosene(_) => "Kerosene",
@@ -156,14 +176,16 @@ impl FuelType {
             Self::PSPC => "PSPC",
             Self::RP1(_) => "RP-1",
             Self::Water(_) => "Water",
+            Self::Hydyne(_) => "Hydyne",
+            Self::Helium(_, _) => "Helium",
+            Self::Turpentine(_, _) => "Turpentine",
+            Self::IWFNA(_, _) => "IWFNA",
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     /// Calculates the density of a fuel.
     /// 
     /// Arguments:
@@ -173,6 +195,10 @@ mod tests {
     fn calculate_density(name: &str, wet_mass: f64, dry_mass: f64, volume: f64) {
         let fuel_mass = wet_mass - dry_mass;
         println!("\n{} density = {:.5}", name, fuel_mass / volume);
+    }
+
+    fn calculate_density_2(name: &str, flow_rate_liters_per_sec: f64, flow_rate_mass_per_sec: f64) {
+        println!("\n{} density = {:.5}", name, flow_rate_mass_per_sec / flow_rate_liters_per_sec);
     }
 
     #[test]
@@ -189,5 +215,9 @@ mod tests {
         calculate_density("Ethanol_75", 16500.0, 2420.0, 16741.6446);
         calculate_density("Liquid Oxygen", 21500.0, 2420.0, 16741.6446);
         calculate_density("HTP", 26400.0, 2420.0, 16741.6446);
+        calculate_density("AnilineFurfuryl_37p", 588.0, 70.6, 488.9104);
+        calculate_density("Ethanol_90", 467.0, 70.6, 488.9104);
+        //calculate_density("Hydyne", 491.0, 70.6, 488.9104);
+        calculate_density_2("Hydyne", 57.7, 49.6);
     }
 }

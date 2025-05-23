@@ -9,10 +9,11 @@ if [ $? -eq 0 ]; then
     wasm-pack build --target web --release
 
     # move the files to the public folder
-    mv pkg/musicgen_bg.wasm ../frontend/public/musicgen_bg.wasm
-    mv pkg/musicgen.js ../frontend/public/musicgen.js
+    mv pkg/ksp_bg.wasm ../frontend/public/ksp_bg.wasm
+    mv pkg/ksp.js ../frontend/public/ksp.js
+    mv pkg/package.json ../frontend/public/package.json
 
     echo "Build successful"
 else
-    echo "Mutation tests failed. Run `cargo test` to see which tests failed."
+    echo "Tests failed. Run `cargo test` to see which tests failed."
 fi

@@ -1,4 +1,4 @@
-use super::{engines::Engine, tanks::{cylindrical_tanks::CylindricalTank, nose_tanks::NoseCone, FuelStack}};
+use super::{engines::Engine, tanks::{cylindrical_tanks::CylindricalTank, nose_tanks::NoseCone}};
 
 #[derive(Debug, Clone)]
 pub struct Rocket {
@@ -32,6 +32,19 @@ impl Rocket {
         }
     }
 
+    pub fn to_string(&self) -> String {
+        let mut result = format!("Mass: {}\nTWR: {}\n{}x {}\n{}x stacks", self.mass, self.twr, self.num_engines, self.engine.name, self.num_engines);
+        if let Some(tank) = &self.tank {
+            result.push_str(&format!("Cylindrical tank with {}m length and {}m diameter and {}", tank.length, tank.diameter, tank.fuselage.name));
+        }
+        if let Some(nose) = &self.nose {
+            result.push_str(&format!("Nosecone {} with {}m length and {}m diameter and {}", nose.core.name, nose.length, nose.diameter, nose.fuselage.name));
+        }
+        result.push_str(&format!("{}", self.fuel));
+
+        result
+    }
+    #[cfg(not(target_arch="wasm32"))]
     pub fn print(&self) {
         println!("Mass: {}\nThrust to weight ratio: {}", self.mass, self.twr);
         println!("{}x {}\n{}x stacks", self.num_engines, self.engine.name, self.num_engines);

@@ -1,3 +1,7 @@
+use std::fmt::Display;
+
+use wasm_bindgen::JsError;
+
 pub mod tanks;
 pub mod engines;
 pub mod calculator;
@@ -19,4 +23,23 @@ macro_rules! debug {
     ($($arg:tt)*) => {
         
     };
+}
+
+#[derive(Debug, Clone)]
+pub enum Error {
+    MissingTech(String),
+}
+
+impl Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::MissingTech(v) => v
+        })
+    }
+}
+
+impl From<Error> for JsError {
+    fn from(value: Error) -> Self {
+        Self::new(&value.to_string())
+    }
 }

@@ -6,9 +6,16 @@ use std::io::{self, Write};
 use crate::modules::{size::Size, calculator::Calculator, rocket_config::Rocket};
 
 mod modules;
-
+pub const TECH_TREE: &[&'static str] = &[
+    "start",
+    "Post-War Rocketry Testing",
+    "Early Rocketry",
+    "Basic Rocketry",
+    "1956-1957 Orbital Rocketry"
+];
 //const G: f64 = 9.81;
 const G: f64 = 9.80665;
+#[cfg(not(target_arch="wasm32"))]
 fn read(text: &str) -> String {
     let mut input = String::new();
     print!("{}", text);
@@ -19,8 +26,9 @@ fn read(text: &str) -> String {
     return input.trim().to_owned();
 }
 
+#[cfg(not(target_arch="wasm32"))]
 fn handle_output(mass: f64, target_delta_v: f64, minimum_twr: f64, calculator: &mut Calculator) {
-    let (mut nose_plus_cylinder_results, mut cylinder_results, mut nose_results) = calculator.calculate();
+    let (mut nose_plus_cylinder_results, mut cylinder_results, mut nose_results) = calculator.calculate().unwrap();
         let mut output: Vec<Rocket> = Vec::with_capacity(nose_plus_cylinder_results.len() + cylinder_results.len() + nose_results.len());
         output.append(&mut nose_plus_cylinder_results.clone());
         output.append(&mut cylinder_results.clone());
@@ -49,6 +57,7 @@ fn handle_output(mass: f64, target_delta_v: f64, minimum_twr: f64, calculator: &
 
 const SIZES: [Size; 5] = [Size::Xs, Size::Sm, Size::Md, Size::Lg, Size::Xl];
 const SIZE_STRS: [&str; 5] = ["xs", "sm", "md", "lg", "xl"];
+#[cfg(not(target_arch="wasm32"))]
 fn main() {
     println!("Kerbal Kalculator 2: Electric Boogaloo! is at your service");
     let mut calculator = Calculator::new();
@@ -112,7 +121,7 @@ fn main() {
             _ => Size::Sm,
         };
         let unlocked_fuselages = read("Enter your unlocked fuselages separated by commas and excluding HP prefixes > ").to_string();
-        calculator.init(mass, target_delta_v, minimum_twr, maximum_twr, needs_gimballing, is_vacuum, use_nosecone, size, unlocked_fuselages.clone());
+        calculator.init(mass, target_delta_v, minimum_twr, maximum_twr, needs_gimballing, is_vacuum, use_nosecone, size, unlocked_fuselages.clone(), "start".to_string());
         
         handle_output(mass, target_delta_v, minimum_twr, &mut calculator);
 
@@ -152,4 +161,9 @@ fn main() {
             }
         }
     }
+}
+
+#[cfg(target_arch="wasm32")]
+fn main() {
+
 }

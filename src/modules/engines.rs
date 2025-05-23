@@ -1,3 +1,7 @@
+use std::collections::HashMap;
+
+use crate::TECH_TREE;
+
 use super::{fuel_type::{FuelMix, FuelType}, size::Size};
 
 const MAX_ENGINE_CONFIGS: usize = 4;
@@ -24,7 +28,8 @@ pub struct Engine {
         pub size: Size, 
         pub tank_volume_liters: f64,
         pub fuel_mix: FuelMix,
-        pub configurations: [EngineConfiguration; MAX_ENGINE_CONFIGS]
+        pub configurations: [EngineConfiguration; MAX_ENGINE_CONFIGS],
+        pub tech_tree_node: &'static str,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -40,6 +45,8 @@ pub struct EngineConfiguration {
     pub hp_fuel: bool,
     pub num_ignitions: u8,
     pub is_initialized: bool,
+    pub fuel_mix: FuelMix,
+    pub tech_tree_node: &'static str,
 }
 
 impl EngineConfiguration {
@@ -54,6 +61,8 @@ impl EngineConfiguration {
         ullage: bool,
         hp_fuel: bool,
         num_ignitions: u8,
+        fuel_mix: FuelMix,
+        tech_tree_node: &'static str,
     ) -> Self {
         Self {
             name,
@@ -67,6 +76,8 @@ impl EngineConfiguration {
             hp_fuel,
             num_ignitions,
             is_initialized: true,
+            fuel_mix,
+            tech_tree_node,
         }
     }
     /// Calculates the thrust (vac) for a configuration.
@@ -87,11 +98,31 @@ impl EngineConfiguration {
             hp_fuel: false,
             num_ignitions: 0,
             is_initialized: false,
+            fuel_mix: FuelMix::new(&[]),
+            tech_tree_node: "start",
         }
+    }
+    /// Turns an engine configuration into an engine
+    pub const fn to_engine(&self, parent: &Engine) -> Engine {
+        let mut result = *parent;
+        result.name = self.name;
+        result.thrust_asl = self.thrust_kn;
+        result.thrust_vac = self.thrust_vac();
+        result.min_thrust = self.min_thrust_percentage;
+        result.mass = self.mass;
+        result.isp_asl = self.isp_asl;
+        result.isp_vac = self.isp_vac;
+        result.ullage = self.ullage;
+        result.rated_burn_time = self.rated_burn_time;
+        result.hp_fuel = self.hp_fuel;
+        result.ignitions = self.num_ignitions;
+        result.fuel_mix = self.fuel_mix;
+        result.tech_tree_node = self.tech_tree_node;
+        result
     }
 }
 
-const NUM_EGINES: usize = 5;
+const NUM_EGINES: usize = 9;
 
 impl Engine {
     /// Creates a new engine.
@@ -130,6 +161,7 @@ impl Engine {
         size: Size, 
         tank_volume_liters: f64,
         fuel_mix: FuelMix,
+        tech_tree_node: &'static str,
     ) -> Self {
         Engine {
             name,
@@ -152,31 +184,64 @@ impl Engine {
             tank_volume_liters,
             fuel_mix,
             configurations: [EngineConfiguration::zeroed(); MAX_ENGINE_CONFIGS],
+            tech_tree_node,
         }
     }
 
     pub const fn init_rp1_engines() -> [Engine; NUM_EGINES] {
         let mut engines = [
-            Engine::new("Aerobee", false, 6.7, 7.7, 100.0, 195.0, 226.0, 0.008, 1.2, 47.0, false, false, true, false, true, 1, Size::Xs, 0.0, FuelMix::new(&[FuelType::AnilineFurfuryl_22p(0.893), FuelType::IRFNA_III(1.64), FuelType::Nitrogen(78.1)])),
-            Engine::new("U-1250", false, 12.7, 14.4, 100.0, 204.8, 232.1, 0.0156, 1.2, 56.0, false, false, true, false, true, 1, Size::Xs, 1.0, FuelMix::new(&[FuelType::Kerosene(1.71), FuelType::AK20(3.26), FuelType::Nitrogen(157.0)])),
-            Engine::new("Veronique", false, 39.2, 49.3, 100.0, 198.0, 249.0, 0.1511, 3.92, 45.0, false, false, true, false, true, 1, Size::Xs, 1.0, FuelMix::new(&[FuelType::Kerosene(5.46), FuelType::IRFNA_III(10.2), FuelType::Water(0.216)])),
-            Engine::new("Tiny Tim Booster", true, 133.4, 146.6, 100.0, 202.0, 222.0, 0.0673, 3.9, 5.0, false, false, false, false, false, 1, Size::Xs, 41.3903, FuelMix::new(&[FuelType::NGNC(42.1)])),
-            Engine::new("A4", false, 238.8, 284.7, 100.0, 203.0, 242.0, 0.9299, 0.47, 70.0, false, false, false, false, true, 1, Size::Sm, 0.0, FuelMix::new(&[FuelType::Ethanol_75(63.6), FuelType::Liquid_Oxygen(58.2), FuelType::HTP(1.22)])),
+            Engine::new("Aerobee", false, 6.7, 7.7, 100.0, 195.0, 226.0, 0.008, 1.2, 47.0, false, false, true, false, true, 1, Size::Xs, 0.0, FuelMix::new(&[FuelType::AnilineFurfuryl_22p(0.893), FuelType::IRFNA_III(1.64), FuelType::Nitrogen(78.1)]), "start"),
+            Engine::new("U-1250", false, 12.7, 14.4, 100.0, 204.8, 232.1, 0.0156, 1.2, 56.0, false, false, true, false, true, 1, Size::Xs, 1.0, FuelMix::new(&[FuelType::Kerosene(1.71), FuelType::AK20(3.26), FuelType::Nitrogen(157.0)]), "start"),
+            Engine::new("Veronique", false, 39.2, 49.3, 100.0, 198.0, 249.0, 0.1511, 3.92, 45.0, false, false, true, false, true, 1, Size::Xs, 1.0, FuelMix::new(&[FuelType::Kerosene(5.46), FuelType::IRFNA_III(10.2), FuelType::Water(0.216)]), "start"),
+            Engine::new("Tiny Tim Booster", true, 133.4, 146.6, 100.0, 202.0, 222.0, 0.0673, 3.9, 5.0, false, false, false, false, false, 1, Size::Xs, 41.3903, FuelMix::new(&[FuelType::NGNC(42.1)]), "start"),
+            Engine::new("A-4", false, 238.8, 284.7, 100.0, 203.0, 242.0, 0.9299, 0.47, 70.0, false, false, false, false, true, 1, Size::Sm, 0.0, FuelMix::new(&[FuelType::Ethanol_75(63.6), FuelType::Liquid_Oxygen(58.2), FuelType::HTP(1.22)]), "start"),
+            Engine::new("RD-100", false, 263.0, 307.0, 100.0, 203.0, 237.0, 0.888, 0.3, 70.0, true, false, true, false, true, 1, Size::Sm, 0.0, FuelMix::new(&[FuelType::Ethanol_75(71.3), FuelType::Liquid_Oxygen(63.1), FuelType::HTP(1.34)]), "Post-War Rocketry Testing"),
+            Engine::new("XLR10", false, 92.5, 110.5, 100.0, 179.6, 214.5, 0.192, 0.3, 103.0, true, false, false, false, true, 1, Size::Sm, 0.0, FuelMix::new(&[FuelType::Ethanol_90(30.5), FuelType::Liquid_Oxygen(24.4), FuelType::HTP(0.966)]), "Post-War Rocketry Testing"),
+            Engine::new("XLR11", false, 24.5, 26.7, 25.0, 207.7, 226.6, 0.1499, 1.6, 300.0, false, false, true, true, false, u8::MAX, Size::Sm, 0.0, FuelMix::new(&[FuelType::Ethanol_75(5.85), FuelType::Liquid_Oxygen(6.21), FuelType::Nitrogen(136.0)]), "Post-War Rocketry Testing"),
+            Engine::new("XLR41", false, 282.8, 333.0, 100.0, 203.0, 239.0, 0.791, 0.3, 70.0, true, false, false, false, true, 1, Size::Sm, 0.0, FuelMix::new(&[FuelType::Ethanol_75(73.7), FuelType::Liquid_Oxygen(70.1), FuelType::HTP(1.44)]), "Post-War Rocketry Testing"),
         ];
         // Aerobee engine configurations
-        engines[0].configurations[0] = EngineConfiguration::new("XASR-1", 13.8, 100.0, 0.010, 200.0, 235.44, 40.0, true, true, 1);
-        engines[0].configurations[1] = EngineConfiguration::new("XASR-2", 13.8, 100.0, 0.010, 200.0, 235.44, 40.0, true, true, 1);
-        engines[0].configurations[2] = EngineConfiguration::new("AJ10-27", 21.3, 100.0, 0.012, 198.0, 231.0, 52.0, true, true, 1);
+        engines[0].configurations[0] = EngineConfiguration::new("XASR-1", 11.7, 100.0, 0.010, 200.0, 235.44, 40.0, true, true, 1, FuelMix::new(&[FuelType::AnilineFurfuryl_37p(1.58), FuelType::IRFNA_III(2.74), FuelType::Nitrogen(148.0)]), "Post-War Rocketry Testing");
+        engines[0].configurations[1] = EngineConfiguration::new("XASR-2", 11.7, 100.0, 0.010, 200.0, 235.44, 40.0, true, true, 1, FuelMix::new(&[FuelType::AnilineFurfuryl_37p(1.58), FuelType::IRFNA_III(2.74), FuelType::Helium(148.0, 0.0264)]), "Early Rocketry");
+        engines[0].configurations[2] = EngineConfiguration::new("AJ10-27", 18.2, 100.0, 0.012, 198.0, 231.0, 52.0, true, true, 1, FuelMix::new(&[FuelType::AnilineFurfuryl_37p(2.49), FuelType::IRFNA_III(4.32), FuelType::Helium(228.0, 0.0407)]), "Early Rocketry");
         
         // U-1250 engine configurations
-        engines[1].configurations[0] = EngineConfiguration::new("U-1700", 19.4, 100.0, 0.015, 206.5, 236.4, 60.0, true, true, 1);
-        engines[1].configurations[1] = EngineConfiguration::new("U-2000", 23.0, 100.0, 0.013, 205.6, 241.3, 60.0, true, true, 1);
+        engines[1].configurations[0] = EngineConfiguration::new("U-1700", 17.0, 100.0, 0.015, 206.5, 236.4, 60.0, true, true, 1, FuelMix::new(&[FuelType::Kerosene(2.22), FuelType::AK20(4.33), FuelType::Nitrogen(216.0)]), "Post-War Rocketry Testing");
+        engines[1].configurations[1] = EngineConfiguration::new("U-2000", 19.6, 100.0, 0.013, 205.6, 241.3, 60.0, true, true, 1, FuelMix::new(&[FuelType::Kerosene(2.61), FuelType::AK20(5.02), FuelType::Nitrogen(263.0)]), "Early Rocketry");
 
         // Veronique engine configurations
-        engines[2].configurations[0] = EngineConfiguration::new("VeroniqueAGI", 49.3, 100.0, 0.150, 208.0, 261.0, 49.0, true, true, 1);
-        engines[2].configurations[1] = EngineConfiguration::new("Veronique61", 73.8, 100.0, 0.150, 208.0, 261.0, 56.0, true, true, 1);
+        engines[2].configurations[0] = EngineConfiguration::new("VeroniqueAGI", 39.3, 100.0, 0.150, 208.0, 261.0, 49.0, true, true, 1, FuelMix::new(&[FuelType::Turpentine(4.84, 4.21), FuelType::IWFNA(9.95, 15.0), FuelType::Water(0.240)]), "Basic Rocketry");
+        engines[2].configurations[1] = EngineConfiguration::new("Veronique61", 58.8, 100.0, 0.150, 208.0, 261.0, 56.0, true, true, 1, FuelMix::new(&[FuelType::Turpentine(7.25, 6.31), FuelType::IWFNA(14.9, 22.5), FuelType::Water(0.359)]), "1956-1957 Orbital Rocketry");
         
+        // A-4 engine configurations
+        engines[4].configurations[0] = EngineConfiguration::new("A-9", 249.1, 100.0, 0.972, 220.0, 255.0, 115.0, true, false, 1, FuelMix::new(&[FuelType::Hydyne(57.7), FuelType::Liquid_Oxygen(57.7), FuelType::HTP(1.15)]), "Post-War Rocketry Testing");
+
         engines
+    }
+
+    pub fn init_all_engines(engines: [Engine; NUM_EGINES]) -> HashMap<&'static str, Vec<Engine>> {
+        let mut result: HashMap<&'static str, Vec<Engine>> = HashMap::with_capacity(TECH_TREE.len());
+        for engine in engines.iter() {
+            if let Some(vec) = result.get_mut(&engine.tech_tree_node) {
+                vec.push(*engine);
+            } else {
+                result.insert(&engine.tech_tree_node, vec![*engine]);
+            }
+            let configurations = &engine.configurations;
+            for config in configurations.iter() {
+                if !config.is_initialized {
+                    break;
+                }
+                let engine = config.to_engine(&engine);
+                if let Some(vec) = result.get_mut(&engine.tech_tree_node) {
+                    vec.push(engine);
+                } else {
+                    let vec = vec![engine];
+                    result.insert(&engine.tech_tree_node, vec);
+                }
+            }
+        }
+        result
     }
 }
 
@@ -198,6 +263,8 @@ mod tests {
             hp_fuel: true,
             num_ignitions: 1,
             is_initialized: true,
+            fuel_mix: FuelMix::new(&[]),
+            tech_tree_node: "start",
         };
         assert_eq!(engine.thrust_vac(), 16.24536);
     }
