@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use serde::Serialize;
+
 use crate::TECH_TREE;
 
 use super::{
@@ -10,9 +12,10 @@ use super::{
 const MAX_ENGINE_CONFIGS: usize = 4;
 pub const ENGINES: [Engine; NUM_EGINES] = Engine::init_rp1_engines();
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize)]
 pub struct Engine {
     pub name: &'static str,
+    pub parent_name: &'static str,
     is_solid: bool,
     pub thrust_asl: f64,
     pub thrust_vac: f64,
@@ -35,7 +38,7 @@ pub struct Engine {
     pub tech_tree_node: &'static str,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize)]
 pub struct EngineConfiguration {
     pub name: &'static str,
     pub thrust_kn: f64, // thrust of the engine config, presumuably ASL
@@ -106,8 +109,9 @@ impl EngineConfiguration {
         }
     }
     /// Turns an engine configuration into an engine
-    pub const fn to_engine(&self, parent: &Engine) -> Engine {
+    pub fn to_engine(&self, parent: &Engine) -> Engine {
         let mut result = *parent;
+        result.parent_name = parent.parent_name;
         result.name = self.name;
         result.thrust_asl = self.thrust_kn;
         result.thrust_vac = self.thrust_vac();
@@ -125,7 +129,7 @@ impl EngineConfiguration {
     }
 }
 
-const NUM_EGINES: usize = 9;
+const NUM_EGINES: usize = 10;
 
 impl Engine {
     /// Creates a new engine.
@@ -168,6 +172,7 @@ impl Engine {
     ) -> Self {
         Engine {
             name,
+            parent_name: "",
             is_solid,
             thrust_asl,
             thrust_vac,
@@ -423,6 +428,32 @@ impl Engine {
                 ]),
                 "Post-War Rocketry Testing",
             ),
+            Engine::new(
+                "ORM-65",        // Engine 9
+                false,
+                1.7,
+                1.8,
+                29.0,
+                210.0,
+                215.0,
+                0.014,
+                0.8,
+                80.0,
+                false,
+                false,
+                true,
+                true,
+                true,
+                1,
+                Size::Xs,
+                0.0,
+                FuelMix::new(&[
+                    FuelType::Kerosene(0.218),
+                    FuelType::AK20(0.441),
+                    FuelType::Nitrogen(25.0),
+                ]),
+                "Post-War Rocketry Testing",
+            ),
         ];
         // Aerobee engine configurations
         engines[0].configurations[0] = EngineConfiguration::new(
@@ -576,6 +607,63 @@ impl Engine {
             "Post-War Rocketry Testing",
         );
 
+        // RD-100 engine configurations
+        engines[5].configurations[0] = EngineConfiguration::new(
+            "RD-101",
+            358.0,
+            100.0,
+            0.888,
+            210.0,
+            237.0,
+            85.0,
+            true,
+            false,
+            1,
+            FuelMix::new(&[
+                FuelType::Ethanol_90(87.9),
+                FuelType::Liquid_Oxygen(89.9),
+                FuelType::HTP(1.78),
+            ]),
+            "Early Rocketry",
+        );
+
+        // ORM-65 engine configurations
+        engines[9].configurations[0] = EngineConfiguration::new(
+            "RDA-1-150",
+            1.4,
+            34.0,
+            0.012,
+            210.0,
+            215.0,
+            200.0,
+            true,
+            true,
+            2,
+            FuelMix::new(&[
+                FuelType::Kerosene(0.178),
+                FuelType::AK20(0.361),
+                FuelType::Nitrogen(20.5),
+            ]),
+            "Post-War Rocketry Testing",
+        );
+        engines[9].configurations[0] = EngineConfiguration::new(
+            "RDA-1-300",
+            1.4,
+            34.0,
+            0.012,
+            210.0,
+            215.0,
+            200.0,
+            true,
+            true,
+            2,
+            FuelMix::new(&[
+                FuelType::Kerosene(0.178),
+                FuelType::AK20(0.361),
+                FuelType::Nitrogen(20.5),
+            ]),
+            "Early Rocketry",
+        );
         // XLR11 engine configurations
         //engines[7].configurations[0] = EngineConfiguration::new("XLR11")
 
@@ -606,6 +694,14 @@ impl Engine {
             }
         }
         result
+    }
+
+    /// Gets the name of this engine, including the parent engine's name.
+    pub fn get_name(&self) -> String {
+        match self.parent_name.is_empty() {
+            true => self.name.to_string(),
+            false => format!("{}: {}", self.parent_name, self.name),
+        }
     }
 }
 

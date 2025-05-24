@@ -2,6 +2,8 @@
 
 use std::collections::HashMap;
 
+use serde::Serialize;
+
 use super::{fuselage_names::*, Fuselage, Tanks};
 
 const NOSE_1_CORRECTION_COEF: f64 = 1.34180454434038853861466122907586;
@@ -12,37 +14,40 @@ const NOSE_5_CORRECTION_COEF: f64 = 1.27217604871392087062531572883017;
 const NOSE_12_CORRECTION_COEF: f64 = 1.27211850249056235284683680220041;
 const NOSE_13_CORRECTION_COEF: f64 = 1.34177037377202035273171532026026;
 
-const STEEL_FUSELAGE_DENSITY: f64 = 0.7050215444;
-const STEEL_FUSELAGE_UTIL_PERCENT: f64 = 83.0;
 const HP_STEEL_FUSELAGE_DENSITY: f64 = 1.0493497032;
 const HP_STEEL_FUSELAGE_UTIL_PERCENT: f64 = 75.0;
-const AL_FUSELAGE_DENSITY: f64 = 0.5997974356;
-const AL_FUSELAGE_UTIL_PERCENT: f64 = 87.0;
-const HP_AL_FUSELAGE_DENSITY: f64 = 1.6430042237;
-const HP_AL_FUSELAGE_UTIL_PERCENT: f64 = 84.0;
-const AL_STRINGER_TANK_DENSITY: f64 = 0.7186757557;
-const AL_STRINGER_TANK_UTIL_PERCENT: f64 = 92.0;
-const HP_AL_STRINGER_TANK_DENSITY: f64 = 2.3393934028;
-const HP_AL_STRINGER_TANK_UTIL_PERCENT: f64 = 90.0;
-const REFINED_AL_STRINGER_TANK_DENSITY: f64 = 0.5319629752;
-const REFINED_AL_STRINGER_TANK_UTIL_PERCENT: f64 = 92.0;
-const HP_REFINED_AL_STRINGER_TANK_DENSITY: f64 = 1.7487016847;
-const HP_REFINED_AL_STRINGER_TANK_UTIL_PERCENT: f64 = 90.0;
-const AL_LI_STRINGER_TANK_DENSITY: f64 = 1.1897409303;
-const AL_LI_STRINGER_TANK_UTIL_PERCENT: f64 = 97.0;
-const HP_AL_LI_STRINGER_TANK_DENSITY: f64 = 2.6723521459;
-const HP_AL_LI_STRINGER_TANK_UTIL_PERCENT: f64 = 96.0;
-const REFINED_AL_LI_STRINGER_TANK_DENSITY: f64 = 1.1121288578;
-const REFINED_AL_LI_STRINGER_TANK_UTIL_PERCENT: f64 = 97.0;
-const HP_REFINED_AL_LI_STRINGER_TANK_DENSITY: f64 = 2.3157513557;
-const HP_REFINED_AL_LI_STRINGER_TANK_UTIL_PERCENT: f64 = 96.0;
-const STEEL_STIR_WELDED_TANK_DENSITY: f64 = 1.3803043213;
-const STEEL_STIR_WELDED_TANK_UTIL_PERCENT: f64 = 97.0;
-const HP_STEEL_STIR_WELDED_TANK_DENSITY: f64 = 3.9418707664;
-const HP_STEEL_STIR_WELDED_TANK_UTIL_PERCENT: f64 = 96.0;
+#[cfg(test)]
+mod densities {
+    pub const STEEL_FUSELAGE_DENSITY: f64 = 0.7050215444;
+    pub const STEEL_FUSELAGE_UTIL_PERCENT: f64 = 83.0;
+    pub const AL_FUSELAGE_DENSITY: f64 = 0.5997974356;
+    pub const AL_FUSELAGE_UTIL_PERCENT: f64 = 87.0;
+    pub const HP_AL_FUSELAGE_DENSITY: f64 = 1.6430042237;
+    pub const HP_AL_FUSELAGE_UTIL_PERCENT: f64 = 84.0;
+    pub const AL_STRINGER_TANK_DENSITY: f64 = 0.7186757557;
+    pub const AL_STRINGER_TANK_UTIL_PERCENT: f64 = 92.0;
+    pub const HP_AL_STRINGER_TANK_DENSITY: f64 = 2.3393934028;
+    pub const HP_AL_STRINGER_TANK_UTIL_PERCENT: f64 = 90.0;
+    pub const REFINED_AL_STRINGER_TANK_DENSITY: f64 = 0.5319629752;
+    pub const REFINED_AL_STRINGER_TANK_UTIL_PERCENT: f64 = 92.0;
+    pub const HP_REFINED_AL_STRINGER_TANK_DENSITY: f64 = 1.7487016847;
+    pub const HP_REFINED_AL_STRINGER_TANK_UTIL_PERCENT: f64 = 90.0;
+    pub const AL_LI_STRINGER_TANK_DENSITY: f64 = 1.1897409303;
+    pub const AL_LI_STRINGER_TANK_UTIL_PERCENT: f64 = 97.0;
+    pub const HP_AL_LI_STRINGER_TANK_DENSITY: f64 = 2.6723521459;
+    pub const HP_AL_LI_STRINGER_TANK_UTIL_PERCENT: f64 = 96.0;
+    pub const REFINED_AL_LI_STRINGER_TANK_DENSITY: f64 = 1.1121288578;
+    pub const REFINED_AL_LI_STRINGER_TANK_UTIL_PERCENT: f64 = 97.0;
+    pub const HP_REFINED_AL_LI_STRINGER_TANK_DENSITY: f64 = 2.3157513557;
+    pub const HP_REFINED_AL_LI_STRINGER_TANK_UTIL_PERCENT: f64 = 96.0;
+    pub const STEEL_STIR_WELDED_TANK_DENSITY: f64 = 1.3803043213;
+    pub const STEEL_STIR_WELDED_TANK_UTIL_PERCENT: f64 = 97.0;
+    pub const HP_STEEL_STIR_WELDED_TANK_DENSITY: f64 = 3.9418707664;
+    pub const HP_STEEL_STIR_WELDED_TANK_UTIL_PERCENT: f64 = 96.0;
+}
 
 /// A nosecone and its dimensions/features.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize)]
 pub struct NoseCone {
     pub core: NoseTankCore,
     pub length: f64,
@@ -157,7 +162,7 @@ impl NoseConeVariant {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize)]
 pub struct NoseTankCore {
     pub name: &'static str,
     /// The length of the tank in meters with V.ScaleAdj = 1.0000
@@ -200,6 +205,7 @@ pub fn calculate_nose_dry_mass(
     structural_volume * density
 }
 
+#[cfg(test)]
 fn calculate_cone_lengths(diameter: f64) -> (f64, f64, f64) {
     let base_length = diameter * 1.2608;
     let min_length = base_length * 0.25;
@@ -210,6 +216,7 @@ fn calculate_cone_lengths(diameter: f64) -> (f64, f64, f64) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    pub use super::densities::*;
 
     const N1: f64 = NOSE_1_CORRECTION_COEF;
 
@@ -783,6 +790,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(unused)]
     fn test_tank_length() {
         let diameter = 5.0;
         let (base_length, min_length, max_length) = calculate_cone_lengths(diameter);

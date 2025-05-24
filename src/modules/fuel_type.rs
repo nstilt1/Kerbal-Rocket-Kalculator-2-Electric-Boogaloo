@@ -1,6 +1,8 @@
 //! A module for fuels and fuel mixes
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+use serde::Serialize;
+
+#[derive(Debug, PartialEq, Clone, Copy, Serialize)]
 pub struct FuelMix {
     fuels: &'static [FuelType],
 }
@@ -66,7 +68,7 @@ impl FuelMix {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize)]
 #[allow(non_camel_case_types)]
 pub enum FuelType {
     RP1(f64),

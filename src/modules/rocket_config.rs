@@ -1,16 +1,29 @@
+use serde::Serialize;
+
+use crate::{debug, G};
+
 use super::{
     engines::Engine,
-    tanks::{cylindrical_tanks::CylindricalTank, nose_tanks::NoseCone},
+    tanks::{cylindrical_tanks::CylindricalTank, nose_tanks::NoseCone}, utils::ln,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Rocket {
     nose: Option<NoseCone>,
     tank: Option<CylindricalTank>,
+    nose_length: Option<f64>,
+    nose_core: Option<&'static str>,
+    nose_fuselage: Option<&'static str>,
+    cyl_length: Option<f64>,
+    cyl_fuselage: Option<&'static str>,
     engine: Engine,
+    diameter: f64,
     fuel: String,
     num_engines: u8,
     pub(crate) mass: f64,
+    dry_mass: f64,
+    delta_v_asl: f64,
+    delta_v_vac: f64,
     twr: f64,
 }
 
@@ -22,15 +35,37 @@ impl Rocket {
         fuel: String,
         num_engines: u8,
         mass: f64,
+        dry_mass: f64,
         twr: f64,
     ) -> Self {
+        let natural_logarithm_g = ln(mass / dry_mass) * G;
+        debug!("Ln Ratio: {}", mass / dry_mass);
+        let (nose_length, nose_fuselage, nose_core) = if let Some(v) = &nose {
+            (Some(v.length), Some(v.fuselage.name), Some(v.core.name))
+        } else {
+            (None, None, None)
+        };
+        let (tank_length, tank_fuselage) = if let Some(v) = &tank {
+            (Some(v.length), Some(v.fuselage.name))
+        } else {
+            (None, None)
+        };
         Rocket {
             nose,
-            tank,
+            nose_length,
+            nose_core,
+            nose_fuselage,
+            tank: tank,
+            cyl_length: tank_length,
+            cyl_fuselage: tank_fuselage,
             engine,
+            diameter: engine.size.get_diameter(),
             fuel,
             num_engines,
             mass,
+            dry_mass,
+            delta_v_vac: natural_logarithm_g * engine.isp_vac,
+            delta_v_asl: natural_logarithm_g * engine.isp_asl,
             twr,
         }
     }

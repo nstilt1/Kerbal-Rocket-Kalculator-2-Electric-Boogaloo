@@ -2,38 +2,45 @@
 
 use std::collections::HashMap;
 
+use serde::Serialize;
+
+use crate::{debug, modules::{engines::Engine, fuel_type::FuelMix, Error}, G};
+
 use super::{fuselage_names::*, Fuselage, TankType, Tanks};
 
-const STEEL_FUSELAGE_DENSITY: f64 = 0.7046255853625588; // kg/L
-const STEEL_FUSELAGE_UTIL_PERCENT: f64 = 83.0;
-const HP_STEEL_FUSELAGE_DENSITY: f64 = 1.161194204449523; // kg/L
-const HP_STEEL_FUSELAGE_UTIL_PERCENT: f64 = 75.0;
-const AL_FUSELAGE_DENSITY: f64 = 0.572370017780281; // kg/L
-const AL_FUSELAGE_UTIL_PERCENT: f64 = 87.0;
-const HP_AL_FUSELAGE_DENSITY: f64 = 1.6233800555626554; // kg/L
-const HP_AL_FUSELAGE_UTIL_PERCENT: f64 = 84.0;
-const AL_STRINGER_TANK_DENSITY: f64 = 0.6474421633361649; // kg/L
-const AL_STRINGER_TANK_UTIL_PERCENT: f64 = 92.0;
-const HP_AL_STRINGER_TANK_DENSITY: f64 = 2.1543208266760887; // kg/L
-const HP_AL_STRINGER_TANK_UTIL_PERCENT: f64 = 90.0;
-const REFINED_AL_STRINGER_TANK_DENSITY: f64 = 0.4793745811132077; // kg/L
-const REFINED_AL_STRINGER_TANK_UTIL_PERCENT: f64 = 92.0;
-const HP_REFINED_AL_STRINGER_TANK_DENSITY: f64 = 1.6195603377848609; // kg/L
-const HP_REFINED_AL_STRINGER_TANK_UTIL_PERCENT: f64 = 90.0;
-const AL_LI_STRINGER_TANK_DENSITY: f64 = 1.0134984503748028; // kg/L
-const AL_LI_STRINGER_TANK_UTIL_PERCENT: f64 = 97.0;
-const HP_AL_LI_STRINGER_TANK_DENSITY: f64 = 2.3147489733434568; // kg/L
-const HP_AL_LI_STRINGER_TANK_UTIL_PERCENT: f64 = 96.0;
-const REFINED_AL_LI_STRINGER_TANK_DENSITY: f64 = 0.9523829659300911; // kg/L
-const REFINED_AL_LI_STRINGER_TANK_UTIL_PERCENT: f64 = 97.0;
-const HP_REFINED_AL_LI_STRINGER_TANK_DENSITY: f64 = 1.9977123977865145; // kg/L
-const HP_REFINED_AL_LI_STRINGER_TANK_UTIL_PERCENT: f64 = 96.0;
-const STEEL_STIR_WELDED_TANK_DENSITY: f64 = 1.1815660325977602; // kg/L
-const STEEL_STIR_WELDED_TANK_UTIL_PERCENT: f64 = 97.0;
-const HP_STEEL_STIR_WELDED_TANK_DENSITY: f64 = 3.4033685400148843; // kg/L
-const HP_STEEL_STIR_WELDED_TANK_UTIL_PERCENT: f64 = 96.0;
+#[cfg(test)]
+mod densities {
+    pub const STEEL_FUSELAGE_DENSITY: f64 = 0.7046255853625588; // kg/L
+    pub const STEEL_FUSELAGE_UTIL_PERCENT: f64 = 83.0;
+    pub const HP_STEEL_FUSELAGE_DENSITY: f64 = 1.161194204449523; // kg/L
+    pub const HP_STEEL_FUSELAGE_UTIL_PERCENT: f64 = 75.0;
+    pub const AL_FUSELAGE_DENSITY: f64 = 0.572370017780281; // kg/L
+    pub const AL_FUSELAGE_UTIL_PERCENT: f64 = 87.0;
+    pub const HP_AL_FUSELAGE_DENSITY: f64 = 1.6233800555626554; // kg/L
+    pub const HP_AL_FUSELAGE_UTIL_PERCENT: f64 = 84.0;
+    pub const AL_STRINGER_TANK_DENSITY: f64 = 0.6474421633361649; // kg/L
+    pub const AL_STRINGER_TANK_UTIL_PERCENT: f64 = 92.0;
+    pub const HP_AL_STRINGER_TANK_DENSITY: f64 = 2.1543208266760887; // kg/L
+    pub const HP_AL_STRINGER_TANK_UTIL_PERCENT: f64 = 90.0;
+    pub const REFINED_AL_STRINGER_TANK_DENSITY: f64 = 0.4793745811132077; // kg/L
+    pub const REFINED_AL_STRINGER_TANK_UTIL_PERCENT: f64 = 92.0;
+    pub const HP_REFINED_AL_STRINGER_TANK_DENSITY: f64 = 1.6195603377848609; // kg/L
+    pub const HP_REFINED_AL_STRINGER_TANK_UTIL_PERCENT: f64 = 90.0;
+    pub const AL_LI_STRINGER_TANK_DENSITY: f64 = 1.0134984503748028; // kg/L
+    pub const AL_LI_STRINGER_TANK_UTIL_PERCENT: f64 = 97.0;
+    pub const HP_AL_LI_STRINGER_TANK_DENSITY: f64 = 2.3147489733434568; // kg/L
+    pub const HP_AL_LI_STRINGER_TANK_UTIL_PERCENT: f64 = 96.0;
+    pub const REFINED_AL_LI_STRINGER_TANK_DENSITY: f64 = 0.9523829659300911; // kg/L
+    pub const REFINED_AL_LI_STRINGER_TANK_UTIL_PERCENT: f64 = 97.0;
+    pub const HP_REFINED_AL_LI_STRINGER_TANK_DENSITY: f64 = 1.9977123977865145; // kg/L
+    pub const HP_REFINED_AL_LI_STRINGER_TANK_UTIL_PERCENT: f64 = 96.0;
+    pub const STEEL_STIR_WELDED_TANK_DENSITY: f64 = 1.1815660325977602; // kg/L
+    pub const STEEL_STIR_WELDED_TANK_UTIL_PERCENT: f64 = 97.0;
+    pub const HP_STEEL_STIR_WELDED_TANK_DENSITY: f64 = 3.4033685400148843; // kg/L
+    pub const HP_STEEL_STIR_WELDED_TANK_UTIL_PERCENT: f64 = 96.0;
+}
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize)]
 pub struct CylindricalTank {
     pub length: f64,
     pub diameter: f64,
@@ -144,9 +151,118 @@ pub fn cylindrical_dry_mass(diameter: f64, height: f64, utilization: f64, densit
     volume * (1.0 - utilization) * density
 }
 
+/// Computes the tank height required to reach a twr.
+pub fn compute_tank_height(
+    thrust: f64, min_twr: f64, diameter: f64,
+    engine: &Engine, fuselage: &Fuselage,
+    payload_mass: f64
+) -> Result<f64, Error> {
+    let max_wet_mass = thrust / (min_twr * G);
+    debug!("Target wet mass = {}", max_wet_mass);
+    let r = diameter / 2.0;
+
+    // twr = thrust_n / wet_mass / G
+    // target_wet_mass = thrust_n / target_twr / G
+    // wet_mass = payload_mass + engine_mass + fuel_mass + structural_mass
+    // structural_mass + fuel_mass = wet_mass - payload_mass - engine_mass
+    // structural_mass = tank_volume(diameter, h) * structural_density * unusable
+    // fuel_mass = tank_volume(diameter, h) * fuel_density * usable
+    // tank_volume(diameter, h) * (structural_density * unusableFraction + fuel_density * usableFraction) = wet_mass - payload_mass - engine_mass
+    // tank_volume(diameter, h) = (wet_mass - payload_mass - engine_mass) / (structural_density * unusableFraction + fuel_density * usableFraction)
+
+    // tank_volume(diameter, h) = ellipsoid_volume(diameter/2, diameter/2, diameter/4) + cylinder_volume(r, h) * 1000.0 - K * diameter.powi(3)
+    // tank_volume(d, h) + K * diameter.powi(3) - ellipsoid_volume() = cylinder_volume(r, h)
+    // cylinder_volume = tank_volume(d, h) + K * diameter.powi(3) - ellipsoid_volume()
+    // PI * radius * radius * height = tank_volume(d, h) + K * diameter.powi(3) - ellipsoid_volume()
+    // h = (tank_volume(d,h) + K * diameter.powi(3) - ellipsoid_volume())/(PI*radius*radius)
+    // h = (((wet_mass - payload_mass - engine_mass) / (structural_density * unusable + fuel_density * usable)) + K * diameter.powi(3) - ellipsoid_volume())/(PI * radius * radius)
+
+    // unsure if the following is usable. probably not since fuel_mass and 
+    // structural mass are functions of height:
+    // h = (((fuel_mass + structural_mass) / (structural_density * unusable + fuel_density * usable)) + K * diameter.powi(3) - ellipsoid_volume())/(PI * radius * radius)
+    // let n1 = max_wet_mass - payload_mass - engine_mass;
+    //assert!(max_wet_mass > payload_mass + engine_mass);
+    let engine_mass = &engine.mass;
+    if max_wet_mass <= payload_mass + engine_mass {
+        return Err(Error::MaxWetMassBelowCurrentMass);
+    }
+    
+    let fuel_density = engine.fuel_mix.density() * 1000.0;
+    let structural_density = fuselage.density * 1000.0;
+    let utilization = fuselage.utilization;
+    debug_assert!(utilization < 1.0, "fuselage.utilization was not less than 1.0");
+    
+    let mass_contribution = structural_density * (1.0 - utilization) + fuel_density * utilization;
+    debug!("Payload mass = {} kg", payload_mass);
+    debug!("Engine mass = {} kg", engine_mass);
+    debug!("Total mass contribution factor: {}", mass_contribution);
+    debug!("Ellipsoid volume: {} L", ellipsoid_volume(r, r, r/2.0));
+    debug!("r = {} m", r);
+
+    let correction_factor = K * diameter.powi(3) / 1000.0;
+    debug!("Correction factor: {}", correction_factor);
+    debug!("Structural density * 1.0 - usable_fraction = {}", structural_density * (1.0 - utilization));
+    debug!("Fuel density * usable fraction = {}", fuel_density * utilization);
+    let h = ((max_wet_mass - payload_mass - engine_mass) / 
+    mass_contribution + correction_factor - ellipsoid_volume(r, r, r/2.0))/(std::f64::consts::PI * r * r);
+    debug!("Computed height: {} m", h);
+    debug!("Fuel mass = {} kg", fuel_density * utilization * tank_volume(diameter, h));
+    if h > 50.0 {
+        return Ok(50.0)
+    }
+    if h <= 0.0 {
+        return Err(Error::InvalidHeight)
+    }
+    if h.is_nan() || h.is_infinite() {
+        return Err(Error::InvalidHeight)
+    }
+    Ok(h)
+
+}
+
+
 #[cfg(test)]
 mod tests {
+    use crate::modules::engines::Engine;
+    use crate::G;
+
     use super::*;
+    use super::densities::*;
+
+    #[test]
+    fn tank_height_tests() {
+        let payload_mass_tons = 0.1;
+        let payload_mass_kg = payload_mass_tons * 1000.0;
+        let engines = Engine::init_rp1_engines();
+        let engine = engines[0];
+        let engine_mass_kg = engine.mass * 1000.0;
+        //let engine_mass_tons = engine.mass;
+        let thrust_n = engine.thrust_asl * 1000.0;
+        let target_twr = 2.4;
+        let diameter = engine.size.get_diameter();
+        let (_hp_fuselages, non_hp_fuselages) = super::CylindricalTank::init_fuselage_types();
+        let fuselage = non_hp_fuselages.get(STEEL_FUSELAGE_NAME).unwrap();
+        let h = compute_tank_height(
+            thrust_n, 
+            target_twr, 
+            diameter, 
+            &engines[0], 
+            &fuselage,
+            payload_mass_kg,
+        ).unwrap();
+
+        let volume = tank_volume(diameter, h);
+        let mut wet_mass = payload_mass_kg + engine_mass_kg;
+        wet_mass += engines[0].fuel_mix.mass(volume * fuselage.utilization);
+        wet_mass += volume * (1.0 - fuselage.utilization) * fuselage.density;
+        assert!(fuselage.utilization < 1.0);
+        assert!(engine.mass < 1.0);
+        let twr = thrust_n / wet_mass / G;
+
+        println!("Wet mass = {}", wet_mass);
+        assert_eq!(twr, target_twr);
+        println!("TWR = {}\nTarget TWR = {}", twr, target_twr);
+    }
 
     // using a const since you can't easily pass arguments to `cargo test`
     const PRINT_STATS: bool = true;
@@ -264,11 +380,12 @@ mod tests {
     }
 
     /// Calculates the dry mass coefficient for some nose tanks
+    #[allow(unused)]
     fn calculate_dry_mass_coefficient(samples: &[(f64, f64, f64, f64, f64)]) -> f64 {
         let mut sum_density = 0.0;
         let mut count = 0;
 
-        for &(diameter, height, dry_mass, max_utilization, correction_coefficient) in samples {
+        for &(diameter, height, dry_mass, max_utilization, _correction_coefficient) in samples {
             let volume = tank_volume(diameter, height);
             let structural_volume = volume / max_utilization * (100.0 - max_utilization);
 
@@ -448,7 +565,7 @@ mod tests {
         let diff = unused - expected;
         assert!(diff.abs() < 0.1, "Diff = {:.5}", diff);
         let unusable_volume = volume * (100.0 - HP_AL_FUSELAGE_UTIL_PERCENT) / 100.0;
-        let diff = (unusable_volume * HP_AL_FUSELAGE_DENSITY - 21200.0);
+        let diff = unusable_volume * HP_AL_FUSELAGE_DENSITY - 21200.0;
         assert!(diff.abs() < 50.1, "Diff = {}", diff);
     }
 
@@ -507,7 +624,7 @@ mod tests {
     #[test]
     fn dry_mass_tests_v2() {
         println!("\n");
-        let density = calculate_densities(&[
+        calculate_densities(&[
             ("Steel Fuselage", 83.0, 78.4),
             ("HP Steel Fuselage", 75.0, 190.0),
             ("Al Fuselage", 87.0, 48.7),

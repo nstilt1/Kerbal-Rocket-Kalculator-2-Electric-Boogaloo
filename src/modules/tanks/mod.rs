@@ -1,6 +1,7 @@
 pub mod tanks;
 use std::collections::HashMap;
 
+use serde::Serialize;
 pub use tanks::*;
 pub mod cylindrical_tanks;
 pub mod nose_tanks;
@@ -34,7 +35,7 @@ pub trait Tanks {
     );
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize)]
 pub struct Fuselage {
     pub name: &'static str,
     pub density: f64,
