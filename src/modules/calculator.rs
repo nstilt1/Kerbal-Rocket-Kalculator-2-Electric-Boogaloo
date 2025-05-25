@@ -120,14 +120,16 @@ impl Calculator {
         let nosecones = NoseConeVariant::nosecones();
         let nosecone_cores = &nosecones.cores;
         let unlocked_fuselages: Vec<&str> = self.unlocked_fusalages.split(',').collect();
-        let (nosecone_hp_fuselages, nosecone_non_hp_fuselages) =
-            NoseConeVariant::init_fuselage_types();
+        let nose_fuselage_types = NoseConeVariant::init_fuselage_types();
+        let (nosecone_hp_fuselages, nosecone_non_hp_fuselages) = (nose_fuselage_types.hp_fuselages, nose_fuselage_types.non_hp_fuselages);
+        
         let mut unlocked_nosecone_hp_fuselages: Vec<&Fuselage> =
             Vec::with_capacity(unlocked_fuselages.len());
         let mut unlocked_nosecone_non_hp_fuselages: Vec<&Fuselage> =
             Vec::with_capacity(unlocked_fuselages.len());
-        let (cylinder_hp_fuselages, cylinder_non_hp_fuselages) =
-            CylindricalTank::init_fuselage_types();
+        
+        let cyl_fuselage_types = CylindricalTank::init_fuselage_types();
+        let (cylinder_hp_fuselages, cylinder_non_hp_fuselages) = (cyl_fuselage_types.hp_fuselages, cyl_fuselage_types.non_hp_fuselages);
         let mut unlocked_cylinder_hp_fuselages: Vec<&Fuselage> =
             Vec::with_capacity(unlocked_fuselages.len());
         let mut unlocked_cylinder_non_hp_fuselages: Vec<&Fuselage> =
@@ -458,14 +460,15 @@ impl Calculator {
         let nosecones = NoseConeVariant::nosecones();
         let nosecone_cores = &nosecones.cores;
         let unlocked_fuselages: Vec<&str> = self.unlocked_fusalages.split(',').collect();
-        let (nosecone_hp_fuselages, nosecone_non_hp_fuselages) =
-            NoseConeVariant::init_fuselage_types();
+
+        let nose_fuselage_types = NoseConeVariant::init_fuselage_types();
+        let (nosecone_hp_fuselages, nosecone_non_hp_fuselages) = (nose_fuselage_types.hp_fuselages, nose_fuselage_types.non_hp_fuselages);
+        let cyl_fuselage_types = CylindricalTank::init_fuselage_types();
+        let (cylinder_hp_fuselages, cylinder_non_hp_fuselages) = (cyl_fuselage_types.hp_fuselages, cyl_fuselage_types.non_hp_fuselages);
         let mut unlocked_nosecone_hp_fuselages: Vec<&Fuselage> =
             Vec::with_capacity(unlocked_fuselages.len());
         let mut unlocked_nosecone_non_hp_fuselages: Vec<&Fuselage> =
             Vec::with_capacity(unlocked_fuselages.len());
-        let (cylinder_hp_fuselages, cylinder_non_hp_fuselages) =
-            CylindricalTank::init_fuselage_types();
         let mut unlocked_cylinder_hp_fuselages: Vec<&Fuselage> =
             Vec::with_capacity(unlocked_fuselages.len());
         let mut unlocked_cylinder_non_hp_fuselages: Vec<&Fuselage> =
@@ -683,8 +686,10 @@ mod tests {
     #[test]
     fn fuselage_retrieval() {
         let unlocked_fuselages: Vec<&str> = "Steel Fuselage,Al Stringer Tank".split(',').collect();
-        let (nosecone_hp_fuselages, nosecone_non_hp_fuselages) =
-            NoseConeVariant::init_fuselage_types();
+        let nose_fuselage_types = NoseConeVariant::init_fuselage_types();
+        let (nosecone_hp_fuselages, nosecone_non_hp_fuselages) = (nose_fuselage_types.hp_fuselages, nose_fuselage_types.non_hp_fuselages);
+        let cyl_fuselage_types = CylindricalTank::init_fuselage_types();
+        let (cylinder_hp_fuselages, cylinder_non_hp_fuselages) = (cyl_fuselage_types.hp_fuselages, cyl_fuselage_types.non_hp_fuselages);
         let keys = nosecone_hp_fuselages.keys();
         for k in keys {
             println!("{}", k);
@@ -693,8 +698,6 @@ mod tests {
             Vec::with_capacity(unlocked_fuselages.len());
         let mut unlocked_nosecone_non_hp_fuselages: Vec<&Fuselage> =
             Vec::with_capacity(unlocked_fuselages.len());
-        let (cylinder_hp_fuselages, cylinder_non_hp_fuselages) =
-            CylindricalTank::init_fuselage_types();
         let mut unlocked_cylinder_hp_fuselages: Vec<&Fuselage> =
             Vec::with_capacity(unlocked_fuselages.len());
         let mut unlocked_cylinder_non_hp_fuselages: Vec<&Fuselage> =

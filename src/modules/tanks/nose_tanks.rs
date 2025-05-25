@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use serde::Serialize;
 
-use super::{fuselage_names::*, Fuselage, Tanks};
+use super::{fuselage_names::*, Fuselage, Fuselages, Tanks};
 
 const NOSE_1_CORRECTION_COEF: f64 = 1.34180454434038853861466122907586;
 const NOSE_2_CORRECTION_COEF: f64 = 1.62346946577909534425998572260141;
@@ -74,10 +74,7 @@ impl Tanks for NoseConeVariant {
     const MIN_VSA: f64 = 0.25;
     const MAX_VSA: f64 = 4.0;
 
-    fn init_fuselage_types() -> (
-        HashMap<&'static str, Fuselage>,
-        HashMap<&'static str, Fuselage>,
-    ) {
+    fn init_fuselage_types() -> Fuselages {
         let mut hp_tanks: HashMap<&str, Fuselage> = HashMap::with_capacity(7);
         let mut non_hp_tanks: HashMap<&str, Fuselage> = HashMap::with_capacity(7);
         hp_tanks.insert(
@@ -140,7 +137,7 @@ impl Tanks for NoseConeVariant {
             STEEL_STIR_WELDED_TANK_NAME,
             Fuselage::new(STEEL_STIR_WELDED_TANK_NAME, 1.3803043213, 0.97),
         );
-        (hp_tanks, non_hp_tanks)
+        Fuselages::new(hp_tanks, non_hp_tanks)
     }
 }
 

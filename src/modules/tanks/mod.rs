@@ -11,6 +11,20 @@ pub enum TankType {
     Nosecone,
 }
 
+pub struct Fuselages {
+    pub hp_fuselages: HashMap<&'static str, Fuselage>,
+    pub non_hp_fuselages: HashMap<&'static str, Fuselage>
+}
+
+impl Fuselages {
+    pub fn new(hp_fuselages: HashMap<&'static str, Fuselage>, non_hp_fuselages: HashMap<&'static str, Fuselage>) -> Self {
+        Self {
+            hp_fuselages,
+            non_hp_fuselages
+        }
+    }
+}
+
 #[const_trait]
 pub trait Tanks {
     const MIN_VSA: f64;
@@ -29,10 +43,7 @@ pub trait Tanks {
     /// Initializes fuselage types as a pair of hashmaps.
     ///
     /// (HP Map<Name, (density, utilization)>, Non-HP Map<Name, (density, utilization)>)
-    fn init_fuselage_types() -> (
-        HashMap<&'static str, Fuselage>,
-        HashMap<&'static str, Fuselage>,
-    );
+    fn init_fuselage_types() -> Fuselages;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize)]

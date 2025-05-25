@@ -10,7 +10,7 @@ use crate::{
     G,
 };
 
-use super::{fuselage_names::*, Fuselage, TankType, Tanks};
+use super::{fuselage_names::*, Fuselage, Fuselages, TankType, Tanks};
 
 #[cfg(test)]
 mod densities {
@@ -57,10 +57,7 @@ impl Tanks for CylindricalTank {
     const MAX_VSA: f64 = 50.0;
     const TANK_TYPE: TankType = TankType::Cylindrical;
 
-    fn init_fuselage_types() -> (
-        HashMap<&'static str, Fuselage>,
-        HashMap<&'static str, Fuselage>,
-    ) {
+    fn init_fuselage_types() -> Fuselages {
         let mut hp_tanks: HashMap<&str, Fuselage> = HashMap::with_capacity(7);
         let mut non_hp_tanks: HashMap<&str, Fuselage> = HashMap::with_capacity(7);
         hp_tanks.insert(
@@ -123,7 +120,7 @@ impl Tanks for CylindricalTank {
             STEEL_STIR_WELDED_TANK_NAME,
             Fuselage::new(STEEL_STIR_WELDED_TANK_NAME, 1.1815660325977602, 0.97),
         );
-        (hp_tanks, non_hp_tanks)
+        Fuselages::new(hp_tanks, non_hp_tanks)
     }
 }
 
@@ -273,7 +270,7 @@ pub fn compute_tank_height(
 
 #[cfg(test)]
 mod tests {
-    use crate::modules::engines::Engine;
+    use crate::modules::engines::{Engine, ENGINES};
     use crate::G;
 
     use super::densities::*;
@@ -290,7 +287,8 @@ mod tests {
         let thrust_n = engine.thrust_asl * 1000.0;
         let target_twr = 3.8;
         let diameter = engine.size.get_diameter();
-        let (_hp_fuselages, non_hp_fuselages) = super::CylindricalTank::init_fuselage_types();
+        let fuselage_types = super::CylindricalTank::init_fuselage_types();
+        let non_hp_fuselages = fuselage_types.non_hp_fuselages;
         let fuselage = non_hp_fuselages.get(STEEL_FUSELAGE_NAME).unwrap();
         let h = compute_tank_height(
             target_twr,
@@ -350,6 +348,137 @@ mod tests {
             );
             println!("TWR: {}\nTarget TWR: {}", twr, target_twr);
         }
+    }
+
+    #[test]
+    fn tank_height_graphs() {
+        const IN_VACUUM: bool = false;
+
+        let engines = ENGINES;
+        let fuselage_types = CylindricalTank::init_fuselage_types();
+        let fuselage = fuselage_types.non_hp_fuselages.get(STEEL_FUSELAGE_NAME).unwrap();
+        
+        const MAX_NUM_TANKS: u8 = 9;
+        const MAX_PAYLOAD_KG: usize = 400;
+        for engine in engines {
+            let diameter = &engine.size.get_diameter();
+            let engine_mass_kg = engine.mass * 1000.0;
+            let thrust_n = if IN_VACUUM {
+                engine.thrust_vac
+            } else {
+                engine.thrust_asl
+            } * 1000.0;
+            let mut twr_errors_payloads = [[(0f64, 0f64, 0f64, 0f64); MAX_NUM_TANKS as usize]; MAX_PAYLOAD_KG];
+            let payload_masses_kg: [usize; 4] = [250, 300, 400, 500];
+            for (i, payload_mass_kg) in payload_masses_kg.iter().enumerate() {
+                let payload_mass_tons = *payload_mass_kg as f64 / 1000.0;
+                let mut twr_errors = [(0f64, 0f64, 0f64, 0f64); MAX_NUM_TANKS as usize];
+                for num_tanks in 1..=MAX_NUM_TANKS {
+                    // error increases a lot when TWR_MIN = 1. Max error was at about 1.2-1.4. Probably because the height was capped to 50. Will eliminate any results where h = 50.0
+                    const TWR_MIN: usize = 1;
+                    const TWR_MAX: usize = 50;
+                    const TWR_MIN_F64: f64 = TWR_MIN as f64 / 10.0;
+                    const TWR_MAX_F64: f64 = TWR_MAX as f64 / 10.0;
+                    
+                    let mut min_error = 1.0;
+                    let mut max_error = -1.0;
+                    let mut sum_error = 0.0;
+                    let mut abs_sum_error = 0.0;
+                    let mut valid_samples = 0;
+                    for target_twr_index in TWR_MIN..=TWR_MAX {
+                        let target_twr = target_twr_index as f64 / 10.0;
+
+                        let h = compute_tank_height(
+                            target_twr, 
+                            &engine, 
+                            fuselage, 
+                            payload_mass_tons, 
+                            num_tanks, 
+                            IN_VACUUM
+                        );
+                        if let Ok(h) = h {
+                            valid_samples += 1;
+                            let volume = tank_volume(*diameter, h) * num_tanks as f64;
+                            let mut wet_mass = *payload_mass_kg as f64 + engine_mass_kg * num_tanks as f64;
+                            let fuel_mass = engine.fuel_mix.mass(volume * fuselage.utilization);
+                            wet_mass += fuel_mass;
+                            let structural_mass = volume * (1.0 - fuselage.utilization) * fuselage.density;
+                            wet_mass += structural_mass;
+                            let twr = thrust_n * num_tanks as f64 / wet_mass / G;
+                            let ratio = twr / target_twr;
+                            let percent_difference = ratio - 1.0;
+                            if min_error > percent_difference {
+                                min_error = percent_difference;
+                            } else if max_error < percent_difference {
+                                max_error = percent_difference;
+                            }
+                            sum_error += percent_difference;
+                            abs_sum_error += percent_difference.abs();
+                        }
+                    }
+                    twr_errors[num_tanks as usize - 1] = (min_error, max_error, sum_error / valid_samples as f64, abs_sum_error / valid_samples as f64);
+                }
+                draw_twr_error_chart_html(*payload_mass_kg, &twr_errors, &format!("height_chart_errors/{}/payload_mass_{}.html", engine.name, payload_mass_kg)).unwrap();
+                twr_errors_payloads[i] = twr_errors;
+            }
+        }
+    }
+
+    use charming::{
+        component::{Axis, Legend, Title},
+        element::{AxisType, LineStyle, Symbol},
+        series::Line,
+        Chart, HtmlRenderer,
+    };
+    use std::fs;
+
+    pub fn draw_twr_error_chart_html(
+        payload_mass_kg: usize,
+        twr_errors: &[(f64, f64, f64, f64)],
+        output_path: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let x_data: Vec<String> = (1..=twr_errors.len()).map(|n| n.to_string()).collect();
+        let mut min_errors = vec![];
+        let mut max_errors = vec![];
+        let mut avg_errors = vec![];
+        let mut abs_avg_errors = vec![];
+        for &(min, max, avg, abs_avg) in twr_errors {
+            min_errors.push(min);
+            max_errors.push(max);
+            avg_errors.push(avg);
+            abs_avg_errors.push(abs_avg);
+        }
+
+        let chart = Chart::new()
+            .title(Title::new().text(format!("TWR Errors for Payload {} kg", payload_mass_kg)))
+            .legend(Legend::new())
+            .x_axis(Axis::new().type_(AxisType::Category).data(x_data))
+            .y_axis(Axis::new().min(-3).max(3))
+            .series(Line::new()
+                .name("min_error")
+                .data(min_errors)
+                .symbol(Symbol::None)
+                .line_style(LineStyle::new().width(2)))
+            .series(Line::new()
+                .name("max_error")
+                .data(max_errors)
+                .symbol(Symbol::None)
+                .line_style(LineStyle::new().width(2)))
+            .series(Line::new()
+                .name("avg_error")
+                .data(avg_errors)
+                .symbol(Symbol::None)
+                .line_style(LineStyle::new().width(2)))
+            .series(Line::new()
+                .name("abs_avg_error")
+                .data(abs_avg_errors)
+                .symbol(Symbol::None)
+                .line_style(LineStyle::new().width(2)));
+
+        let html = HtmlRenderer::new("chart", 800, 600).render(&chart)?;
+        fs::create_dir_all(std::path::Path::new(output_path).parent().unwrap()).unwrap();
+        fs::write(output_path, html)?;
+        Ok(())
     }
 
     // using a const since you can't easily pass arguments to `cargo test`

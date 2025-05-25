@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/dist/echarts-gl.min.js"></script>
+    <style> .container { display: flex; justify-content: center; align-items: center; } .item { margin: auto; } </style>
+  </head>
+  <body>
+      <div class="container">
+        <div class="item" id="chart" style="width: 800px; height: 600px"></div>
+      </div>
+      
+      <script type="text/javascript">
+          var chart = echarts.init(document.getElementById('chart'));
+          var option = {
+  "title": [
+    {
+      "text": "TWR Errors for Payload 500 kg"
+    }
+  ],
+  "legend": {},
+  "xAxis": {
+    "type": "category",
+    "data": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9"
+    ]
+  },
+  "yAxis": {
+    "min": -3,
+    "max": 3
+  },
+  "series": [
+    {
+      "type": "line",
+      "name": "min_error",
+      "symbol": "none",
+      "lineStyle": {
+        "width": 2.0
+      },
+      "data": [
+        0.008731303216453101,
+        0.008734492409018024,
+        0.00873555547768734,
+        0.008736087012862548,
+        0.008736405934236302,
+        0.00873661854859753,
+        0.008736770416053252,
+        0.008736884316675075,
+        0.008736972906065787
+      ]
+    },
+    {
+      "type": "line",
+      "name": "max_error",
+      "symbol": "none",
+      "lineStyle": {
+        "width": 2.0
+      },
+      "data": [
+        0.46483428396247906,
+        0.7170207545347664,
+        0.7171747710053598,
+        0.7172517896025608,
+        0.7172980040772257,
+        0.7173288151089356,
+        0.7173508236656336,
+        0.7173673304533543,
+        0.7173801692854087
+      ]
+    },
+    {
+      "type": "line",
+      "name": "avg_error",
+      "symbol": "none",
+      "lineStyle": {
+        "width": 2.0
+      },
+      "data": [
+        0.2093190478112634,
+        0.3019458452590202,
+        0.3020002602790073,
+        0.3020274701608937,
+        0.3020437968491219,
+        0.3020546816242516,
+        0.30206245661856507,
+        0.3020682879490324,
+        0.3020728234784978
+      ]
+    },
+    {
+      "type": "line",
+      "name": "abs_avg_error",
+      "symbol": "none",
+      "lineStyle": {
+        "width": 2.0
+      },
+      "data": [
+        0.2093190478112634,
+        0.3019458452590202,
+        0.3020002602790073,
+        0.3020274701608937,
+        0.3020437968491219,
+        0.3020546816242516,
+        0.30206245661856507,
+        0.3020682879490324,
+        0.3020728234784978
+      ]
+    }
+  ]
+};
+          chart.setOption(option);
+      </script>
+  </body>
+</html>

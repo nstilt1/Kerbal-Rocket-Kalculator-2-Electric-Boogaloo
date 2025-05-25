@@ -16,7 +16,7 @@ serde-wasm-bindgen = "0.6"
 wasm-bindgen = { version = "0.2" }
 
 [dev-dependencies]
-plotters = "0.3"
+charming = "0.5"
 
 [profile.release]
 opt-level = "z"  # Optimize for size instead of speed
