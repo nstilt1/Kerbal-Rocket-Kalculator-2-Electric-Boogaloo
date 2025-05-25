@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>height_chart_errors/inner/XLR11/1_engines_500_payload_mass.html</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/dist/echarts-gl.min.js"></script>
+    <style> .container { display: flex; justify-content: center; align-items: center; } .item { margin: auto; } </style>
+  </head>
+  <body>
+      <div class="container">
+        <div class="item" id="chart" style="width: 800px; height: 600px"></div>
+      </div>
+      
+      <script type="text/javascript">
+          var chart = echarts.init(document.getElementById('chart'));
+          var option = {
+  "title": [
+    {
+      "text": "TWR Errors for Payload 500 kg"
+    }
+  ],
+  "legend": {},
+  "xAxis": {
+    "type": "category",
+    "min": 0.0,
+    "max": 50.0,
+    "data": [
+      "0.1",
+      "0.2",
+      "0.3",
+      "0.4",
+      "0.5",
+      "0.6",
+      "0.7",
+      "0.8",
+      "0.9",
+      "1",
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "1.5",
+      "1.6",
+      "1.7",
+      "1.8",
+      "1.9",
+      "2",
+      "2.1",
+      "2.2",
+      "2.3",
+      "2.4",
+      "2.5",
+      "2.6",
+      "2.7",
+      "2.8",
+      "2.9",
+      "3",
+      "3.1",
+      "3.2",
+      "3.3",
+      "3.4",
+      "3.5",
+      "3.6",
+      "3.7",
+      "3.8",
+      "3.9",
+      "4",
+      "4.1",
+      "4.2",
+      "4.3",
+      "4.4",
+      "4.5",
+      "4.6",
+      "4.7",
+      "4.8",
+      "4.9",
+      "5"
+    ]
+  },
+  "yAxis": {
+    "min": -0.01,
+    "max": 0.09
+  },
+  "series": [
+    {
+      "type": "line",
+      "name": "error %",
+      "symbol": "none",
+      "lineStyle": {
+        "width": 2.0
+      },
+      "data": [
+        0.008731303216453101,
+        0.017292182986353044,
+        0.02599961510516602,
+        0.034857395271653324,
+        0.04386945140395504,
+        0.053039849447329424,
+        0.06237279949072838,
+        0.07187266221155086,
+        0.0815439556692894,
+        0.09139136247031132,
+        0.1014197373276493,
+        0.1116341150414406,
+        0.12203971892757526,
+        0.13264196972420783,
+        0.14344649500802942,
+        0.15445913915468146,
+        0.1656859738803398,
+        0.1771333094044245,
+        0.18880770627656407,
+        0.20071598791437495,
+        0.21286525390241406,
+        0.22526289410676692,
+        0.23791660366423462,
+        0.2508343989099924,
+        0.26402463431302126,
+        0.27749602049446875,
+        0.29125764341061067,
+        0.3053189847891906,
+        0.3196899439157237,
+        0.3343808608749683,
+        0.34940254136222304,
+        0.36476628318958193,
+        0.3804839046237716,
+        0.39656777470495475,
+        0.41303084570997073,
+        0.42988668793906837,
+        0.4471495270224919,
+        0.46483428396247906,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    }
+  ]
+};
+          chart.setOption(option);
+      </script>
+  </body>
+</html>

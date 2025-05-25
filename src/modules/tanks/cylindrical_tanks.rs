@@ -385,6 +385,7 @@ mod tests {
                     let mut sum_error = 0.0;
                     let mut abs_sum_error = 0.0;
                     let mut valid_samples = 0;
+                    let mut twr_errors_inner: [Option<f64>; TWR_MAX] = [None; TWR_MAX];
                     for target_twr_index in TWR_MIN..=TWR_MAX {
                         let target_twr = target_twr_index as f64 / 10.0;
 
@@ -398,6 +399,7 @@ mod tests {
                         );
                         if let Ok(h) = h {
                             if h == 50.0 {
+                                twr_errors_inner[target_twr_index - 1] = None;
                                 continue;
                             }
                             valid_samples += 1;
@@ -410,6 +412,7 @@ mod tests {
                             let twr = thrust_n * num_tanks as f64 / wet_mass / G;
                             let ratio = twr / target_twr;
                             let percent_difference = ratio - 1.0;
+                            twr_errors_inner[target_twr_index - 1] = Some(percent_difference);
                             if min_error > percent_difference {
                                 min_error = percent_difference;
                             } else if max_error < percent_difference {
@@ -419,12 +422,14 @@ mod tests {
                             abs_sum_error += percent_difference.abs();
                         }
                     }
+                    draw_twr_error_chart_inner(*payload_mass_kg, &twr_errors_inner, &format!("height_chart_errors/inner/{}/{}_engines_{}_payload_mass.html", engine.name, num_tanks, payload_mass_kg)).unwrap();
                     twr_errors[num_tanks as usize - 1] = (min_error, max_error, sum_error / valid_samples as f64, abs_sum_error / valid_samples as f64);
                 }
                 draw_twr_error_chart_html(*payload_mass_kg, &twr_errors, &format!("height_chart_errors/{}/payload_mass_{}.html", engine.name, payload_mass_kg)).unwrap();
                 twr_errors_payloads[i] = twr_errors;
             }
         }
+
     }
 
     use charming::{
@@ -435,7 +440,7 @@ mod tests {
     };
     use std::fs;
 
-    pub fn draw_twr_error_chart_html(
+    fn draw_twr_error_chart_html(
         payload_mass_kg: usize,
         twr_errors: &[(f64, f64, f64, f64)],
         output_path: &str,
@@ -456,7 +461,7 @@ mod tests {
             .title(Title::new().text(format!("TWR Errors for Payload {} kg", payload_mass_kg)))
             .legend(Legend::new())
             .x_axis(Axis::new().type_(AxisType::Category).data(x_data))
-            .y_axis(Axis::new().min(-3).max(3))
+            .y_axis(Axis::new().min(-0.01).max(0.09))
             .series(Line::new()
                 .name("min_error")
                 .data(min_errors)
@@ -471,14 +476,47 @@ mod tests {
                 .name("avg_error")
                 .data(avg_errors)
                 .symbol(Symbol::None)
-                .line_style(LineStyle::new().width(2)))
-            .series(Line::new()
-                .name("abs_avg_error")
-                .data(abs_avg_errors)
-                .symbol(Symbol::None)
                 .line_style(LineStyle::new().width(2)));
+            // .series(Line::new()
+            //     .name("abs_avg_error")
+            //     .data(abs_avg_errors)
+            //     .symbol(Symbol::None)
+            //     .line_style(LineStyle::new().width(2)));
 
         let html = HtmlRenderer::new("chart", 800, 600).render(&chart)?;
+        fs::create_dir_all(std::path::Path::new(output_path).parent().unwrap()).unwrap();
+        fs::write(output_path, html)?;
+        Ok(())
+    }
+
+    fn draw_twr_error_chart_inner(
+        payload_mass_kg: usize,
+        twr_errors: &[Option<f64>],
+        output_path: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let x_data: Vec<String> = (1..=twr_errors.len()).map(|n| (n as f64 / 10.0).to_string()).collect();
+        let mut errors = vec![];
+        for err in twr_errors {
+            errors.push(*err);
+        }
+
+        let chart = Chart::new()
+            .title(Title::new().text(format!("TWR Errors for Payload {} kg", payload_mass_kg)))
+            .legend(Legend::new())
+            .x_axis(Axis::new().type_(AxisType::Category).data(x_data).min(0.0).max(50.0))
+            .y_axis(Axis::new().min(-0.01).max(0.09))
+            .series(Line::new()
+                .name("error %")
+                .data(errors)
+                .symbol(Symbol::None)
+                .line_style(LineStyle::new().width(2)));
+            // .series(Line::new()
+            //     .name("abs_avg_error")
+            //     .data(abs_avg_errors)
+            //     .symbol(Symbol::None)
+            //     .line_style(LineStyle::new().width(2)));
+
+        let html = HtmlRenderer::new(output_path, 800, 600).render(&chart)?;
         fs::create_dir_all(std::path::Path::new(output_path).parent().unwrap()).unwrap();
         fs::write(output_path, html)?;
         Ok(())
