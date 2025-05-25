@@ -13,14 +13,17 @@ pub enum TankType {
 
 pub struct Fuselages {
     pub hp_fuselages: HashMap<&'static str, Fuselage>,
-    pub non_hp_fuselages: HashMap<&'static str, Fuselage>
+    pub non_hp_fuselages: HashMap<&'static str, Fuselage>,
 }
 
 impl Fuselages {
-    pub fn new(hp_fuselages: HashMap<&'static str, Fuselage>, non_hp_fuselages: HashMap<&'static str, Fuselage>) -> Self {
+    pub fn new(
+        hp_fuselages: HashMap<&'static str, Fuselage>,
+        non_hp_fuselages: HashMap<&'static str, Fuselage>,
+    ) -> Self {
         Self {
             hp_fuselages,
-            non_hp_fuselages
+            non_hp_fuselages,
         }
     }
 }

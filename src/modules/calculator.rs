@@ -5,7 +5,9 @@ use super::{
     rocket_config::Rocket,
     size::Size,
     tanks::{
-        cylindrical_tanks::{cylindrical_dry_mass, tank_volume, CylindricalTank},
+        cylindrical_tanks::{
+            compute_tank_height, cylindrical_dry_mass, tank_volume, CylindricalTank,
+        },
         nose_tanks::{
             calculate_corrected_volume, calculate_nose_dry_mass, NoseCone, NoseConeVariant,
         },
@@ -121,15 +123,21 @@ impl Calculator {
         let nosecone_cores = &nosecones.cores;
         let unlocked_fuselages: Vec<&str> = self.unlocked_fusalages.split(',').collect();
         let nose_fuselage_types = NoseConeVariant::init_fuselage_types();
-        let (nosecone_hp_fuselages, nosecone_non_hp_fuselages) = (nose_fuselage_types.hp_fuselages, nose_fuselage_types.non_hp_fuselages);
-        
+        let (nosecone_hp_fuselages, nosecone_non_hp_fuselages) = (
+            nose_fuselage_types.hp_fuselages,
+            nose_fuselage_types.non_hp_fuselages,
+        );
+
         let mut unlocked_nosecone_hp_fuselages: Vec<&Fuselage> =
             Vec::with_capacity(unlocked_fuselages.len());
         let mut unlocked_nosecone_non_hp_fuselages: Vec<&Fuselage> =
             Vec::with_capacity(unlocked_fuselages.len());
-        
+
         let cyl_fuselage_types = CylindricalTank::init_fuselage_types();
-        let (cylinder_hp_fuselages, cylinder_non_hp_fuselages) = (cyl_fuselage_types.hp_fuselages, cyl_fuselage_types.non_hp_fuselages);
+        let (cylinder_hp_fuselages, cylinder_non_hp_fuselages) = (
+            cyl_fuselage_types.hp_fuselages,
+            cyl_fuselage_types.non_hp_fuselages,
+        );
         let mut unlocked_cylinder_hp_fuselages: Vec<&Fuselage> =
             Vec::with_capacity(unlocked_fuselages.len());
         let mut unlocked_cylinder_non_hp_fuselages: Vec<&Fuselage> =
@@ -462,9 +470,15 @@ impl Calculator {
         let unlocked_fuselages: Vec<&str> = self.unlocked_fusalages.split(',').collect();
 
         let nose_fuselage_types = NoseConeVariant::init_fuselage_types();
-        let (nosecone_hp_fuselages, nosecone_non_hp_fuselages) = (nose_fuselage_types.hp_fuselages, nose_fuselage_types.non_hp_fuselages);
+        let (nosecone_hp_fuselages, nosecone_non_hp_fuselages) = (
+            nose_fuselage_types.hp_fuselages,
+            nose_fuselage_types.non_hp_fuselages,
+        );
         let cyl_fuselage_types = CylindricalTank::init_fuselage_types();
-        let (cylinder_hp_fuselages, cylinder_non_hp_fuselages) = (cyl_fuselage_types.hp_fuselages, cyl_fuselage_types.non_hp_fuselages);
+        let (cylinder_hp_fuselages, cylinder_non_hp_fuselages) = (
+            cyl_fuselage_types.hp_fuselages,
+            cyl_fuselage_types.non_hp_fuselages,
+        );
         let mut unlocked_nosecone_hp_fuselages: Vec<&Fuselage> =
             Vec::with_capacity(unlocked_fuselages.len());
         let mut unlocked_nosecone_non_hp_fuselages: Vec<&Fuselage> =
@@ -651,7 +665,23 @@ impl Calculator {
 
                             let twr = thrust / wet_mass / G;
                             if twr < self.minimum_twr {
-                                cyl_height -= HEIGHT_DECREMENT_AMT;
+                                cyl_height = if let Ok(v) = compute_tank_height(
+                                    self.minimum_twr,
+                                    &engine,
+                                    &cyl_fuselage,
+                                    self.mass,
+                                    num_engines,
+                                    self.in_vacuum,
+                                ) {
+                                    if cyl_height == v {
+                                        // this should not happen if compute_tank_height returns a twr greater than or equal to minimum_twr
+                                        break 'cyl_height_loop_2;
+                                    }
+                                    v
+                                } else {
+                                    // height was negative or infinity or NaN
+                                    break 'cyl_height_loop_2;
+                                };
                                 continue 'cyl_height_loop_2;
                             }
 
@@ -687,9 +717,15 @@ mod tests {
     fn fuselage_retrieval() {
         let unlocked_fuselages: Vec<&str> = "Steel Fuselage,Al Stringer Tank".split(',').collect();
         let nose_fuselage_types = NoseConeVariant::init_fuselage_types();
-        let (nosecone_hp_fuselages, nosecone_non_hp_fuselages) = (nose_fuselage_types.hp_fuselages, nose_fuselage_types.non_hp_fuselages);
+        let (nosecone_hp_fuselages, nosecone_non_hp_fuselages) = (
+            nose_fuselage_types.hp_fuselages,
+            nose_fuselage_types.non_hp_fuselages,
+        );
         let cyl_fuselage_types = CylindricalTank::init_fuselage_types();
-        let (cylinder_hp_fuselages, cylinder_non_hp_fuselages) = (cyl_fuselage_types.hp_fuselages, cyl_fuselage_types.non_hp_fuselages);
+        let (cylinder_hp_fuselages, cylinder_non_hp_fuselages) = (
+            cyl_fuselage_types.hp_fuselages,
+            cyl_fuselage_types.non_hp_fuselages,
+        );
         let keys = nosecone_hp_fuselages.keys();
         for k in keys {
             println!("{}", k);

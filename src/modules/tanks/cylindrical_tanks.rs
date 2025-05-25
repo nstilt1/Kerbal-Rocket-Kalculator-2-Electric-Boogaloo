@@ -356,8 +356,11 @@ mod tests {
 
         let engines = ENGINES;
         let fuselage_types = CylindricalTank::init_fuselage_types();
-        let fuselage = fuselage_types.non_hp_fuselages.get(STEEL_FUSELAGE_NAME).unwrap();
-        
+        let fuselage = fuselage_types
+            .non_hp_fuselages
+            .get(STEEL_FUSELAGE_NAME)
+            .unwrap();
+
         const MAX_NUM_TANKS: u8 = 9;
         const MAX_PAYLOAD_KG: usize = 400;
         for engine in engines {
@@ -368,7 +371,8 @@ mod tests {
             } else {
                 engine.thrust_asl
             } * 1000.0;
-            let mut twr_errors_payloads = [[(0f64, 0f64, 0f64, 0f64); MAX_NUM_TANKS as usize]; MAX_PAYLOAD_KG];
+            let mut twr_errors_payloads =
+                [[(0f64, 0f64, 0f64, 0f64); MAX_NUM_TANKS as usize]; MAX_PAYLOAD_KG];
             let payload_masses_kg: [usize; 4] = [250, 300, 400, 500];
             for (i, payload_mass_kg) in payload_masses_kg.iter().enumerate() {
                 let payload_mass_tons = *payload_mass_kg as f64 / 1000.0;
@@ -377,7 +381,7 @@ mod tests {
                     // error increases a lot when TWR_MIN = 1. Max error was at about 1.2-1.4. Probably because the height was capped to 50. Will eliminate any results where h = 50.0
                     const TWR_MIN: usize = 1;
                     const TWR_MAX: usize = 50;
-                    
+
                     let mut min_error = 1.0;
                     let mut max_error = -1.0;
                     let mut sum_error = 0.0;
@@ -388,12 +392,12 @@ mod tests {
                         let target_twr = target_twr_index as f64 / 10.0;
 
                         let h = compute_tank_height(
-                            target_twr, 
-                            &engine, 
-                            fuselage, 
-                            payload_mass_tons, 
-                            num_tanks, 
-                            IN_VACUUM
+                            target_twr,
+                            &engine,
+                            fuselage,
+                            payload_mass_tons,
+                            num_tanks,
+                            IN_VACUUM,
                         );
                         if let Ok(h) = h {
                             if h == 50.0 {
@@ -402,10 +406,12 @@ mod tests {
                             }
                             valid_samples += 1;
                             let volume = tank_volume(*diameter, h) * num_tanks as f64;
-                            let mut wet_mass = *payload_mass_kg as f64 + engine_mass_kg * num_tanks as f64;
+                            let mut wet_mass =
+                                *payload_mass_kg as f64 + engine_mass_kg * num_tanks as f64;
                             let fuel_mass = engine.fuel_mix.mass(volume * fuselage.utilization);
                             wet_mass += fuel_mass;
-                            let structural_mass = volume * (1.0 - fuselage.utilization) * fuselage.density;
+                            let structural_mass =
+                                volume * (1.0 - fuselage.utilization) * fuselage.density;
                             wet_mass += structural_mass;
                             let twr = thrust_n * num_tanks as f64 / wet_mass / G;
                             let ratio = twr / target_twr;
@@ -420,14 +426,36 @@ mod tests {
                             abs_sum_error += percent_difference.abs();
                         }
                     }
-                    draw_twr_error_chart_inner(*payload_mass_kg, engine_mass_kg * num_tanks as f64, thrust_n * num_tanks as f64, &twr_errors_inner, &format!("height_chart_errors/inner/{}/{}_engines_{}_payload_mass.html", engine.name, num_tanks, payload_mass_kg)).unwrap();
-                    twr_errors[num_tanks as usize - 1] = (min_error, max_error, sum_error / valid_samples as f64, abs_sum_error / valid_samples as f64);
+                    draw_twr_error_chart_inner(
+                        *payload_mass_kg,
+                        engine_mass_kg * num_tanks as f64,
+                        thrust_n * num_tanks as f64,
+                        &twr_errors_inner,
+                        &format!(
+                            "height_chart_errors/inner/{}/{}_engines_{}_payload_mass.html",
+                            engine.name, num_tanks, payload_mass_kg
+                        ),
+                    )
+                    .unwrap();
+                    twr_errors[num_tanks as usize - 1] = (
+                        min_error,
+                        max_error,
+                        sum_error / valid_samples as f64,
+                        abs_sum_error / valid_samples as f64,
+                    );
                 }
-                draw_twr_error_chart_html(*payload_mass_kg, &twr_errors, &format!("height_chart_errors/{}/payload_mass_{}.html", engine.name, payload_mass_kg)).unwrap();
+                draw_twr_error_chart_html(
+                    *payload_mass_kg,
+                    &twr_errors,
+                    &format!(
+                        "height_chart_errors/{}/payload_mass_{}.html",
+                        engine.name, payload_mass_kg
+                    ),
+                )
+                .unwrap();
                 twr_errors_payloads[i] = twr_errors;
             }
         }
-
     }
 
     use charming::{
@@ -460,26 +488,32 @@ mod tests {
             .legend(Legend::new())
             .x_axis(Axis::new().type_(AxisType::Category).data(x_data))
             .y_axis(Axis::new().min(-0.01).max(0.09))
-            .series(Line::new()
-                .name("min_error")
-                .data(min_errors)
-                .symbol(Symbol::None)
-                .line_style(LineStyle::new().width(2)))
-            .series(Line::new()
-                .name("max_error")
-                .data(max_errors)
-                .symbol(Symbol::None)
-                .line_style(LineStyle::new().width(2)))
-            .series(Line::new()
-                .name("avg_error")
-                .data(avg_errors)
-                .symbol(Symbol::None)
-                .line_style(LineStyle::new().width(2)));
-            // .series(Line::new()
-            //     .name("abs_avg_error")
-            //     .data(abs_avg_errors)
-            //     .symbol(Symbol::None)
-            //     .line_style(LineStyle::new().width(2)));
+            .series(
+                Line::new()
+                    .name("min_error")
+                    .data(min_errors)
+                    .symbol(Symbol::None)
+                    .line_style(LineStyle::new().width(2)),
+            )
+            .series(
+                Line::new()
+                    .name("max_error")
+                    .data(max_errors)
+                    .symbol(Symbol::None)
+                    .line_style(LineStyle::new().width(2)),
+            )
+            .series(
+                Line::new()
+                    .name("avg_error")
+                    .data(avg_errors)
+                    .symbol(Symbol::None)
+                    .line_style(LineStyle::new().width(2)),
+            );
+        // .series(Line::new()
+        //     .name("abs_avg_error")
+        //     .data(abs_avg_errors)
+        //     .symbol(Symbol::None)
+        //     .line_style(LineStyle::new().width(2)));
 
         let html = HtmlRenderer::new("chart", 800, 600).render(&chart)?;
         fs::create_dir_all(std::path::Path::new(output_path).parent().unwrap()).unwrap();
@@ -494,7 +528,9 @@ mod tests {
         twr_errors: &[Option<f64>],
         output_path: &str,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let x_data: Vec<String> = (1..=twr_errors.len()).map(|n| (n as f64 / 10.0).to_string()).collect();
+        let x_data: Vec<String> = (1..=twr_errors.len())
+            .map(|n| (n as f64 / 10.0).to_string())
+            .collect();
         let mut errors = vec![];
         let mut first_error = f64::NAN;
         let mut first_err_index = 0;
@@ -519,7 +555,7 @@ mod tests {
         }
         let rise = last_err - first_error;
         let run = (last_err_index - first_err_index) as f64 * 0.1;
-        let slope = rise/run;
+        let slope = rise / run;
         //let normalized_slope = slope / engine_mass;
         //let normalized_slope = slope / engine_thrust;
         println!("\tError % slope = {} % / twr", slope);
@@ -527,18 +563,26 @@ mod tests {
         let chart = Chart::new()
             .title(Title::new().text(format!("TWR Errors for Payload {} kg", payload_mass_kg)))
             .legend(Legend::new())
-            .x_axis(Axis::new().type_(AxisType::Category).data(x_data).min(0.0).max(50.0))
+            .x_axis(
+                Axis::new()
+                    .type_(AxisType::Category)
+                    .data(x_data)
+                    .min(0.0)
+                    .max(50.0),
+            )
             .y_axis(Axis::new().min(-0.01).max(0.09))
-            .series(Line::new()
-                .name("error %")
-                .data(errors)
-                .symbol(Symbol::None)
-                .line_style(LineStyle::new().width(2)));
-            // .series(Line::new()
-            //     .name("abs_avg_error")
-            //     .data(abs_avg_errors)
-            //     .symbol(Symbol::None)
-            //     .line_style(LineStyle::new().width(2)));
+            .series(
+                Line::new()
+                    .name("error %")
+                    .data(errors)
+                    .symbol(Symbol::None)
+                    .line_style(LineStyle::new().width(2)),
+            );
+        // .series(Line::new()
+        //     .name("abs_avg_error")
+        //     .data(abs_avg_errors)
+        //     .symbol(Symbol::None)
+        //     .line_style(LineStyle::new().width(2)));
 
         let html = HtmlRenderer::new(output_path, 800, 600).render(&chart)?;
         fs::create_dir_all(std::path::Path::new(output_path).parent().unwrap()).unwrap();
