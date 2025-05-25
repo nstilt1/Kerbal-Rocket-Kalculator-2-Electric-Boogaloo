@@ -239,8 +239,8 @@ pub fn compute_tank_height(
         fuel_density * utilization
     );
 
-    let h = ((max_wet_mass - payload_mass - engine_mass_total)
-        / ((mass_contribution * num_tanks) + correction_factor_total - ellipsoid_volume_total))
+    let h = (max_wet_mass - payload_mass - engine_mass_total)
+        / ((mass_contribution * num_tanks) + correction_factor_total - ellipsoid_volume_total)
         / (std::f64::consts::PI * r * r);
 
     #[cfg(test)]
@@ -249,9 +249,9 @@ pub fn compute_tank_height(
         let structural_mass =
             structural_density * 0.001 * (1.0 - utilization) * tank_volume(diameter, h) * num_tanks;
         let fuel_mass = fuel_density * utilization * tank_volume(diameter, h) * 0.001 * num_tanks;
-        println!("Fuel mass inside fn: {} kg", fuel_mass);
-        println!("Structural mass inside fn: {} kg", structural_mass);
-        println!(
+        debug!("Fuel mass inside fn: {} kg", fuel_mass);
+        debug!("Structural mass inside fn: {} kg", structural_mass);
+        debug!(
             "Wet mass inside fn: {} kg",
             payload_mass + engine_mass_total + fuel_mass + structural_mass
         );
@@ -308,13 +308,13 @@ mod tests {
         assert!(engine.mass < 1.0);
         let twr = thrust_n / wet_mass / G;
 
-        println!("Wet mass = {}", wet_mass);
+        //println!("Wet mass = {}", wet_mass);
         assert_eq!(
             (twr - target_twr).abs() < 0.105,
             true,
             "TWR was outside the range"
         );
-        println!("TWR = {}\nTarget TWR = {}", twr, target_twr);
+        //println!("TWR = {}\nTarget TWR = {}", twr, target_twr);
 
         for num_tanks in 2..=9 {
             println!();
@@ -331,14 +331,14 @@ mod tests {
             let volume = tank_volume(diameter, h) * num_tanks as f64;
             let mut wet_mass = payload_mass_kg + engine_mass_kg * num_tanks as f64;
             let fuel_mass = engines[0].fuel_mix.mass(volume * fuselage.utilization);
-            println!("Fuel mass in test: {} kg", fuel_mass);
+            //println!("Fuel mass in test: {} kg", fuel_mass);
             wet_mass += fuel_mass;
             let structural_mass = volume * (1.0 - fuselage.utilization) * fuselage.density;
             wet_mass += structural_mass;
             let twr = thrust_n * num_tanks as f64 / wet_mass / G;
 
-            println!("Wet mass in test = {} kg", wet_mass);
-            println!("Structural mass in test = {} kg", structural_mass);
+            //println!("Wet mass in test = {} kg", wet_mass);
+            //println!("Structural mass in test = {} kg", structural_mass);
             assert!(
                 (twr - target_twr).abs() < 0.105,
                 "Failed on num_tanks={}\ntwr = {}\ntarget = {}",
@@ -346,7 +346,7 @@ mod tests {
                 twr,
                 target_twr
             );
-            println!("TWR: {}\nTarget TWR: {}", twr, target_twr);
+            //println!("TWR: {}\nTarget TWR: {}", twr, target_twr);
         }
     }
 
@@ -377,8 +377,6 @@ mod tests {
                     // error increases a lot when TWR_MIN = 1. Max error was at about 1.2-1.4. Probably because the height was capped to 50. Will eliminate any results where h = 50.0
                     const TWR_MIN: usize = 1;
                     const TWR_MAX: usize = 50;
-                    const TWR_MIN_F64: f64 = TWR_MIN as f64 / 10.0;
-                    const TWR_MAX_F64: f64 = TWR_MAX as f64 / 10.0;
                     
                     let mut min_error = 1.0;
                     let mut max_error = -1.0;
@@ -422,7 +420,7 @@ mod tests {
                             abs_sum_error += percent_difference.abs();
                         }
                     }
-                    draw_twr_error_chart_inner(*payload_mass_kg, &twr_errors_inner, &format!("height_chart_errors/inner/{}/{}_engines_{}_payload_mass.html", engine.name, num_tanks, payload_mass_kg)).unwrap();
+                    draw_twr_error_chart_inner(*payload_mass_kg, engine_mass_kg * num_tanks as f64, thrust_n * num_tanks as f64, &twr_errors_inner, &format!("height_chart_errors/inner/{}/{}_engines_{}_payload_mass.html", engine.name, num_tanks, payload_mass_kg)).unwrap();
                     twr_errors[num_tanks as usize - 1] = (min_error, max_error, sum_error / valid_samples as f64, abs_sum_error / valid_samples as f64);
                 }
                 draw_twr_error_chart_html(*payload_mass_kg, &twr_errors, &format!("height_chart_errors/{}/payload_mass_{}.html", engine.name, payload_mass_kg)).unwrap();
@@ -491,14 +489,40 @@ mod tests {
 
     fn draw_twr_error_chart_inner(
         payload_mass_kg: usize,
+        engine_mass: f64,
+        engine_thrust: f64,
         twr_errors: &[Option<f64>],
         output_path: &str,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let x_data: Vec<String> = (1..=twr_errors.len()).map(|n| (n as f64 / 10.0).to_string()).collect();
         let mut errors = vec![];
-        for err in twr_errors {
+        let mut first_error = f64::NAN;
+        let mut first_err_index = 0;
+        for (i, err) in twr_errors.iter().enumerate() {
             errors.push(*err);
+            if first_error.is_nan() {
+                if let Some(err) = err {
+                    first_error = *err;
+                    first_err_index = i;
+                }
+            }
         }
+        let mut last_err = f64::NAN;
+        let mut last_err_index = twr_errors.len() + 1;
+        for (i, err) in twr_errors.iter().enumerate().rev() {
+            if last_err.is_nan() {
+                if let Some(err) = err {
+                    last_err = *err;
+                    last_err_index = i;
+                }
+            }
+        }
+        let rise = last_err - first_error;
+        let run = (last_err_index - first_err_index) as f64 * 0.1;
+        let slope = rise/run;
+        //let normalized_slope = slope / engine_mass;
+        //let normalized_slope = slope / engine_thrust;
+        println!("\tError % slope = {} % / twr", slope);
 
         let chart = Chart::new()
             .title(Title::new().text(format!("TWR Errors for Payload {} kg", payload_mass_kg)))
