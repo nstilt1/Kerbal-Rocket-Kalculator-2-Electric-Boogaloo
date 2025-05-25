@@ -215,8 +215,8 @@ fn calculate_cone_lengths(diameter: f64) -> (f64, f64, f64) {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     pub use super::densities::*;
+    use super::*;
 
     const N1: f64 = NOSE_1_CORRECTION_COEF;
 
@@ -531,8 +531,8 @@ mod tests {
     );
 
     macro_rules! get_fuselage_densities {
-        ($name:ident, $fuselage:literal, $utilization:literal, 
-            $mass_1:literal, $mass_2:literal, $mass_3:literal, 
+        ($name:ident, $fuselage:literal, $utilization:literal,
+            $mass_1:literal, $mass_2:literal, $mass_3:literal,
             $mass_4:literal, $expct_mass_1:literal, $expct_mass_2:literal,
             $error_1:literal, $error_2:literal
         ) => {

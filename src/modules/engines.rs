@@ -199,7 +199,7 @@ impl Engine {
     pub const fn init_rp1_engines() -> [Engine; NUM_EGINES] {
         let mut engines = [
             Engine::new(
-                "Aerobee",  // Engine 0
+                "Aerobee", // Engine 0
                 false,
                 6.7,
                 7.7,
@@ -225,7 +225,7 @@ impl Engine {
                 "start",
             ),
             Engine::new(
-                "U-1250",       // Engine 1
+                "U-1250", // Engine 1
                 false,
                 12.7,
                 14.4,
@@ -251,7 +251,7 @@ impl Engine {
                 "start",
             ),
             Engine::new(
-                "Veronique",        // Engine 2
+                "Veronique", // Engine 2
                 false,
                 39.2,
                 49.3,
@@ -277,7 +277,7 @@ impl Engine {
                 "start",
             ),
             Engine::new(
-                "Tiny Tim Booster",     // Engine 3
+                "Tiny Tim Booster", // Engine 3
                 true,
                 133.4,
                 146.6,
@@ -299,7 +299,7 @@ impl Engine {
                 "start",
             ),
             Engine::new(
-                "A-4",      // Engine 4
+                "A-4", // Engine 4
                 false,
                 238.8,
                 284.7,
@@ -325,7 +325,7 @@ impl Engine {
                 "start",
             ),
             Engine::new(
-                "RD-100",       // Engine 5
+                "RD-100", // Engine 5
                 false,
                 263.0,
                 307.0,
@@ -351,7 +351,7 @@ impl Engine {
                 "Post-War Rocketry Testing",
             ),
             Engine::new(
-                "XLR10",        // Engine 6
+                "XLR10", // Engine 6
                 false,
                 92.5,
                 110.5,
@@ -377,7 +377,7 @@ impl Engine {
                 "Post-War Rocketry Testing",
             ),
             Engine::new(
-                "XLR11",        // Engine 7
+                "XLR11", // Engine 7
                 false,
                 24.5,
                 26.7,
@@ -403,7 +403,7 @@ impl Engine {
                 "Post-War Rocketry Testing",
             ),
             Engine::new(
-                "XLR41",        // Engine 8
+                "XLR41", // Engine 8
                 false,
                 282.8,
                 333.0,
@@ -429,7 +429,7 @@ impl Engine {
                 "Post-War Rocketry Testing",
             ),
             Engine::new(
-                "ORM-65",        // Engine 9
+                "ORM-65", // Engine 9
                 false,
                 1.7,
                 1.8,

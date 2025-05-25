@@ -245,8 +245,8 @@ impl Calculator {
                                     nose_fuselage.utilization,
                                     nosecone_core.correction_coefficient,
                                 ) * num_engines as f64;
-                                let nose_wet_mass = nose_dry_mass
-                                    + fuel.mass(nose_volume * num_engines as f64);
+                                let nose_wet_mass =
+                                    nose_dry_mass + fuel.mass(nose_volume * num_engines as f64);
 
                                 let wet_mass = nose_wet_mass + partial_mass;
                                 let dry_mass = nose_dry_mass + partial_mass;
@@ -458,18 +458,24 @@ impl Calculator {
         let nosecones = NoseConeVariant::nosecones();
         let nosecone_cores = &nosecones.cores;
         let unlocked_fuselages: Vec<&str> = self.unlocked_fusalages.split(',').collect();
-        let (nosecone_hp_fuselages, nosecone_non_hp_fuselages) = 
+        let (nosecone_hp_fuselages, nosecone_non_hp_fuselages) =
             NoseConeVariant::init_fuselage_types();
-        let mut unlocked_nosecone_hp_fuselages: Vec<&Fuselage> = Vec::with_capacity(unlocked_fuselages.len());
-        let mut unlocked_nosecone_non_hp_fuselages: Vec<&Fuselage> = Vec::with_capacity(unlocked_fuselages.len());
-        let (cylinder_hp_fuselages, cylinder_non_hp_fuselages) = CylindricalTank::init_fuselage_types();
-        let mut unlocked_cylinder_hp_fuselages: Vec<&Fuselage> = Vec::with_capacity(unlocked_fuselages.len());
-        let mut unlocked_cylinder_non_hp_fuselages: Vec<&Fuselage> = Vec::with_capacity(unlocked_fuselages.len());
+        let mut unlocked_nosecone_hp_fuselages: Vec<&Fuselage> =
+            Vec::with_capacity(unlocked_fuselages.len());
+        let mut unlocked_nosecone_non_hp_fuselages: Vec<&Fuselage> =
+            Vec::with_capacity(unlocked_fuselages.len());
+        let (cylinder_hp_fuselages, cylinder_non_hp_fuselages) =
+            CylindricalTank::init_fuselage_types();
+        let mut unlocked_cylinder_hp_fuselages: Vec<&Fuselage> =
+            Vec::with_capacity(unlocked_fuselages.len());
+        let mut unlocked_cylinder_non_hp_fuselages: Vec<&Fuselage> =
+            Vec::with_capacity(unlocked_fuselages.len());
         for unlocked_fuselage in unlocked_fuselages {
             let hp_unlocked_fuselage = format!("HP {}", unlocked_fuselage);
             unlocked_nosecone_hp_fuselages.push(
-                nosecone_hp_fuselages.get(hp_unlocked_fuselage.as_str())
-                .expect(&format!("fuselage not found1: '{}'", hp_unlocked_fuselage)),
+                nosecone_hp_fuselages
+                    .get(hp_unlocked_fuselage.as_str())
+                    .expect(&format!("fuselage not found1: '{}'", hp_unlocked_fuselage)),
             );
             unlocked_nosecone_non_hp_fuselages.push(
                 nosecone_non_hp_fuselages
@@ -484,22 +490,28 @@ impl Calculator {
             unlocked_cylinder_non_hp_fuselages.push(
                 cylinder_non_hp_fuselages
                     .get(unlocked_fuselage)
-                    .expect(&format!("fuselage not found4: '{}'", unlocked_fuselage))
+                    .expect(&format!("fuselage not found4: '{}'", unlocked_fuselage)),
             );
         }
         unlocked_nosecone_hp_fuselages.sort_by_key(|s| s.name);
         unlocked_nosecone_non_hp_fuselages.sort_by_key(|s| s.name);
         unlocked_cylinder_hp_fuselages.sort_by_key(|s| s.name);
         unlocked_cylinder_non_hp_fuselages.sort_by_key(|s| s.name);
-        
+
         'engine_loop: for engine in engines.iter() {
             if !engine.has_gimbal && self.needs_gimballing {
                 continue 'engine_loop;
             }
             let (cyl_fuselages, nose_fuselages) = if engine.hp_fuel {
-                (&unlocked_cylinder_hp_fuselages, &unlocked_nosecone_hp_fuselages)
+                (
+                    &unlocked_cylinder_hp_fuselages,
+                    &unlocked_nosecone_hp_fuselages,
+                )
             } else {
-                (&unlocked_cylinder_non_hp_fuselages, &unlocked_nosecone_non_hp_fuselages)
+                (
+                    &unlocked_cylinder_non_hp_fuselages,
+                    &unlocked_nosecone_non_hp_fuselages,
+                )
             };
 
             for (nose_fuselage, cyl_fuselage) in nose_fuselages.iter().zip(cyl_fuselages) {
@@ -516,7 +528,8 @@ impl Calculator {
                     let thrust = engine_thrust * num_engines as f64 * 1000.0;
 
                     let fuel = &engine.fuel_mix;
-                    let max_volume_per_stack = fuel.max_volume(engine.rated_burn_time) * (extra_fuel_percentage / 100.0 + 1.0);
+                    let max_volume_per_stack = fuel.max_volume(engine.rated_burn_time)
+                        * (extra_fuel_percentage / 100.0 + 1.0);
 
                     if self.use_nosecone {
                         for nosecone_core in nosecone_cores {
@@ -525,7 +538,7 @@ impl Calculator {
                             let mut height = max_height;
                             'nose_height_loop: while height >= min_height {
                                 let nose_volume = calculate_corrected_volume(
-                                    engine.size.get_diameter(), 
+                                    engine.size.get_diameter(),
                                     height,
                                     nosecone_core.correction_coefficient,
                                 ) * nose_fuselage.utilization;
@@ -534,13 +547,14 @@ impl Calculator {
                                     continue 'nose_height_loop;
                                 }
                                 let nose_dry_mass = calculate_nose_dry_mass(
-                                    engine.size.get_diameter(), 
-                                    height, 
-                                    nose_fuselage.density, 
-                                    nose_fuselage.utilization, 
-                                    nosecone_core.correction_coefficient
+                                    engine.size.get_diameter(),
+                                    height,
+                                    nose_fuselage.density,
+                                    nose_fuselage.utilization,
+                                    nosecone_core.correction_coefficient,
                                 ) * num_engines as f64;
-                                let nose_wet_mass = nose_dry_mass + fuel.mass(nose_volume * num_engines as f64);
+                                let nose_wet_mass =
+                                    nose_dry_mass + fuel.mass(nose_volume * num_engines as f64);
 
                                 let wet_mass = nose_wet_mass + partial_mass;
                                 let dry_mass = nose_dry_mass + partial_mass;
@@ -553,17 +567,26 @@ impl Calculator {
                                 }
 
                                 // we have enough twr, but max volume is not yet reached
-                                let min_cyl_height = 0.1f64.max(engine.size.get_diameter() * CylindricalTank::MIN_VSA);
+                                let min_cyl_height = 0.1f64
+                                    .max(engine.size.get_diameter() * CylindricalTank::MIN_VSA);
                                 let max_cyl_height = CylindricalTank::MAX_VSA;
                                 let mut cyl_height = max_cyl_height;
                                 'cyl_height_loop: while cyl_height >= min_cyl_height {
-                                    let cyl_volume = tank_volume(engine.size.get_diameter(), cyl_height) * cyl_fuselage.utilization;
+                                    let cyl_volume =
+                                        tank_volume(engine.size.get_diameter(), cyl_height)
+                                            * cyl_fuselage.utilization;
                                     if nose_volume + cyl_volume > max_volume_per_stack {
                                         cyl_height -= HEIGHT_DECREMENT_AMT;
                                         continue 'cyl_height_loop;
                                     }
-                                    let cyl_dry_mass = cylindrical_dry_mass(engine.size.get_diameter(), cyl_height, cyl_fuselage.utilization, cyl_fuselage.density) * num_engines as f64;
-                                    let cyl_wet_mass = cyl_dry_mass + fuel.mass(cyl_volume * num_engines as f64);
+                                    let cyl_dry_mass = cylindrical_dry_mass(
+                                        engine.size.get_diameter(),
+                                        cyl_height,
+                                        cyl_fuselage.utilization,
+                                        cyl_fuselage.density,
+                                    ) * num_engines as f64;
+                                    let cyl_wet_mass =
+                                        cyl_dry_mass + fuel.mass(cyl_volume * num_engines as f64);
 
                                     let dry_mass = nose_dry_mass + partial_mass + cyl_dry_mass;
                                     let wet_mass = nose_wet_mass + partial_mass + cyl_wet_mass;
@@ -582,9 +605,9 @@ impl Calculator {
                                             diameter: engine.size.get_diameter(),
                                             fuselage: **nose_fuselage,
                                         }),
-                                        Some(CylindricalTank { 
-                                            length: cyl_height, 
-                                            diameter: engine.size.get_diameter(), 
+                                        Some(CylindricalTank {
+                                            length: cyl_height,
+                                            diameter: engine.size.get_diameter(),
                                             fuselage: **cyl_fuselage,
                                         }),
                                         *engine,
@@ -592,7 +615,7 @@ impl Calculator {
                                         num_engines,
                                         wet_mass,
                                         dry_mass,
-                                        twr
+                                        twr,
                                     ));
                                     height -= HEIGHT_DECREMENT_AMT;
                                     continue 'nose_height_loop;
@@ -602,21 +625,24 @@ impl Calculator {
                         }
                     } else {
                         // no nosecones!
-                        let min_cyl_height = 0.1f64.max(engine.size.get_diameter() * CylindricalTank::MIN_VSA);
+                        let min_cyl_height =
+                            0.1f64.max(engine.size.get_diameter() * CylindricalTank::MIN_VSA);
                         let max_cyl_height = CylindricalTank::MAX_VSA;
                         let mut cyl_height = max_cyl_height;
                         'cyl_height_loop_2: while cyl_height >= min_cyl_height {
-                            let cyl_volume = tank_volume(engine.size.get_diameter(), cyl_height) * cyl_fuselage.utilization;
+                            let cyl_volume = tank_volume(engine.size.get_diameter(), cyl_height)
+                                * cyl_fuselage.utilization;
                             if cyl_volume > max_volume_per_stack {
                                 break;
                             }
                             let cyl_dry_mass = cylindrical_dry_mass(
-                                engine.size.get_diameter(), 
-                                cyl_height, 
-                                cyl_fuselage.utilization, 
-                                cyl_fuselage.density
+                                engine.size.get_diameter(),
+                                cyl_height,
+                                cyl_fuselage.utilization,
+                                cyl_fuselage.density,
                             ) * num_engines as f64;
-                            let cyl_wet_mass = cyl_dry_mass + fuel.mass(cyl_volume * num_engines as f64);
+                            let cyl_wet_mass =
+                                cyl_dry_mass + fuel.mass(cyl_volume * num_engines as f64);
                             let dry_mass = partial_mass + cyl_dry_mass;
                             let wet_mass = partial_mass + cyl_wet_mass;
 
@@ -628,17 +654,17 @@ impl Calculator {
 
                             result.push(Rocket::new(
                                 None,
-                                Some(CylindricalTank { 
-                                    length: cyl_height, 
-                                    diameter: engine.size.get_diameter(), 
-                                    fuselage: **cyl_fuselage, 
+                                Some(CylindricalTank {
+                                    length: cyl_height,
+                                    diameter: engine.size.get_diameter(),
+                                    fuselage: **cyl_fuselage,
                                 }),
                                 *engine,
                                 fuel.fuel_volumes(cyl_volume),
                                 num_engines,
                                 wet_mass,
                                 dry_mass,
-                                twr
+                                twr,
                             ));
                             continue 'num_engine_loop;
                         }
@@ -728,8 +754,19 @@ mod tests {
     #[test]
     fn max_dv_test() {
         let mut calculator = Calculator::new();
-        calculator.prepare_for_max_dv(0.5, false, 1.02, false, false, "Steel Fuselage".to_string(), "start".to_string());
+        calculator.prepare_for_max_dv(
+            0.5,
+            false,
+            1.02,
+            false,
+            false,
+            "Steel Fuselage".to_string(),
+            "start".to_string(),
+        );
         let results = calculator.max_dv(1.5).unwrap();
-        println!("Results: {}", serde_json::to_string_pretty(&results[0]).unwrap());
+        println!(
+            "Results: {}",
+            serde_json::to_string_pretty(&results[0]).unwrap()
+        );
     }
 }

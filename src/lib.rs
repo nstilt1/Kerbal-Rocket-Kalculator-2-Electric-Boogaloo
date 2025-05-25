@@ -37,8 +37,14 @@ pub fn calculate(
 
     assert!(target_delta_v > 0.0, "Target delta v was not positive");
     assert!(minimum_twr >= 0.01, "minimum twr was less than 0.01");
-    assert!(maximum_twr > minimum_twr, "maximum twr was greater than minimum twr");
-    assert!(unlocked_fuselages.length() > 0, "unlocked fuselages.len was 0");
+    assert!(
+        maximum_twr > minimum_twr,
+        "maximum twr was greater than minimum twr"
+    );
+    assert!(
+        unlocked_fuselages.length() > 0,
+        "unlocked fuselages.len was 0"
+    );
     assert!(unlocked_tech.length() > 0, "unlocked tech.len was 0");
 
     let mut calculator = Calculator::new();
@@ -87,7 +93,7 @@ pub fn calculate(
 }
 
 #[wasm_bindgen]
-#[cfg(target_arch="wasm32")]
+#[cfg(target_arch = "wasm32")]
 pub fn max_dv(
     mass: f64,
     in_vacuum: bool,
@@ -109,7 +115,15 @@ pub fn max_dv(
         .collect();
     let unlocked_fuselages: String = unlocked_fuselages.join(",");
     let unlocked_tech: String = unlocked_tech.join(",");
-    calculator.prepare_for_max_dv(mass, in_vacuum, minimum_twr, needs_gimballing, use_nosecone, unlocked_fuselages, unlocked_tech);
+    calculator.prepare_for_max_dv(
+        mass,
+        in_vacuum,
+        minimum_twr,
+        needs_gimballing,
+        use_nosecone,
+        unlocked_fuselages,
+        unlocked_tech,
+    );
     let mut result = calculator.max_dv(extra_fuel_percentage)?;
     result.sort_by(|a, b| a.partial_cmp(&b).unwrap());
     Ok(serde_json::to_string(&result).expect("serde_error"))
