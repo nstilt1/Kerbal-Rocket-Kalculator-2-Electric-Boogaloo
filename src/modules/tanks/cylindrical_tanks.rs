@@ -203,6 +203,30 @@ pub fn compute_tank_height(
     // h = (((fuel_mass + structural_mass) / (structural_density * unusable + fuel_density * usable)) + K * diameter.powi(3) - ellipsoid_volume())/(PI * radius * radius)
     // let n1 = max_wet_mass - payload_mass - engine_mass;
     //assert!(max_wet_mass > payload_mass + engine_mass);
+
+
+    #[allow(unused_doc_comments)]
+    /// Derivation attempt 2:
+    /// 
+    /// Given:
+    /// twr = thrust / wet_mass / g
+    /// wet_mass = payload_mass + engine_mass + fuel_mass + structural_mass
+    /// fuel_mass = tank_volume(h) * fuel_density * util
+    /// tank_volume(h) = ellipsoid_volume + cyl_volume(h) - K*d^3
+    /// cyl_volume(h) = pi*r*r*h
+    /// structural_volume = tank_volume(h) * structural_density * (1-util)
+    /// 
+    /// Derived:
+    /// wet_mass = thrust / twr / g
+    /// numerator_1 = wet_mass - payload_mass - engine_mass
+    /// fuel_mass + structural_mass = numerator_1
+    /// tank_volume(h) * (fuel_density * util + structural_density * (1-util)) = numerator_1
+    /// denominator_1 = fuel_density * util + structural_density * (1 - util)
+    /// tank_volume(h) = numerator_1 / denominator_1
+    /// ellipsoid_volume + cyl_volume(h) - Kd^3 = numerator_1 / denominator_1
+    /// cyl_volume(h) = numerator_1 / denominator_1 - ellipsoid_volume + Kd^3
+    /// pi*r^2*h = numerator_1 / denominator_1 - ellipsoid_volume + Kd^3
+    /// h = (num_1 / den_1 - ellipsoid_volume + Kd^3) / (pi*r*r)
     {
         let engine_mass = &engine.mass;
         if max_wet_mass <= payload_mass + engine_mass {
@@ -239,9 +263,16 @@ pub fn compute_tank_height(
         fuel_density * utilization
     );
 
+    /* 
     let h = (max_wet_mass - payload_mass - engine_mass_total)
         / ((mass_contribution * num_tanks) + correction_factor_total - ellipsoid_volume_total)
         / (std::f64::consts::PI * r * r);
+    */
+    let numerator_1 = max_wet_mass - payload_mass - engine_mass_total;
+    let denominator_1 = mass_contribution;
+    let numerator_2 = (numerator_1 / denominator_1) - ellipsoid_volume_total + correction_factor_total;
+    let denominator_2 = std::f64::consts::PI * r * r * num_tanks;
+    let h = numerator_2 / denominator_2;
 
     #[cfg(test)]
     {
@@ -487,7 +518,7 @@ mod tests {
             .title(Title::new().text(format!("TWR Errors for Payload {} kg", payload_mass_kg)))
             .legend(Legend::new())
             .x_axis(Axis::new().type_(AxisType::Category).data(x_data))
-            .y_axis(Axis::new().min(-0.01).max(0.09))
+            .y_axis(Axis::new().min(-0.1).max(0.01))
             .series(
                 Line::new()
                     .name("min_error")
