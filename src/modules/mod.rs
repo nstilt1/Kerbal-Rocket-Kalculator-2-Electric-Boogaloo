@@ -31,6 +31,7 @@ pub enum Error {
     MissingTech(String),
     MaxWetMassBelowCurrentMass,
     InvalidHeight,
+    HeightTooLarge,
 }
 
 impl Display for Error {
@@ -39,6 +40,7 @@ impl Display for Error {
             Self::MissingTech(v) => v,
             Self::MaxWetMassBelowCurrentMass => "Max wet mass is below current mass",
             Self::InvalidHeight => "Invalid height (NaN or negative)",
+            Self::HeightTooLarge => "Height exceeds limit",
         })
     }
 }

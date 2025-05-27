@@ -1,4 +1,4 @@
-use crate::{debug, G};
+use crate::{debug, modules::tanks::cylindrical_tanks::compute_tank_height_for_delta_v, G};
 
 use super::{
     engines::Engine,
@@ -383,6 +383,9 @@ impl Calculator {
                         let wet_mass = partial_mass + cyl_wet_mass;
 
                         let twr = thrust / wet_mass / G;
+                        
+                        debug!("TWR passed check = {}", twr);
+
                         if twr < self.minimum_twr {
                             // TODO: consider breaking here instead of continuing
                             debug!("Calculated TWR ({}) was less than minimum TWR ({})\nthrust = {}kN, wet_mass = {}kg, G = {}m/s/s", twr, self.minimum_twr, thrust, wet_mass, G);
@@ -403,8 +406,6 @@ impl Calculator {
                             cyl_height += HEIGHT_INCREMENT_AMT;
                             continue 'cyl_height_loop_2;
                         }
-                        debug!("TWR passed check = {}", twr);
-
                         // we have enough twr, but do we have enough delta-v?
                         if wet_mass / dry_mass >= target_ratio {
                             only_cylinder_results.push(Rocket::new(
@@ -422,8 +423,22 @@ impl Calculator {
                                 twr,
                             ));
                             break;
+                        } else {
+                            cyl_height = if let Ok(v) = compute_tank_height_for_delta_v(
+                                self.target_dv, 
+                                engine, 
+                                &cyl_fuselage, 
+                                self.mass, 
+                                num_engines, 
+                                self.in_vacuum
+                            ) {
+                                v + 0.001
+                            } else {
+                                // height is greater than 50.0, or NaN or infinity
+                                continue 'num_engine_loop;
+                            };
+                            continue 'cyl_height_loop_2;
                         }
-                        cyl_height += 0.05;
                     }
                 }
             }
@@ -650,6 +665,7 @@ impl Calculator {
                             let cyl_volume = tank_volume(engine.size.get_diameter(), cyl_height)
                                 * cyl_fuselage.utilization;
                             if cyl_volume > max_volume_per_stack {
+                                cyl_height -= HEIGHT_DECREMENT_AMT;
                                 break;
                             }
                             let cyl_dry_mass = cylindrical_dry_mass(
@@ -682,7 +698,7 @@ impl Calculator {
                                     // height was negative or infinity or NaN
                                     break 'cyl_height_loop_2;
                                 };
-                                continue 'cyl_height_loop_2;
+                                unreachable!("This should not be reachable - line 686");
                             }
 
                             result.push(Rocket::new(

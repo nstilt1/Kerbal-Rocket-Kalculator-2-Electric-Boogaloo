@@ -298,6 +298,76 @@ pub fn compute_tank_height(
     }
     Ok(h)
 }
+/// Computes the tank height required to reach a specific delta-v
+/// 
+/// ```norun
+/// Given:
+/// wet_mass = payload_mass + engine_mass + fuel_mass + structural_mass
+/// dry_mass = payload_mass + engine_mass + structural_mass
+/// fuel_mass = tank_volume(h) * fuel_density * util
+/// structural_mass = tank_volume(h) * structural_density * (1 - util)
+/// tank_volume(h) = ellipsoid_volume + cyl_volume(h) - K*d^3
+/// cyl_volume(h) = pi*r^2*h
+/// dv = Isp * g * ln(wet_mass/dry_mass)
+/// 
+/// Derivation:
+/// dv/(Isp * g) = ln(wet_mass/dry_mass)
+/// e^(dv/Isp/g) = wet_mass/dry_mass
+/// e0 = e^(dv/Isp/g)
+/// e0 = (payload_mass + engine_mass + fuel_mass + structural_mass)/(payload_mass + engine_mass + structural_mass)
+/// e0 * (payload_mass + engine_mass + structural_mass) = payload_mass + engine_mass + fuel_mass + structural_mass
+/// e0*payload_mass + e0*engine_mass + e0 * structural_mass = payload_mass + engine_mass + fuel_mass + structural_mass
+/// e0*structural_mass - structural_mass - fuel_mass = payload_mass + engine_mass - e0*payload_mass - e0*engine_mass
+/// structural_mass * (e0 - 1) - fuel_mass = (payload_mass + engine_mass) * (1 - e0)
+/// num_1 = (payload_mass + engine_mass) * (1 - e0)
+/// (tank_volume(h) * structural_density * (1-util))*(e0 - 1) - tank_volume(h) * fuel_density * util = num_1
+/// tank_volume(h) * (structural_density * (1-util)*(e0-1) - fuel_density * util) = num_1
+/// tank_volume(h) = num_1 / (structural_density * (1-util) * (e0 - 1) - fuel_density * util)
+/// den_1 = structural_density * (1-util) * (e0 - 1) - fuel_density * util
+/// ellipsoid_volume + cyl_volume(h) - K*d^3 = num_1 / den_1
+/// cyl_volume(h) = num_1 / den_1 - ellipsoid_volume + K*d^3
+/// pi*r*r*h = num_1 / den_1 - ellipsoid_volume + K * d^3
+/// den_2 = pi * r * r
+/// h = (num_1 / den_1 - ellipsoid_volume + K * d^3)/den_2
+/// ```
+pub fn compute_tank_height_for_delta_v(
+    target_dv: f64,
+    engine: &Engine,
+    fuselage: &Fuselage,
+    payload_mass: f64,
+    num_tanks: u8,
+    in_vacuum: bool,
+) -> Result<f64, Error> {
+    let isp = if in_vacuum {
+        engine.isp_vac
+    } else {
+        engine.isp_asl
+    };
+    let engine_mass = engine.mass * 1000.0 * num_tanks as f64;
+    let payload_mass = payload_mass * 1000.0;
+    let e0 = std::f64::consts::E.powf(target_dv/(isp*G));
+    //let e0 = f64::exp(target_dv / (isp * g));
+    let d = engine.size.get_diameter();
+    let r = d / 2.0;
+    let ellipsoid_volume_total = ellipsoid_volume(r, r, r/2.0) * num_tanks as f64;
+    let correction_total = (K*d*d*d*num_tanks as f64) * 0.001;
+
+    let fuel_density = engine.fuel_mix.density() * 1000.0;
+    let structural_density = fuselage.density * 1000.0;
+
+    let num_1 = (payload_mass + engine_mass) * (1.0 - e0);
+    let den_1 = structural_density * (1.0 - fuselage.utilization) * (e0 - 1.0) - fuel_density * fuselage.utilization;
+    let num_2 = num_1 / den_1 - ellipsoid_volume_total + correction_total;
+    let den_2 = std::f64::consts::PI * r * r * num_tanks as f64;
+    let h = num_2 / den_2;
+    if h > 50.0 {
+        return Err(Error::HeightTooLarge);
+    }
+    if h < 0.0 || h.is_nan() || h.is_infinite() {
+        return Err(Error::InvalidHeight);
+    }
+    Ok(h)
+}
 
 #[cfg(test)]
 mod tests {
@@ -306,6 +376,27 @@ mod tests {
 
     use super::densities::*;
     use super::*;
+
+    #[test]
+    fn tank_height_delta_v_tests() {
+        let payload_mass_tons = 0.4;
+        let engines = ENGINES;
+        let engine = engines[0];
+        let diameter = engine.size.get_diameter();
+        let fuselages = CylindricalTank::init_fuselage_types();
+        let fuselage = fuselages.non_hp_fuselages.get(STEEL_FUSELAGE_NAME).unwrap();
+        let target_dv = 789.123;
+        let num_tanks = 3;
+        let h = compute_tank_height_for_delta_v(target_dv, &engine, fuselage, payload_mass_tons, num_tanks, false).unwrap();
+
+        let volume = tank_volume(diameter, h) * num_tanks as f64;
+        let structural_mass = volume * fuselage.density * (1.0 - fuselage.utilization);
+
+        let dry_mass = payload_mass_tons * 1000.0 + engine.mass * 1000.0 * num_tanks as f64 + structural_mass;
+        let wet_mass = dry_mass + volume * engine.fuel_mix.density() * fuselage.utilization;
+        let delta_v = engine.isp_asl * G * f64::ln(wet_mass/dry_mass);
+        assert_eq!(delta_v, target_dv);
+    }
 
     #[test]
     fn tank_height_tests() {
@@ -589,7 +680,7 @@ mod tests {
         let slope = rise / run;
         //let normalized_slope = slope / engine_mass;
         //let normalized_slope = slope / engine_thrust;
-        println!("\tError % slope = {} % / twr", slope);
+        //println!("\tError % slope = {} % / twr", slope);
 
         let chart = Chart::new()
             .title(Title::new().text(format!("TWR Errors for Payload {} kg", payload_mass_kg)))
