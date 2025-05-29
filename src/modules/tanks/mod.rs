@@ -92,3 +92,43 @@ pub mod fuselage_names {
     pub const STEEL_STIR_WELDED_TANK_NAME: &str = "Steel Stir-Welded Tank";
     pub const HP_STEEL_STIR_WELDED_TANK_NAME: &str = "HP Steel Stir-Welded Tank";
 }
+#[cfg(test)]
+mod tests {
+    use super::{cylindrical_tanks::CylindricalTank, nose_tanks::NoseConeVariant, *};
+
+    #[test]
+    fn sanity_check_fuselage_densities() {
+        use super::fuselage_names::*;
+        let cyl_fuselages = CylindricalTank::init_fuselage_types();
+        let nose_fuselages = NoseConeVariant::init_fuselage_types();
+
+        let cyl_hp_fuselages = cyl_fuselages.hp_fuselages;
+        let cyl_non_hp_fuselages = cyl_fuselages.non_hp_fuselages;
+
+        let nose_hp_fuselages = nose_fuselages.hp_fuselages;
+        let nose_non_hp_fuselages = nose_fuselages.non_hp_fuselages;
+
+        let fuselage_names = [
+            STEEL_FUSELAGE_NAME,
+            AL_FUSELAGE_NAME,
+            AL_STRINGER_TANK_NAME,
+            REFINED_AL_STRINGER_TANK_NAME,
+            AL_LI_STRINGER_TANK_NAME,
+            REFINED_AL_LI_STRINGER_TANK_NAME,
+            STEEL_STIR_WELDED_TANK_NAME
+        ];
+
+        for name in fuselage_names {
+            let nose_non_hp_fuselage = nose_non_hp_fuselages.get(name).unwrap();
+            let cyl_non_hp_fuselage = cyl_non_hp_fuselages.get(name).unwrap();
+            
+            let diff = (nose_non_hp_fuselage.density - cyl_non_hp_fuselage.density).abs();
+            assert!(diff < 0.08, "Diff = {}\n{}\nnose: {}\ncyl: {}", diff, name, nose_non_hp_fuselage.density, cyl_non_hp_fuselage.density);
+
+            let nose_hp_fuselage = nose_hp_fuselages.get(format!("HP {}", name).as_str()).unwrap();
+            let cyl_hp_fuselage = cyl_hp_fuselages.get(format!("HP {}", name).as_str()).unwrap();
+            let diff = (nose_hp_fuselage.density - cyl_hp_fuselage.density).abs();
+            //assert!(diff < 0.005, "Diff = {}\nHP {}", diff, name);
+        }
+    }
+}

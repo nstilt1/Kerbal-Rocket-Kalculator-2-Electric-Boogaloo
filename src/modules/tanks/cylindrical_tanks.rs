@@ -129,11 +129,11 @@ fn cylinder_volume(radius: f64, height: f64) -> f64 {
     std::f64::consts::PI * radius * radius * height
 }
 /// Calculates the volume of an ellipsoid.
-fn ellipsoid_volume(a: f64, b: f64, c: f64) -> f64 {
+pub fn ellipsoid_volume(a: f64, b: f64, c: f64) -> f64 {
     4.0 / 3.0 * std::f64::consts::PI * (a * b * c)
 }
 
-const K: f64 = 392.69893495497905;
+pub const K: f64 = 392.69893495497905;
 //const N: f64 = 3.0000008452405535;
 
 /// Calculates the volume of a tank with no nose or mount. Applies a correction
@@ -181,6 +181,7 @@ pub fn compute_tank_height(
     //debug!("Engine.mass = {}", engine.mass);
     let diameter = engine.size.get_diameter();
     let r = diameter / 2.0;
+    let engine_mass = engine.mass * 1000.0 * num_engines as f64;
 
     // twr = thrust_n / wet_mass / G
     // target_wet_mass = thrust_n / target_twr / G
@@ -228,7 +229,6 @@ pub fn compute_tank_height(
     /// pi*r^2*h = numerator_1 / denominator_1 - ellipsoid_volume + Kd^3
     /// h = (num_1 / den_1 - ellipsoid_volume + Kd^3) / (pi*r*r)
     {
-        let engine_mass = &engine.mass;
         if max_wet_mass <= payload_mass + engine_mass {
             return Err(Error::MaxWetMassBelowCurrentMass);
         }

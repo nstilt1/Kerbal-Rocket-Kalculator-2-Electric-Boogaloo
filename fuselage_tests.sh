@@ -1,0 +1,1 @@
+cargo test modules::tanks::tests -- --nocapture --test-threads=1

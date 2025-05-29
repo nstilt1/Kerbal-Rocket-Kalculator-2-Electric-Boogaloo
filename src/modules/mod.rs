@@ -32,6 +32,7 @@ pub enum Error {
     MaxWetMassBelowCurrentMass,
     InvalidHeight,
     HeightTooLarge,
+    HeightOutsideOfNoseconeRange,
 }
 
 impl Display for Error {
@@ -41,6 +42,7 @@ impl Display for Error {
             Self::MaxWetMassBelowCurrentMass => "Max wet mass is below current mass",
             Self::InvalidHeight => "Invalid height (NaN or negative)",
             Self::HeightTooLarge => "Height exceeds limit",
+            Self::HeightOutsideOfNoseconeRange => "Nosecone height is outside of its range",
         })
     }
 }
