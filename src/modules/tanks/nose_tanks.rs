@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use serde::Serialize;
 
-use crate::{debug, modules::{engines::Engine, Error}, G};
+use crate::{debug, modules::{engines::Engine, tanks::cylindrical_tanks::CylindricalTank, Error}, G};
 
 use super::{cylindrical_tanks::{ellipsoid_volume, K}, fuselage_names::*, Fuselage, Fuselages, Tanks};
 
@@ -250,18 +250,17 @@ fn compute_tank_height_with_nose_for_twr(
     num_tanks: u8,
     in_vacuum: bool
 ) -> Result<f64, Error> {
+    let n = num_tanks as f64;
     let thrust_total = if in_vacuum {
         engine.thrust_vac
     } else {
         engine.thrust_asl
-    };
-    let n = num_tanks as f64;
+    } * n;
     let max_wet_mass = thrust_total / (min_twr * G) * 1000.0;
     let diameter = engine.size.get_diameter();
     let r = diameter / 2.0;
     let engine_mass = engine.mass * 1000.0;
     let payload_mass = payload_mass * 1000.0;
-    let engine_mass_total = engine_mass * num_tanks as f64;
     let fuel_density = engine.fuel_mix.density() * 1000.0;
     let structural_density_cyl = cylindrical_tank_fuselage.density * 1000.0;
     let structural_density_nose = nose_fuselage.density * 1000.0;
@@ -285,19 +284,15 @@ fn compute_tank_height_with_nose_for_twr(
     let m_fuel_nose_plus_m_struct_nose = v_nose * (utilization * fuel_density + (1.0 - utilization) * structural_density_nose);
     
     debug!("max_wet_mass = {}", max_wet_mass);
-    let n_1 = max_wet_mass - payload_mass - engine_mass - m_fuel_nose_plus_m_struct_nose;
+    let n_1 = max_wet_mass - payload_mass - n * (engine_mass + m_fuel_nose_plus_m_struct_nose);
     let d_1 = fuel_density * utilization + structural_density_cyl * (1.0 - utilization);
-    let t_1 = n_1 / d_1 - ellipsoid_volume + K * diameter * diameter * diameter * 0.001;
-    let h = t_1 / (std::f64::consts::PI * r * r);
-    // let n_1 = max_wet_mass - payload_mass - num_tanks as f64 * (engine_mass + v_nose * (fuel_density * nose_fuselage.utilization  + structural_density_nose * (1.0 - nose_fuselage.utilization)));
-    // let d_1 = num_tanks as f64 * (fuel_density + (1.0 - utilization) * structural_density_cyl);
+    let t_1 = n_1 / d_1 + n * (-ellipsoid_volume + K * diameter * diameter * diameter * 0.001);
+    let h = t_1 / (std::f64::consts::PI * r * r * n);
     debug!("n1/d1 = {}", n_1 / d_1);
-    // let n_2 = n_1 / d_1 - ellipsoid_volume + K * diameter * diameter * diameter * 0.001;
-    // let h = n_2 / (std::f64::consts::PI * r * r);
 
-    if h > 50.0 {
-        debug!("Height was over 50: {}", h);
-        return Ok(50.0);
+    if h > CylindricalTank::MAX_VSA {
+        debug!("Height was over MAX_VSA = {}: {}", CylindricalTank::MAX_VSA, h);
+        return Ok(CylindricalTank::MAX_VSA);
     }
     if h.is_infinite() || h.is_nan() || h.is_sign_negative() {
         debug!("h was invalid: {}", h);
@@ -319,8 +314,8 @@ mod tests {
         let target_twr = 3.0;
         let engine = ENGINES[4];
         println!("Engine: {}", engine.name);
-        let num_tanks_f64 = 1.0;
-        let payload_mass_tons = 0.8;
+        let num_tanks_f64 = 5.0;
+        let payload_mass_tons = 1.5;
         let payload_mass_kg = payload_mass_tons * 1000.0;
         let engine_mass_kg = engine.mass * 1000.0 * num_tanks_f64;
         let thrust_n = engine.thrust_asl * 1000.0 * num_tanks_f64;
