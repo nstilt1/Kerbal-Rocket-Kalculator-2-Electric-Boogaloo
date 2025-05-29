@@ -14,7 +14,7 @@ pub mod utils;
 #[cfg(test)]
 macro_rules! debug {
     ($($arg:tt)*) => {
-        if false {
+        if true {
             println!($($arg)*);
         }
     };
