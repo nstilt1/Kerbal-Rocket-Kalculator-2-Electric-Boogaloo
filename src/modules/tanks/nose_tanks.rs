@@ -330,6 +330,8 @@ fn compute_tank_height_with_nose_for_delta_v(
     let fuel_density = engine.fuel_mix.density() * 1000.0;
     let cyl_structural_density = cylindrical_tank_fuselage.density * 1000.0;
     let nose_structural_density = nose_fuselage.density * 1000.0;
+    let u_nose = nose_fuselage.utilization;
+    let u_cyl = cylindrical_tank_fuselage.utilization;
 
     let v_nose = calculate_corrected_volume(
         d, 
@@ -338,21 +340,21 @@ fn compute_tank_height_with_nose_for_delta_v(
     ) * 0.001;
     debug!("v_nose = {}", v_nose);
 
-    let m_fuel_nose = v_nose * nose_fuselage.utilization * fuel_density;
-    let m_struct_nose = v_nose * (1.0 - utilization) * nose_structural_density;
+    let m_fuel_nose = v_nose * u_nose * fuel_density;
+    let m_struct_nose = v_nose * (1.0 - u_nose) * nose_structural_density;
 
-    let dry_mass_partial = payload_mass + engine_mass + m_struct_nose;
-    let n_1 = (e0 - 1.0) * dry_mass_partial - m_fuel_nose;
+    let dry_mass_partial = payload_mass + n * (engine_mass + m_struct_nose);
+    let n_1 = n * m_fuel_nose - (e0 - 1.0) * dry_mass_partial;
     debug!("n_1 = {}", n_1);
     debug!("e0 = {}", e0);
     debug!("e0*dry_mass_partial - dry_mass_partial = {}", (e0 - 1.0) * dry_mass_partial);
     debug!("dry_mass_partial = {}", dry_mass_partial);
     debug!("m_fuel_nose = {}", m_fuel_nose);
-    let d_1 = fuel_density * utilization + cyl_structural_density * (1.0 - e0);
+    let d_1 = cyl_structural_density * (1.0 - u_cyl) * (e0 - 1.0) - fuel_density * u_cyl;
     debug!("d_1 = {}", d_1);
-    let t_1 = n_1 / d_1 - ellipsoid_volume + correction;
+    let t_1 = n_1 / d_1 + n * (-ellipsoid_volume + correction);
     debug!("t_1 = {}", t_1);
-    let h = t_1 / (std::f64::consts::PI * r * r);
+    let h = t_1 / (std::f64::consts::PI * r * r * n);
     
     if h > CylindricalTank::MAX_VSA {
         debug!("h was greater than max vsa: {}", h);
@@ -374,14 +376,14 @@ mod tests {
 
     #[test]
     fn delta_v_nosecone_test() {
-        let nose_height = 1.5;
-        let target_dv = 789.12345;
+        let nose_height = 2.0;
+        let target_dv = 2789.12345;
         let in_vacuum = false;
         let engine = ENGINES[4];
         println!("Engine: {}", engine.name);
-        let num_tanks = 1;
+        let num_tanks = 8;
         let num_tanks_f64 = num_tanks as f64;
-        let payload_mass_tons = 0.5;
+        let payload_mass_tons = 5.5;
         let payload_mass_kg = payload_mass_tons * 1000.0;
         let engine_mass_kg = engine.mass * 1000.0 * num_tanks_f64;
         let diameter = engine.size.get_diameter();
@@ -402,6 +404,7 @@ mod tests {
             nose_height, 
             in_vacuum
         ).unwrap();
+        println!("h = {}", h);
 
         let nose_volume = calculate_corrected_volume(
             diameter, 
@@ -412,7 +415,7 @@ mod tests {
         let nose_structural_mass = nose_volume * nose_fuselage.density * (1.0 - nose_fuselage.utilization);
         let cyl_structural_mass = cyl_volume * cyl_fuselage.density * (1.0 - cyl_fuselage.utilization);
         let dry_mass = payload_mass_kg + engine_mass_kg + num_tanks_f64 * (nose_structural_mass + cyl_structural_mass);
-        let wet_mass = dry_mass + cyl_volume * cyl_fuselage.utilization * engine.fuel_mix.density() + nose_volume * nose_fuselage.utilization * engine.fuel_mix.density();
+        let wet_mass = dry_mass + num_tanks_f64 * cyl_volume * cyl_fuselage.utilization * engine.fuel_mix.density() + num_tanks_f64 * nose_volume * nose_fuselage.utilization * engine.fuel_mix.density();
         let delta_v = engine.isp_asl * G * f64::ln(wet_mass/dry_mass);
         assert_eq!(delta_v, target_dv);
     }
