@@ -10,7 +10,11 @@ use crate::{
     G,
 };
 
-use super::{fuselage_names::*, Fuselage, Fuselages, TankType, Tanks};
+use super::{
+    fuselage_names::*,
+    nose_tanks::{calculate_corrected_volume, NoseTankCore},
+    Fuselage, Fuselages, TankType, Tanks,
+};
 
 #[cfg(test)]
 mod densities {
@@ -146,6 +150,55 @@ pub fn tank_volume(diameter: f64, height: f64) -> f64 {
     base_volume - correction_factor
 }
 
+pub fn tank_height_given_max_volume(
+    max_total_volume: f64,
+    nose_height: f64,
+    nose_fuselage: &Fuselage,
+    nose_core: &NoseTankCore,
+    cyl_fuselage: &Fuselage,
+    engine: &Engine,
+    num_tanks: u8,
+    payload_mass: f64,
+    in_vacuum: bool,
+) -> Result<(f64, f64, f64, f64), Error> {
+    let n = num_tanks as f64;
+    let d = engine.size.get_diameter();
+    let r = d / 2.0;
+    let nose_volume = calculate_corrected_volume(d, nose_height, nose_core.correction_coefficient);
+    let max_volume = max_total_volume - nose_volume;
+    if max_volume < 0.0 {
+        debug!(
+            "Invalid max_volume in tank_height_given_max_volume: {}",
+            max_volume
+        );
+        return Err(Error::InvalidHeight);
+    }
+    let fuel_density = engine.fuel_mix.density();
+    // max_volume = tank_volume(d, h)
+    // max_volume = 1000 * (ellipsoid_volume + cylinder_volume(r, h)) - correction_factor
+    // (max_volume + correction_factor)/1000 = ellipsoid_volume + cylinder_volume(r,h)
+    // (max_volume + correction_factor)/1000 - ellipsoid_volume = cylinder_volume(r,h)
+    // n_1 = (max_volume + correction_factor) / 1000 - ellipsoid_volume
+    // n_1 / (PI * r * r) = h
+    let n_1 = (max_volume + K * d * d * d) / 1000.0 - ellipsoid_volume(r, r, r / 2.0);
+    let h = n_1 / (std::f64::consts::PI * r * r);
+    let tank_volume = tank_volume(d, h);
+    let dry_mass = payload_mass
+        + n * nose_volume * nose_fuselage.density * (1.0 - nose_fuselage.utilization)
+        + n * tank_volume * cyl_fuselage.density * (1.0 - cyl_fuselage.utilization);
+    let wet_mass = dry_mass
+        + n * fuel_density
+            * (nose_volume * nose_fuselage.utilization + tank_volume * cyl_fuselage.utilization);
+    let thrust_n = if in_vacuum {
+        engine.thrust_vac
+    } else {
+        engine.thrust_asl
+    } * 1000.0
+        * n;
+    let twr = thrust_n / wet_mass / G;
+    Ok((h, twr, wet_mass, dry_mass))
+}
+
 /// Calculates the dry mass of a cylindrical tank in kg.
 pub fn cylindrical_dry_mass(diameter: f64, height: f64, utilization: f64, density: f64) -> f64 {
     let volume = tank_volume(diameter, height);
@@ -160,7 +213,7 @@ pub fn compute_tank_height(
     payload_mass: f64,
     num_tanks: u8,
     in_vacuum: bool,
-) -> Result<f64, Error> {
+) -> Result<(f64, f64, f64, f64, f64), Error> {
     // increase min_twr by a small amount to ensure that the output has that much
     // twr
     //let min_twr = min_twr + 0.1;
@@ -272,7 +325,7 @@ pub fn compute_tank_height(
     let numerator_2 =
         (numerator_1 / denominator_1) - ellipsoid_volume_total + correction_factor_total;
     let denominator_2 = std::f64::consts::PI * r * r * num_tanks;
-    let h = numerator_2 / denominator_2;
+    let mut h = numerator_2 / denominator_2;
 
     #[cfg(test)]
     {
@@ -288,7 +341,7 @@ pub fn compute_tank_height(
         );
     }
     if h > 50.0 {
-        return Ok(50.0);
+        h = 50.0;
     }
     if h <= 0.0 {
         return Err(Error::InvalidHeight);
@@ -296,7 +349,26 @@ pub fn compute_tank_height(
     if h.is_nan() || h.is_infinite() {
         return Err(Error::InvalidHeight);
     }
-    Ok(h)
+    let tank_volume = tank_volume(diameter, h);
+    let dry_mass = payload_mass
+        + engine_mass_total
+        + fuselage.density * tank_volume * (1.0 - fuselage.utilization) * num_tanks;
+    let wet_mass =
+        dry_mass + tank_volume * fuselage.utilization * engine.fuel_mix.density() * num_tanks;
+    let thrust_n = if in_vacuum {
+        engine.thrust_vac
+    } else {
+        engine.thrust_asl
+    } * 1000.0
+        * num_engines;
+    let twr = thrust_n / wet_mass / G;
+    Ok((
+        h,
+        twr,
+        wet_mass,
+        dry_mass,
+        tank_volume * fuselage.utilization,
+    ))
 }
 /// Computes the tank height required to reach a specific delta-v
 ///
@@ -337,7 +409,7 @@ pub fn compute_tank_height_for_delta_v(
     payload_mass: f64,
     num_tanks: u8,
     in_vacuum: bool,
-) -> Result<f64, Error> {
+) -> Result<(f64, f64, f64, f64), Error> {
     let isp = if in_vacuum {
         engine.isp_vac
     } else {
@@ -367,7 +439,18 @@ pub fn compute_tank_height_for_delta_v(
     if h < 0.0 || h.is_nan() || h.is_infinite() {
         return Err(Error::InvalidHeight);
     }
-    Ok(h)
+    let volume = tank_volume(d, h) * num_tanks as f64;
+    let dry_mass =
+        payload_mass + engine_mass + volume * fuselage.density * (1.0 - fuselage.utilization);
+    let wet_mass = dry_mass + volume * engine.fuel_mix.density() * fuselage.utilization;
+    let thrust_n = if in_vacuum {
+        engine.thrust_vac
+    } else {
+        engine.thrust_asl
+    } * 1000.0
+        * num_tanks as f64;
+    let twr = thrust_n / wet_mass / G;
+    Ok((h, twr, wet_mass, dry_mass))
 }
 
 #[cfg(test)]
@@ -388,7 +471,7 @@ mod tests {
         let fuselage = fuselages.non_hp_fuselages.get(STEEL_FUSELAGE_NAME).unwrap();
         let target_dv = 789.123;
         let num_tanks = 3;
-        let h = compute_tank_height_for_delta_v(
+        let (h, twr, _wet_mass, _dry_mass) = compute_tank_height_for_delta_v(
             target_dv,
             &engine,
             fuselage,
@@ -405,7 +488,12 @@ mod tests {
             payload_mass_tons * 1000.0 + engine.mass * 1000.0 * num_tanks as f64 + structural_mass;
         let wet_mass = dry_mass + volume * engine.fuel_mix.density() * fuselage.utilization;
         let delta_v = engine.isp_asl * G * f64::ln(wet_mass / dry_mass);
-        assert_eq!(delta_v, target_dv);
+        let diff = target_dv - delta_v;
+        assert!(diff.abs() < 0.00001);
+
+        let thrust_n = engine.thrust_asl * 1000.0 * num_tanks as f64;
+        let expected_twr = thrust_n / wet_mass / G;
+        assert_eq!(twr, expected_twr);
     }
 
     #[test]
@@ -422,7 +510,7 @@ mod tests {
         let fuselage_types = super::CylindricalTank::init_fuselage_types();
         let non_hp_fuselages = fuselage_types.non_hp_fuselages;
         let fuselage = non_hp_fuselages.get(STEEL_FUSELAGE_NAME).unwrap();
-        let h = compute_tank_height(
+        let (h, twr, _wet_mass, _dry_mass, _volume) = compute_tank_height(
             target_twr,
             &engines[0],
             &fuselage,
@@ -450,7 +538,7 @@ mod tests {
 
         for num_tanks in 2..=9 {
             println!();
-            let h = compute_tank_height(
+            let (h, twr, _wet_mass, _dry_mass, _volume) = compute_tank_height(
                 target_twr,
                 &engines[0],
                 &fuselage,
@@ -467,17 +555,19 @@ mod tests {
             wet_mass += fuel_mass;
             let structural_mass = volume * (1.0 - fuselage.utilization) * fuselage.density;
             wet_mass += structural_mass;
-            let twr = thrust_n * num_tanks as f64 / wet_mass / G;
+            let expected_twr = thrust_n * num_tanks as f64 / wet_mass / G;
 
             //println!("Wet mass in test = {} kg", wet_mass);
             //println!("Structural mass in test = {} kg", structural_mass);
             assert!(
-                (twr - target_twr).abs() < 0.105,
+                (expected_twr - target_twr).abs() < 0.105,
                 "Failed on num_tanks={}\ntwr = {}\ntarget = {}",
                 num_tanks,
                 twr,
                 target_twr
             );
+            let diff = expected_twr - twr;
+            assert!(diff.abs() < 0.00001);
             //println!("TWR: {}\nTarget TWR: {}", twr, target_twr);
         }
     }
@@ -531,7 +621,7 @@ mod tests {
                             num_tanks,
                             IN_VACUUM,
                         );
-                        if let Ok(h) = h {
+                        if let Ok((h, twr, wet_mass, dry_mass, _volume)) = h {
                             if h == 50.0 {
                                 twr_errors_inner[target_twr_index - 1] = None;
                                 continue;

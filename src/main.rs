@@ -29,14 +29,8 @@ fn read(text: &str) -> String {
 
 #[cfg(not(target_arch = "wasm32"))]
 fn handle_output(mass: f64, target_delta_v: f64, minimum_twr: f64, calculator: &mut Calculator) {
-    let (mut nose_plus_cylinder_results, mut cylinder_results, mut nose_results) =
-        calculator.calculate().unwrap();
-    let mut output: Vec<Rocket> = Vec::with_capacity(
-        nose_plus_cylinder_results.len() + cylinder_results.len() + nose_results.len(),
-    );
-    output.append(&mut nose_plus_cylinder_results.clone());
-    output.append(&mut cylinder_results.clone());
-    output.append(&mut nose_results.clone());
+    let mut output = calculator.calculate().unwrap();
+
     output.sort_by(|a, b| a.partial_cmp(b).unwrap());
     let mut outputs: Vec<Option<Rocket>> = Vec::new();
 

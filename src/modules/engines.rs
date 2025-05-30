@@ -16,7 +16,7 @@ pub const ENGINES: [Engine; NUM_EGINES] = Engine::init_rp1_engines();
 pub struct Engine {
     pub name: &'static str,
     pub parent_name: &'static str,
-    is_solid: bool,
+    pub is_solid: bool,
     pub thrust_asl: f64,
     pub thrust_vac: f64,
     pub min_thrust: f64,

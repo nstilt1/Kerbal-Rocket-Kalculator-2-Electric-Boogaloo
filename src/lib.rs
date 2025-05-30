@@ -78,12 +78,7 @@ pub fn calculate(
         unlocked_tech,
     );
 
-    let (mut nose_plus_cyl_results, mut cyl_results, mut nose_results) = calculator.calculate()?;
-    let mut output: Vec<Rocket> =
-        Vec::with_capacity(nose_plus_cyl_results.len() + cyl_results.len() + nose_results.len());
-    output.append(&mut nose_plus_cyl_results);
-    output.append(&mut cyl_results);
-    output.append(&mut nose_results);
+    let mut output = calculator.calculate()?;
 
     if output.is_empty() {
         return Ok("No rockets found".to_string());

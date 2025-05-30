@@ -1,4 +1,11 @@
-use crate::{debug, modules::tanks::{cylindrical_tanks::compute_tank_height_for_delta_v, nose_tanks::compute_tank_height_with_nose_for_delta_v}, G};
+use crate::{
+    debug,
+    modules::tanks::{
+        cylindrical_tanks::compute_tank_height_for_delta_v,
+        nose_tanks::compute_tank_height_with_nose_for_delta_v,
+    },
+    G,
+};
 
 use super::{
     engines::Engine,
@@ -6,10 +13,12 @@ use super::{
     size::Size,
     tanks::{
         cylindrical_tanks::{
-            compute_tank_height, cylindrical_dry_mass, tank_volume, CylindricalTank,
+            compute_tank_height, cylindrical_dry_mass, tank_height_given_max_volume, tank_volume,
+            CylindricalTank,
         },
         nose_tanks::{
-            calculate_corrected_volume, calculate_nose_dry_mass, NoseCone, NoseConeVariant,
+            calculate_corrected_volume, calculate_nose_dry_mass,
+            compute_tank_height_with_nose_for_twr, NoseCone, NoseConeVariant,
         },
         Fuselage, Tanks,
     },
@@ -99,7 +108,7 @@ impl Calculator {
     /// Calculates the parts required to build a rocket with specific arguments.
     ///
     /// Returns (nose+cylinder_results, cylinder_results, nose_results)
-    pub fn calculate(&self) -> Result<(Vec<Rocket>, Vec<Rocket>, Vec<Rocket>), Error> {
+    pub fn calculate(&self) -> Result<Vec<Rocket>, Error> {
         debug!(
             "Mass = {}\ntarget_dv = {}\nminimum twr = {}\nsize = {}",
             self.mass,
@@ -175,7 +184,6 @@ impl Calculator {
         unlocked_cylinder_hp_fuselages.sort_by_key(|s| s.name);
         unlocked_cylinder_non_hp_fuselages.sort_by_key(|s| s.name);
 
-        let mut only_nose_results: Vec<Rocket> = Vec::new();
         let mut only_cylinder_results: Vec<Rocket> = Vec::new();
         'engine_loop: for engine in engines.iter() {
             let (cyl_fuselages, nose_fuselages) = if engine.hp_fuel {
@@ -214,6 +222,9 @@ impl Calculator {
                 if self.needs_gimballing && !engine.has_gimbal {
                     continue 'engine_loop;
                 }
+                if engine.is_solid {
+                    continue 'engine_loop;
+                }
 
                 'num_engine_loop: for num_engines in 1..=MAX_ENGINES {
                     // if num_engines == 2 || num_engines == 6 || num_engines == 8 {
@@ -240,154 +251,66 @@ impl Calculator {
                     let max_volume_per_stack = fuel.max_volume(engine.rated_burn_time);
                     if self.use_nosecone {
                         'nosecone_core_loop: for nosecone_core in nosecone_cores {
-                            let core_base_length_x_diameter = nosecone_core.base_length * engine.size.get_diameter();
-                            let min_nose_height = core_base_length_x_diameter * NoseConeVariant::MIN_VSA;
-                            let max_nose_height = core_base_length_x_diameter * NoseConeVariant::MAX_VSA;
+                            let core_base_length_x_diameter =
+                                nosecone_core.base_length * engine.size.get_diameter();
+                            let min_nose_height =
+                                core_base_length_x_diameter * NoseConeVariant::MIN_VSA;
+                            let max_nose_height =
+                                core_base_length_x_diameter * NoseConeVariant::MAX_VSA;
 
-                            if self.nose_height < min_nose_height || self.nose_height > max_nose_height {
+                            if self.nose_height < min_nose_height
+                                || self.nose_height > max_nose_height
+                            {
                                 // different cores have different `base_length`s; because of this
-                                // one type of nose could be picked every time if it somehow has 
-                                // better properties than the others, namely the correction 
+                                // one type of nose could be picked every time if it somehow has
+                                // better properties than the others, namely the correction
                                 // coefficient in the nose volume calculation
                                 continue 'nosecone_core_loop;
                             }
-                            
-                            let h = compute_tank_height_with_nose_for_delta_v(
-                                self.target_dv, 
-                                engine, 
-                                &cyl_fuselage, 
-                                &nose_fuselage, 
-                                nosecone_core, 
-                                self.mass, 
-                                num_engines, 
-                                self.nose_height, 
+
+                            let h_twr_wet_dry = compute_tank_height_with_nose_for_delta_v(
+                                self.target_dv,
+                                engine,
+                                &cyl_fuselage,
+                                &nose_fuselage,
+                                nosecone_core,
+                                self.mass,
+                                num_engines,
+                                self.nose_height,
                                 self.in_vacuum,
                             );
 
-                            if h.as_ref().is_err() {
+                            if h_twr_wet_dry.as_ref().is_err() {
                                 // TODO: determine if this is the loop that needs to continue
                                 continue 'nosecone_core_loop;
                             }
 
-                            let h = h.unwrap();
-                            
                             // we have enough delta-v, but do we have enough TWR?
-                            let mut height = 0.0;
-                            let max_height = 1.0;
-                            'nose_height_loop: while height <= max_height {
-                                let nose_volume = calculate_corrected_volume(
-                                    self.size.get_diameter(),
-                                    height,
-                                    nosecone_core.correction_coefficient,
-                                ) * nose_fuselage.utilization;
-                                if nose_volume > max_volume_per_stack {
-                                    break;
-                                }
-                                let nose_dry_mass = calculate_nose_dry_mass(
-                                    self.size.get_diameter(),
-                                    height,
-                                    nose_fuselage.density,
-                                    nose_fuselage.utilization,
-                                    nosecone_core.correction_coefficient,
-                                ) * num_engines as f64;
-                                let nose_wet_mass =
-                                    nose_dry_mass + fuel.mass(nose_volume * num_engines as f64);
-
-                                let wet_mass = nose_wet_mass + partial_mass;
-                                let dry_mass = nose_dry_mass + partial_mass;
-
-                                let twr = thrust / wet_mass / G;
-                                if twr < self.minimum_twr {
-                                    // TODO: maybe consider breaking here, but first check that the results are the same
-                                    continue 'num_engine_loop;
-                                }
-                                if twr > self.maximum_twr {
-                                    height += HEIGHT_INCREMENT_AMT;
-                                    continue 'nose_height_loop;
-                                }
-
-                                // we have enough twr, but do we have enough delta-v?
-                                if wet_mass / dry_mass >= target_ratio {
-                                    only_nose_results.push(Rocket::new(
-                                        Some(NoseCone {
-                                            core: nosecone_core.clone(),
-                                            length: height,
-                                            diameter: self.size.get_diameter(),
-                                            fuselage: **nose_fuselage,
-                                        }),
-                                        None,
-                                        *engine,
-                                        fuel.fuel_volumes(nose_volume),
-                                        num_engines,
-                                        wet_mass,
-                                        dry_mass,
-                                        twr,
-                                    ));
-                                    break;
-                                }
-
-                                // not enough delta v, let's add a cylindrical tank
-                                let min_cyl_height =
-                                    0.1f64.max(self.size.get_diameter() * CylindricalTank::MIN_VSA);
-                                let max_cyl_height = CylindricalTank::MAX_VSA;
-                                let mut cyl_height = min_cyl_height;
-                                'cyl_height_loop: while cyl_height <= max_cyl_height {
-                                    let cyl_volume =
-                                        tank_volume(self.size.get_diameter(), cyl_height)
-                                            * cyl_fuselage.utilization;
-                                    if nose_volume + cyl_volume > max_volume_per_stack {
-                                        break;
-                                    }
-                                    let cyl_dry_mass = cylindrical_dry_mass(
-                                        self.size.get_diameter(),
-                                        cyl_height,
-                                        cyl_fuselage.utilization,
-                                        cyl_fuselage.density,
-                                    ) * num_engines as f64;
-                                    let cyl_wet_mass =
-                                        cyl_dry_mass + fuel.mass(cyl_volume * num_engines as f64);
-
-                                    let dry_mass = nose_dry_mass + partial_mass + cyl_dry_mass;
-                                    let wet_mass = nose_wet_mass + partial_mass + cyl_wet_mass;
-
-                                    let twr = thrust / wet_mass / G;
-                                    if twr < self.minimum_twr {
-                                        // TODO: consider breaking here instead of continuing
-                                        continue 'num_engine_loop;
-                                    }
-                                    if twr > self.maximum_twr {
-                                        cyl_height += HEIGHT_INCREMENT_AMT;
-                                        continue 'cyl_height_loop;
-                                    }
-
-                                    // we have enough twr, but do we have enough delta-v?
-                                    if wet_mass / dry_mass >= target_ratio {
-                                        result.push(Rocket::new(
-                                            Some(NoseCone {
-                                                core: nosecone_core.clone(),
-                                                length: height,
-                                                diameter: self.size.get_diameter(),
-                                                fuselage: **nose_fuselage,
-                                            }),
-                                            Some(CylindricalTank {
-                                                length: cyl_height,
-                                                diameter: self.size.get_diameter(),
-                                                fuselage: **cyl_fuselage,
-                                            }),
-                                            *engine,
-                                            fuel.fuel_volumes(nose_volume + cyl_volume),
-                                            num_engines,
-                                            wet_mass,
-                                            dry_mass,
-                                            twr,
-                                        ));
-                                        break;
-                                    }
-                                    cyl_height += 0.05;
-                                }
-
-                                height += 0.05;
+                            let (h, twr, wet_mass, dry_mass) = h_twr_wet_dry.unwrap();
+                            if twr < self.minimum_twr || twr > self.maximum_twr {
+                                // TODO: determine if this should be nosecone_core_loop or num_engine_loop
+                                continue 'nosecone_core_loop;
                             }
+                            result.push(Rocket::new(
+                                Some(NoseCone {
+                                    core: *nosecone_core,
+                                    length: self.nose_height,
+                                    diameter: engine.size.get_diameter(),
+                                    fuselage: **nose_fuselage,
+                                }),
+                                Some(CylindricalTank {
+                                    length: h,
+                                    diameter: engine.size.get_diameter(),
+                                    fuselage: **cyl_fuselage,
+                                }),
+                                *engine,
+                                engine.fuel_mix.fuel_volumes(0.0),
+                                num_engines,
+                                wet_mass,
+                                dry_mass,
+                                twr,
+                            ));
+                            continue 'nosecone_core_loop;
                         }
                     }
                     /* No nosecones!! */
@@ -395,90 +318,48 @@ impl Calculator {
                         0.1f64.max(self.size.get_diameter() * CylindricalTank::MIN_VSA);
                     let max_cyl_height = CylindricalTank::MAX_VSA;
                     let mut cyl_height = min_cyl_height;
-                    'cyl_height_loop_2: while cyl_height <= max_cyl_height {
-                        let cyl_volume = tank_volume(self.size.get_diameter(), cyl_height)
-                            * cyl_fuselage.utilization;
-                        if cyl_volume > max_volume_per_stack {
-                            debug!(
-                                "cyl_volume exceeded max volume with height = {} min_height = {}",
-                                cyl_height, min_cyl_height
-                            );
-                            break;
-                        }
-                        let cyl_dry_mass = cylindrical_dry_mass(
-                            self.size.get_diameter(),
-                            cyl_height,
-                            cyl_fuselage.utilization,
-                            cyl_fuselage.density,
-                        ) * num_engines as f64;
-                        let cyl_wet_mass =
-                            cyl_dry_mass + fuel.mass(cyl_volume * num_engines as f64);
 
-                        let dry_mass = partial_mass + cyl_dry_mass;
-                        let wet_mass = partial_mass + cyl_wet_mass;
+                    let h_twr_wet_dry = compute_tank_height_for_delta_v(
+                        self.target_dv,
+                        engine,
+                        cyl_fuselage,
+                        self.mass,
+                        num_engines,
+                        self.in_vacuum,
+                    );
 
-                        let twr = thrust / wet_mass / G;
-
-                        debug!("TWR passed check = {}", twr);
-
-                        if twr < self.minimum_twr {
-                            // TODO: consider breaking here instead of continuing
-                            debug!("Calculated TWR ({}) was less than minimum TWR ({})\nthrust = {}kN, wet_mass = {}kg, G = {}m/s/s", twr, self.minimum_twr, thrust, wet_mass, G);
-                            debug!(
-                                "Engine: {}\nnum_engines: {}\ncyl_height: {}m",
-                                engine.name, num_engines, cyl_height
-                            );
-                            debug!(
-                                "cyl_diameter: {}m\ncyl_dry_mass: {}kg\ncyl_wet_mass: {}kg",
-                                self.size.get_diameter(),
-                                cyl_dry_mass,
-                                cyl_wet_mass
-                            );
-                            debug!("partial_mass = {}kg\n", partial_mass);
-                            continue 'num_engine_loop;
-                        }
-                        if twr > self.maximum_twr {
-                            cyl_height += HEIGHT_INCREMENT_AMT;
-                            continue 'cyl_height_loop_2;
-                        }
-                        // we have enough twr, but do we have enough delta-v?
-                        if wet_mass / dry_mass >= target_ratio {
-                            only_cylinder_results.push(Rocket::new(
-                                None,
-                                Some(CylindricalTank {
-                                    length: cyl_height,
-                                    diameter: self.size.get_diameter(),
-                                    fuselage: **cyl_fuselage,
-                                }),
-                                *engine,
-                                fuel.fuel_volumes(cyl_volume),
-                                num_engines,
-                                wet_mass,
-                                dry_mass,
-                                twr,
-                            ));
-                            break;
-                        } else {
-                            cyl_height = if let Ok(v) = compute_tank_height_for_delta_v(
-                                self.target_dv,
-                                engine,
-                                &cyl_fuselage,
-                                self.mass,
-                                num_engines,
-                                self.in_vacuum,
-                            ) {
-                                v + 0.001
-                            } else {
-                                // height is greater than 50.0, or NaN or infinity
-                                continue 'num_engine_loop;
-                            };
-                            continue 'cyl_height_loop_2;
-                        }
+                    if h_twr_wet_dry.as_ref().is_err() {
+                        // TODO: Determine if this is the right loop to continue
+                        continue 'num_engine_loop;
                     }
+                    let (h, twr, wet_mass, dry_mass) = h_twr_wet_dry.unwrap();
+
+                    // we have enough delta-v, but do we heve enough TWR?
+                    if twr < self.minimum_twr || twr > self.maximum_twr {
+                        // TODO: determine if a different loop needs to be continued
+                        // depending on which condition is true
+                        continue 'num_engine_loop;
+                    }
+
+                    result.push(Rocket::new(
+                        None,
+                        Some(CylindricalTank {
+                            length: h,
+                            diameter: engine.size.get_diameter(),
+                            fuselage: **cyl_fuselage,
+                        }),
+                        *engine,
+                        fuel.fuel_volumes(0.0),
+                        num_engines,
+                        wet_mass,
+                        dry_mass,
+                        twr,
+                    ));
+                    continue 'num_engine_loop;
                 }
             }
         }
-        return Ok((result, only_cylinder_results, only_nose_results));
+        return Ok(result);
     }
 
     pub fn prepare_for_max_dv(
@@ -566,7 +447,11 @@ impl Calculator {
         unlocked_cylinder_non_hp_fuselages.sort_by_key(|s| s.name);
 
         'engine_loop: for engine in engines.iter() {
+            let d = engine.size.get_diameter();
             if !engine.has_gimbal && self.needs_gimballing {
+                continue 'engine_loop;
+            }
+            if engine.is_solid {
                 continue 'engine_loop;
             }
             let (cyl_fuselages, nose_fuselages) = if engine.hp_fuel {
@@ -589,7 +474,7 @@ impl Calculator {
                     } else {
                         engine.thrust_asl
                     };
-                    if engine_thrust * MAX_ENGINES as f64 / self.mass / G < self.minimum_twr {
+                    if engine_thrust * num_engines as f64 / self.mass / G < self.minimum_twr {
                         continue 'engine_loop;
                     }
                     let thrust = engine_thrust * num_engines as f64 * 1000.0;
@@ -599,95 +484,113 @@ impl Calculator {
                         * (extra_fuel_percentage / 100.0 + 1.0);
 
                     if self.use_nosecone {
-                        for nosecone_core in nosecone_cores {
-                            let min_height = nosecone_core.base_length * NoseConeVariant::MIN_VSA;
-                            let max_height = nosecone_core.base_length * NoseConeVariant::MAX_VSA;
-                            let mut height = max_height;
-                            'nose_height_loop: while height >= min_height {
-                                let nose_volume = calculate_corrected_volume(
-                                    engine.size.get_diameter(),
-                                    height,
-                                    nosecone_core.correction_coefficient,
-                                ) * nose_fuselage.utilization;
-                                if nose_volume > max_volume_per_stack {
-                                    height -= HEIGHT_DECREMENT_AMT;
-                                    continue 'nose_height_loop;
+                        'nosecone_core_loop: for nosecone_core in nosecone_cores {
+                            let core_base_length_x_diameter =
+                                nosecone_core.base_length * engine.size.get_diameter();
+                            let min_height = core_base_length_x_diameter * NoseConeVariant::MIN_VSA;
+                            let max_height = core_base_length_x_diameter * NoseConeVariant::MAX_VSA;
+                            if self.nose_height < min_height || self.nose_height > max_height {
+                                continue 'nosecone_core_loop;
+                            }
+
+                            let h_twr_wet_dry = compute_tank_height_with_nose_for_twr(
+                                self.minimum_twr,
+                                engine,
+                                &nose_fuselage,
+                                nosecone_core,
+                                self.nose_height,
+                                &cyl_fuselage,
+                                self.mass,
+                                num_engines,
+                                self.in_vacuum,
+                            );
+
+                            if h_twr_wet_dry.as_ref().is_err() {
+                                // TODO: determine if this is the loop that needs to continue
+                                continue 'nosecone_core_loop;
+                            }
+
+                            // we have the minimum TWR, but are we over the maximum volume of fuel
+                            // given the engine's rated burn time * extra fuel?
+                            let (h, twr, wet_mass, dry_mass) = h_twr_wet_dry.unwrap();
+                            let tank_volume = tank_volume(engine.size.get_diameter(), h);
+                            let nose_volume = calculate_corrected_volume(
+                                d,
+                                self.nose_height,
+                                nosecone_core.correction_coefficient,
+                            );
+                            let fuel_volume = cyl_fuselage.utilization * tank_volume
+                                + nose_fuselage.utilization * nose_volume;
+                            if fuel_volume > max_volume_per_stack * extra_fuel_percentage {
+                                // volume exceeds the amount of fuel that can be burnt by this engine
+                                // decrease height
+                                let h_twr_wet_dry = tank_height_given_max_volume(
+                                    max_volume_per_stack * extra_fuel_percentage,
+                                    self.nose_height,
+                                    &nose_fuselage,
+                                    nosecone_core,
+                                    &cyl_fuselage,
+                                    engine,
+                                    num_engines,
+                                    self.mass,
+                                    self.in_vacuum,
+                                );
+                                if h_twr_wet_dry.as_ref().is_err() {
+                                    // TODO: determine if this is the right loop to continue
+                                    continue 'nosecone_core_loop;
                                 }
-                                let nose_dry_mass = calculate_nose_dry_mass(
-                                    engine.size.get_diameter(),
-                                    height,
-                                    nose_fuselage.density,
-                                    nose_fuselage.utilization,
-                                    nosecone_core.correction_coefficient,
-                                ) * num_engines as f64;
-                                let nose_wet_mass =
-                                    nose_dry_mass + fuel.mass(nose_volume * num_engines as f64);
-
-                                let wet_mass = nose_wet_mass + partial_mass;
-                                let dry_mass = nose_dry_mass + partial_mass;
-
-                                let twr = thrust / wet_mass / G;
-
-                                if twr < self.minimum_twr {
-                                    height -= HEIGHT_DECREMENT_AMT;
-                                    continue 'nose_height_loop;
+                                // TWR should be above the minimum twr now since we decreased the height
+                                debug_assert!(twr > self.minimum_twr - 0.0001);
+                                if twr > self.maximum_twr {
+                                    continue 'nosecone_core_loop;
                                 }
-
-                                // we have enough twr, but max volume is not yet reached
-                                let min_cyl_height = 0.1f64
-                                    .max(engine.size.get_diameter() * CylindricalTank::MIN_VSA);
-                                let max_cyl_height = CylindricalTank::MAX_VSA;
-                                let mut cyl_height = max_cyl_height;
-                                'cyl_height_loop: while cyl_height >= min_cyl_height {
-                                    let cyl_volume =
-                                        tank_volume(engine.size.get_diameter(), cyl_height)
-                                            * cyl_fuselage.utilization;
-                                    if nose_volume + cyl_volume > max_volume_per_stack {
-                                        cyl_height -= HEIGHT_DECREMENT_AMT;
-                                        continue 'cyl_height_loop;
-                                    }
-                                    let cyl_dry_mass = cylindrical_dry_mass(
-                                        engine.size.get_diameter(),
-                                        cyl_height,
-                                        cyl_fuselage.utilization,
-                                        cyl_fuselage.density,
-                                    ) * num_engines as f64;
-                                    let cyl_wet_mass =
-                                        cyl_dry_mass + fuel.mass(cyl_volume * num_engines as f64);
-
-                                    let dry_mass = nose_dry_mass + partial_mass + cyl_dry_mass;
-                                    let wet_mass = nose_wet_mass + partial_mass + cyl_wet_mass;
-
-                                    let twr = thrust / wet_mass / G;
-                                    if twr < self.minimum_twr {
-                                        cyl_height -= HEIGHT_DECREMENT_AMT;
-                                        continue 'cyl_height_loop;
-                                    }
-
-                                    // we have enough twr, add rocket to result
-                                    result.push(Rocket::new(
-                                        Some(NoseCone {
-                                            core: nosecone_core.clone(),
-                                            length: height,
-                                            diameter: engine.size.get_diameter(),
-                                            fuselage: **nose_fuselage,
-                                        }),
-                                        Some(CylindricalTank {
-                                            length: cyl_height,
-                                            diameter: engine.size.get_diameter(),
-                                            fuselage: **cyl_fuselage,
-                                        }),
-                                        *engine,
-                                        fuel.fuel_volumes(nose_volume + cyl_volume),
-                                        num_engines,
-                                        wet_mass,
-                                        dry_mass,
-                                        twr,
-                                    ));
-                                    height -= HEIGHT_DECREMENT_AMT;
-                                    continue 'nose_height_loop;
-                                }
-                                height -= HEIGHT_DECREMENT_AMT;
+                                // TWR is within the range. This is the most delta-v
+                                // that this number of engines combine with this
+                                // specific nose can have
+                                result.push(Rocket::new(
+                                    Some(NoseCone {
+                                        core: *nosecone_core,
+                                        length: self.nose_height,
+                                        diameter: d,
+                                        fuselage: **nose_fuselage,
+                                    }),
+                                    Some(CylindricalTank {
+                                        length: h,
+                                        diameter: d,
+                                        fuselage: **cyl_fuselage,
+                                    }),
+                                    *engine,
+                                    "".to_string(),
+                                    num_engines,
+                                    wet_mass,
+                                    dry_mass,
+                                    twr,
+                                ));
+                                continue 'nosecone_core_loop;
+                            } else {
+                                // fuel_volume is less than max. We could squeeze
+                                // out some extra delta-v, but the TWR would be
+                                // below the minimum TWR
+                                result.push(Rocket::new(
+                                    Some(NoseCone {
+                                        core: *nosecone_core,
+                                        length: self.nose_height,
+                                        diameter: d,
+                                        fuselage: **nose_fuselage,
+                                    }),
+                                    Some(CylindricalTank {
+                                        length: h,
+                                        diameter: d,
+                                        fuselage: **cyl_fuselage,
+                                    }),
+                                    *engine,
+                                    "".to_string(),
+                                    num_engines,
+                                    wet_mass,
+                                    dry_mass,
+                                    twr,
+                                ));
+                                continue 'nosecone_core_loop;
                             }
                         }
                     } else {
@@ -695,62 +598,75 @@ impl Calculator {
                         let min_cyl_height =
                             0.1f64.max(engine.size.get_diameter() * CylindricalTank::MIN_VSA);
                         let max_cyl_height = CylindricalTank::MAX_VSA;
-                        let mut cyl_height = max_cyl_height;
-                        'cyl_height_loop_2: while cyl_height >= min_cyl_height {
-                            let cyl_volume = tank_volume(engine.size.get_diameter(), cyl_height)
-                                * cyl_fuselage.utilization;
-                            if cyl_volume > max_volume_per_stack {
-                                cyl_height -= HEIGHT_DECREMENT_AMT;
-                                break;
-                            }
-                            let cyl_dry_mass = cylindrical_dry_mass(
-                                engine.size.get_diameter(),
-                                cyl_height,
-                                cyl_fuselage.utilization,
-                                cyl_fuselage.density,
-                            ) * num_engines as f64;
-                            let cyl_wet_mass =
-                                cyl_dry_mass + fuel.mass(cyl_volume * num_engines as f64);
-                            let dry_mass = partial_mass + cyl_dry_mass;
-                            let wet_mass = partial_mass + cyl_wet_mass;
 
-                            let twr = thrust / wet_mass / G;
-                            if twr < self.minimum_twr {
-                                cyl_height = if let Ok(v) = compute_tank_height(
-                                    self.minimum_twr,
-                                    &engine,
-                                    &cyl_fuselage,
-                                    self.mass,
-                                    num_engines,
-                                    self.in_vacuum,
-                                ) {
-                                    if cyl_height == v {
-                                        // this should not happen if compute_tank_height returns a twr greater than or equal to minimum_twr
-                                        break 'cyl_height_loop_2;
-                                    }
-                                    v
-                                } else {
-                                    // height was negative or infinity or NaN
-                                    break 'cyl_height_loop_2;
-                                };
-                                unreachable!("This should not be reachable - line 686");
-                            }
+                        let h_twr_wet_dry = compute_tank_height(
+                            self.minimum_twr,
+                            engine,
+                            cyl_fuselage,
+                            self.mass,
+                            num_engines,
+                            self.in_vacuum,
+                        );
+                        if h_twr_wet_dry.as_ref().is_err() {
+                            continue 'num_engine_loop;
+                        }
 
+                        // we have the minimum TWR, but are we over the maximum volume of fuel
+                        // given the engine's rated burn time * extra fuel?
+                        let (h, twr, wet_mass, dry_mass, volume) = h_twr_wet_dry.unwrap();
+                        if volume > max_volume_per_stack * extra_fuel_percentage {
+                            let h_twr_wet_dry = tank_height_given_max_volume(
+                                max_volume_per_stack,
+                                0.0,
+                                &nose_fuselage,
+                                &nosecone_cores[0],
+                                cyl_fuselage,
+                                engine,
+                                num_engines,
+                                self.mass,
+                                self.in_vacuum,
+                            );
+                            if h_twr_wet_dry.as_ref().is_err() {
+                                continue 'num_engine_loop;
+                            }
+                            debug_assert!(twr > self.minimum_twr - 0.0001);
+                            if twr > self.maximum_twr {
+                                continue 'num_engine_loop;
+                            }
+                            // TWR is within the range. This is the most delta-v
+                            // that this tank will be able to have
                             result.push(Rocket::new(
                                 None,
                                 Some(CylindricalTank {
-                                    length: cyl_height,
-                                    diameter: engine.size.get_diameter(),
+                                    length: h,
+                                    diameter: d,
                                     fuselage: **cyl_fuselage,
                                 }),
                                 *engine,
-                                fuel.fuel_volumes(cyl_volume),
+                                fuel.fuel_volumes(volume),
                                 num_engines,
                                 wet_mass,
                                 dry_mass,
                                 twr,
-                            ));
-                            continue 'num_engine_loop;
+                            ))
+                        } else {
+                            // fuel volume is less than max. We could squeeze out
+                            // some more delta-v, but the TWR would be below the
+                            // minimum TWR
+                            result.push(Rocket::new(
+                                None,
+                                Some(CylindricalTank {
+                                    length: h,
+                                    diameter: d,
+                                    fuselage: **cyl_fuselage,
+                                }),
+                                *engine,
+                                fuel.fuel_volumes(volume),
+                                num_engines,
+                                wet_mass,
+                                dry_mass,
+                                twr,
+                            ))
                         }
                     }
                 }
@@ -834,11 +750,9 @@ mod tests {
             "Steel Fuselage".to_string(),
             "start".to_string(),
         );
-        let (mut n_c_results, mut c_results, mut n_results) = calculator.calculate().unwrap();
+        let mut n_c_results = calculator.calculate().unwrap();
         let mut output: Vec<Rocket> = Vec::new();
         output.append(&mut n_c_results);
-        output.append(&mut n_results);
-        output.append(&mut c_results);
         assert_ne!(output.len(), 0);
     }
 
