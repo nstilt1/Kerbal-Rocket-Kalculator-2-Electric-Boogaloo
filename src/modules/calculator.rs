@@ -383,7 +383,7 @@ impl Calculator {
                         let wet_mass = partial_mass + cyl_wet_mass;
 
                         let twr = thrust / wet_mass / G;
-                        
+
                         debug!("TWR passed check = {}", twr);
 
                         if twr < self.minimum_twr {
@@ -425,12 +425,12 @@ impl Calculator {
                             break;
                         } else {
                             cyl_height = if let Ok(v) = compute_tank_height_for_delta_v(
-                                self.target_dv, 
-                                engine, 
-                                &cyl_fuselage, 
-                                self.mass, 
-                                num_engines, 
-                                self.in_vacuum
+                                self.target_dv,
+                                engine,
+                                &cyl_fuselage,
+                                self.mass,
+                                num_engines,
+                                self.in_vacuum,
                             ) {
                                 v + 0.001
                             } else {

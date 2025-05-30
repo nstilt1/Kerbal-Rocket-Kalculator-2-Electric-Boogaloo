@@ -115,18 +115,29 @@ mod tests {
             REFINED_AL_STRINGER_TANK_NAME,
             AL_LI_STRINGER_TANK_NAME,
             REFINED_AL_LI_STRINGER_TANK_NAME,
-            STEEL_STIR_WELDED_TANK_NAME
+            STEEL_STIR_WELDED_TANK_NAME,
         ];
 
         for name in fuselage_names {
             let nose_non_hp_fuselage = nose_non_hp_fuselages.get(name).unwrap();
             let cyl_non_hp_fuselage = cyl_non_hp_fuselages.get(name).unwrap();
-            
-            let diff = (nose_non_hp_fuselage.density - cyl_non_hp_fuselage.density).abs();
-            assert!(diff < 0.08, "Diff = {}\n{}\nnose: {}\ncyl: {}", diff, name, nose_non_hp_fuselage.density, cyl_non_hp_fuselage.density);
 
-            let nose_hp_fuselage = nose_hp_fuselages.get(format!("HP {}", name).as_str()).unwrap();
-            let cyl_hp_fuselage = cyl_hp_fuselages.get(format!("HP {}", name).as_str()).unwrap();
+            let diff = (nose_non_hp_fuselage.density - cyl_non_hp_fuselage.density).abs();
+            assert!(
+                diff < 0.08,
+                "Diff = {}\n{}\nnose: {}\ncyl: {}",
+                diff,
+                name,
+                nose_non_hp_fuselage.density,
+                cyl_non_hp_fuselage.density
+            );
+
+            let nose_hp_fuselage = nose_hp_fuselages
+                .get(format!("HP {}", name).as_str())
+                .unwrap();
+            let cyl_hp_fuselage = cyl_hp_fuselages
+                .get(format!("HP {}", name).as_str())
+                .unwrap();
             let diff = (nose_hp_fuselage.density - cyl_hp_fuselage.density).abs();
             //assert!(diff < 0.005, "Diff = {}\nHP {}", diff, name);
         }
