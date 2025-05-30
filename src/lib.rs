@@ -32,6 +32,7 @@ pub fn calculate(
     diameter: f64,
     unlocked_fuselages: Array,
     unlocked_tech: Array,
+    nose_height: f64,
 ) -> Result<String, JsError> {
     use modules::{rocket_config::Rocket, size::Size};
 
@@ -72,7 +73,7 @@ pub fn calculate(
         needs_gimballing,
         in_vacuum,
         use_nosecone,
-        0.0,
+        nose_height,
         size,
         unlocked_fuselages,
         unlocked_tech,
@@ -99,6 +100,7 @@ pub fn max_dv(
     unlocked_fuselages: Array,
     unlocked_tech: Array,
     extra_fuel_percentage: f64,
+    nose_height: f64,
 ) -> Result<String, JsError> {
     let mut calculator = Calculator::new();
     let unlocked_fuselages: Vec<String> = unlocked_fuselages
@@ -119,6 +121,7 @@ pub fn max_dv(
         use_nosecone,
         unlocked_fuselages,
         unlocked_tech,
+        nose_height,
     );
     let mut result = calculator.max_dv(extra_fuel_percentage)?;
     result.sort_by(|a, b| a.partial_cmp(&b).unwrap());

@@ -371,6 +371,7 @@ impl Calculator {
         use_nosecone: bool,
         unlocked_fuselages: String,
         unlocked_tech: String,
+        nose_height: f64,
     ) {
         self.mass = mass;
         self.in_vacuum = in_vacuum;
@@ -767,6 +768,7 @@ mod tests {
             false,
             "Steel Fuselage".to_string(),
             "start".to_string(),
+            0.0,
         );
         let results = calculator.max_dv(1.5).unwrap();
         println!(
