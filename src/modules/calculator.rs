@@ -1,4 +1,4 @@
-use crate::{debug, modules::tanks::cylindrical_tanks::compute_tank_height_for_delta_v, G};
+use crate::{debug, modules::tanks::{cylindrical_tanks::compute_tank_height_for_delta_v, nose_tanks::compute_tank_height_with_nose_for_delta_v}, G};
 
 use super::{
     engines::Engine,
@@ -30,6 +30,7 @@ pub struct Calculator {
     needs_gimballing: bool,
     in_vacuum: bool,
     use_nosecone: bool,
+    nose_height: f64,
     unlocked_fusalages: String,
     unlocked_tech: String,
 }
@@ -42,6 +43,7 @@ impl Calculator {
             mass: 0.0,
             minimum_twr: 0.0,
             maximum_twr: 100000.0,
+            nose_height: 0.0,
             needs_gimballing: false,
             in_vacuum: false,
             use_nosecone: false,
@@ -60,6 +62,7 @@ impl Calculator {
         needs_gimballing: bool,
         in_vacuum: bool,
         use_nosecone: bool,
+        nose_height: f64,
         size: Size,
         unlocked_fuselages: String,
         unlocked_tech: String,
@@ -72,6 +75,7 @@ impl Calculator {
         self.in_vacuum = in_vacuum;
         self.size = size;
         self.use_nosecone = use_nosecone;
+        self.nose_height = nose_height;
         self.unlocked_fusalages = unlocked_fuselages;
         self.unlocked_tech = unlocked_tech;
     }
@@ -235,10 +239,41 @@ impl Calculator {
 
                     let max_volume_per_stack = fuel.max_volume(engine.rated_burn_time);
                     if self.use_nosecone {
-                        for nosecone_core in nosecone_cores {
-                            let min_height = nosecone_core.base_length * NoseConeVariant::MIN_VSA;
-                            let max_height = nosecone_core.base_length * NoseConeVariant::MAX_VSA;
-                            let mut height = min_height;
+                        'nosecone_core_loop: for nosecone_core in nosecone_cores {
+                            let core_base_length_x_diameter = nosecone_core.base_length * engine.size.get_diameter();
+                            let min_nose_height = core_base_length_x_diameter * NoseConeVariant::MIN_VSA;
+                            let max_nose_height = core_base_length_x_diameter * NoseConeVariant::MAX_VSA;
+
+                            if self.nose_height < min_nose_height || self.nose_height > max_nose_height {
+                                // different cores have different `base_length`s; because of this
+                                // one type of nose could be picked every time if it somehow has 
+                                // better properties than the others, namely the correction 
+                                // coefficient in the nose volume calculation
+                                continue 'nosecone_core_loop;
+                            }
+                            
+                            let h = compute_tank_height_with_nose_for_delta_v(
+                                self.target_dv, 
+                                engine, 
+                                &cyl_fuselage, 
+                                &nose_fuselage, 
+                                nosecone_core, 
+                                self.mass, 
+                                num_engines, 
+                                self.nose_height, 
+                                self.in_vacuum,
+                            );
+
+                            if h.as_ref().is_err() {
+                                // TODO: determine if this is the loop that needs to continue
+                                continue 'nosecone_core_loop;
+                            }
+
+                            let h = h.unwrap();
+                            
+                            // we have enough delta-v, but do we have enough TWR?
+                            let mut height = 0.0;
+                            let max_height = 1.0;
                             'nose_height_loop: while height <= max_height {
                                 let nose_volume = calculate_corrected_volume(
                                     self.size.get_diameter(),
@@ -794,6 +829,7 @@ mod tests {
             false,
             false,
             false,
+            0.0,
             Size::Sm,
             "Steel Fuselage".to_string(),
             "start".to_string(),

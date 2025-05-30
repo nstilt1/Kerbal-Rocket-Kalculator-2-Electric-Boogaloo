@@ -6,7 +6,7 @@ use serde::Serialize;
 
 use crate::{
     debug,
-    modules::{engines::Engine, tanks::cylindrical_tanks::CylindricalTank, Error},
+    modules::{engines::Engine, tanks::cylindrical_tanks::{tank_volume, CylindricalTank}, Error},
     G,
 };
 
@@ -325,7 +325,7 @@ pub fn compute_tank_height_with_nose_for_delta_v(
     num_tanks: u8,
     nose_height: f64,
     in_vacuum: bool,
-) -> Result<f64, Error> {
+) -> Result<(f64, f64), Error> {
     let n = num_tanks as f64;
     let isp = if in_vacuum {
         engine.isp_vac
@@ -377,7 +377,18 @@ pub fn compute_tank_height_with_nose_for_delta_v(
         debug!("h was invalid: {}", h);
         return Err(Error::InvalidHeight);
     }
-    Ok(h)
+    let cyl_volume = tank_volume(d, h) * n;
+    let m_struct_cyl = cyl_volume * cylindrical_tank_fuselage.density * (1.0 - cylindrical_tank_fuselage.utilization);
+
+    let dry_mass = payload_mass + n * (engine_mass + m_struct_nose) + m_struct_cyl;
+    let wet_mass = dry_mass + n * m_fuel_nose + engine.fuel_mix.density() * u_cyl * cyl_volume;
+    let thrust_n = if in_vacuum {
+        engine.thrust_vac
+    } else {
+        engine.thrust_asl
+    } * 1000.0 * n;
+    let twr = thrust_n / wet_mass / G;
+    Ok((h, twr))
 }
 
 #[cfg(test)]
@@ -415,7 +426,7 @@ mod tests {
             .unwrap();
         let nosecones = NoseConeVariant::nosecones();
         let core = &nosecones.cores[0];
-        let h = compute_tank_height_with_nose_for_delta_v(
+        let (h, twr) = compute_tank_height_with_nose_for_delta_v(
             target_dv,
             &engine,
             cyl_fuselage,
@@ -443,7 +454,16 @@ mod tests {
             + num_tanks_f64 * cyl_volume * cyl_fuselage.utilization * engine.fuel_mix.density()
             + num_tanks_f64 * nose_volume * nose_fuselage.utilization * engine.fuel_mix.density();
         let delta_v = engine.isp_asl * G * f64::ln(wet_mass / dry_mass);
-        assert_eq!(delta_v, target_dv);
+        let diff = delta_v - target_dv;
+        assert!(diff.abs() < 0.0001);
+        let thrust_n = if in_vacuum {
+            engine.thrust_vac
+        } else {
+            engine.thrust_asl
+        } * 1000.0 * num_tanks_f64;
+
+        let expected_twr = thrust_n / wet_mass / G;
+        assert_eq!(twr, expected_twr);
     }
 
     #[test]

@@ -72,6 +72,7 @@ pub fn calculate(
         needs_gimballing,
         in_vacuum,
         use_nosecone,
+        0.0,
         size,
         unlocked_fuselages,
         unlocked_tech,

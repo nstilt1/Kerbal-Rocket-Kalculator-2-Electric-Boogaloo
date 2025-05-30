@@ -144,6 +144,7 @@ fn main() {
             needs_gimballing,
             is_vacuum,
             use_nosecone,
+            0.0,
             size,
             unlocked_fuselages.clone(),
             "start".to_string(),
