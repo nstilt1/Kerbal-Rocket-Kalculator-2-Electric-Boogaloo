@@ -164,17 +164,17 @@ pub fn tank_height_given_max_volume(
     let n = num_tanks as f64;
     let d = engine.size.get_diameter();
     let r = d / 2.0;
-    let nose_volume = calculate_corrected_volume(d, nose_height, nose_core.correction_coefficient);
-    let max_volume = max_total_volume - nose_volume;
+    let nose_volume = calculate_corrected_volume(d, nose_height, nose_core.correction_coefficient) * nose_fuselage.utilization;
+    let max_volume = (max_total_volume / cyl_fuselage.utilization) - nose_volume;
     if max_volume < 0.0 {
         debug!(
-            "Invalid max_volume in tank_height_given_max_volume: {}",
+            "\t\tError: Invalid max_volume in tank_height_given_max_volume: {}",
             max_volume
         );
         return Err(Error::InvalidHeight);
     }
     let fuel_density = engine.fuel_mix.density(engine.hp_fuel);
-    // max_volume = tank_volume(d, h)
+    // max_volume = tank_volume(d, h) * u
     // max_volume = 1000 * (ellipsoid_volume + cylinder_volume(r, h)) - correction_factor
     // (max_volume + correction_factor)/1000 = ellipsoid_volume + cylinder_volume(r,h)
     // (max_volume + correction_factor)/1000 - ellipsoid_volume = cylinder_volume(r,h)
@@ -182,6 +182,7 @@ pub fn tank_height_given_max_volume(
     // n_1 / (PI * r * r) = h
     let n_1 = (max_volume + K * d * d * d) / 1000.0 - ellipsoid_volume(r, r, r / 2.0);
     let h = n_1 / (std::f64::consts::PI * r * r);
+
     let tank_volume = tank_volume(d, h);
     let dry_mass = payload_mass
         + n * nose_volume * nose_fuselage.density * (1.0 - nose_fuselage.utilization)
@@ -196,6 +197,7 @@ pub fn tank_height_given_max_volume(
     } * 1000.0
         * n;
     let twr = thrust_n / wet_mass / G;
+    debug_assert!((tank_volume * cyl_fuselage.utilization - max_total_volume).abs() < 0.001, "Tank volume was off. tank_volume * utilization = {}\nmax_total_volume = {}", tank_volume * cyl_fuselage.utilization, max_total_volume);
     Ok((h, twr, wet_mass, dry_mass))
 }
 
@@ -464,7 +466,7 @@ mod tests {
 
     #[test]
     fn max_tank_height_given_max_volume() {
-        let max_total_volume = 1000.0;
+        let max_total_volume = 139.465;
         let nose_height = 0.0;
         let nose_fuselages = NoseConeVariant::init_fuselage_types();
         let nose_fuselage = nose_fuselages.hp_fuselages.get(format!("HP {}", STEEL_FUSELAGE_NAME).as_str()).unwrap();

@@ -652,6 +652,7 @@ impl Calculator {
                             }
                             console_log!("New h = {}", h);
                             console_log!("New twr = {}", twr);
+                            console_log!("New volume = {}", tank_volume(d, h));
                             // TWR is within the range. This is the most delta-v
                             // that this tank will be able to have
                             result.push(Rocket::new(

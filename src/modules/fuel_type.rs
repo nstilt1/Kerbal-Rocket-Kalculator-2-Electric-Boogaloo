@@ -58,19 +58,31 @@ impl FuelMix {
     /// Returns the maximum volume of fuel that an engine can burn through in
     /// its rated burn time. Unit = liters
     pub fn max_volume(&self, rated_burn_time: f64, hp_fuel: bool) -> f64 {
-        // 1) How many kilograms will be burned in `rated_burn_time`?
-        let mass_consumed_kg = self.flow_rate() * rated_burn_time; // (kg/s) × (s) = kg
-
-        // 2) “density(...)” already accounts for compression if hp_fuel == true:
-        let compressed_density_kg_per_l = self.density(hp_fuel);
-
-        if compressed_density_kg_per_l <= 0.0 {
-            // Avoid dividing by zero (e.g., if no propellant at all).
+        if self.fuels.is_empty() {
             return 0.0;
         }
 
-        // 3) Convert mass → volume (L):
-        mass_consumed_kg / compressed_density_kg_per_l
+        let compression_ratio = 200.0;
+
+        let mut total_volume_liters = 0.0;
+
+        for fuel in self.fuels {
+            let mass_flow_i = fuel.flow_rate();
+            let mass_i = mass_flow_i * rated_burn_time;
+
+            let mut density_i = fuel.density();
+            if fuel.is_gas() && hp_fuel {
+                density_i *= compression_ratio;
+            }
+
+            if density_i <= 0.0 {
+                continue;
+            }
+
+            let volume_i = mass_i / density_i;
+            total_volume_liters += volume_i;
+        }
+        total_volume_liters
     }
 
     /// Returns the mass of this fuel mixture when filling the specified volume.
@@ -125,12 +137,12 @@ impl FuelType {
             Self::RP1(lps, kgps) => kgps / lps,
             //Self::PSPC => 1.73874, // Measured, actual 0.00174
             Self::PSPC => 1.74,
-            Self::AnilineFurfuryl_22p(lps, kgps) => kgps / lps,
+            Self::AnilineFurfuryl_22p(lps, kgps) => 1.02,
             Self::AnilineFurfuryl_37p(lps, kgps) => kgps / lps,
             //Self::IRFNA_III(_) => 1.56377, // Measured, actual 0.001658
-            Self::IRFNA_III(lps, kgps) => kgps / lps,
+            Self::IRFNA_III(lps, kgps) => 1.658,
             //Self::Nitrogen(_) => 0.82310,
-            Self::Nitrogen(lps, kgps) => kgps / lps,
+            Self::Nitrogen(lps, kgps) => 0.00082,
             //Self::Kerosene(_) => 0.77531, // Measured, actual 0.00082
             Self::Kerosene(lps, kgps) => kgps / lps,
             //Self::AK20(_) => 1.53390, // Measured, actual from CommonResources.cfg: 0.001499
@@ -271,7 +283,7 @@ mod tests {
         let expected_value = 144.7293;
 
         let diff = actual_value - expected_value;
-        assert!(diff.abs() < 1e-4, "Aerobee max volume should be {} but was found to be {}", expected_value, actual_value);
+        assert!(diff.abs() < 0.00001, "\nError: Aerobee max volume should be {} but was found to be {}\n", expected_value, actual_value);
     }
 
     mod sanity_checks {

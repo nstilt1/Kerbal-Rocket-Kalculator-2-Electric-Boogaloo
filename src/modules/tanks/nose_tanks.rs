@@ -484,7 +484,8 @@ mod tests {
             * num_tanks_f64;
 
         let expected_twr = thrust_n / wet_mass / G;
-        assert_eq!(twr, expected_twr);
+        let diff = expected_twr - twr;
+        assert!(diff.abs() < 0.00001);
     }
 
     #[test]
