@@ -4,7 +4,7 @@ use serde::Serialize;
 
 #[derive(Debug, PartialEq, Clone, Copy, Serialize)]
 pub struct FuelMix {
-    fuels: &'static [FuelType],
+    pub fuels: &'static [FuelType],
 }
 
 impl FuelMix {
@@ -13,17 +13,23 @@ impl FuelMix {
         Self { fuels }
     }
 
-    /// Returns the density of this fuel mixture.
-    pub fn density(&self) -> f64 {
-        let total_flow_rate = self.flow_rate();
+    /// Returns the density of this fuel mixture in kg/L
+    pub fn density(&self, hp_fuel: bool) -> f64 {
+        let total_flow_rate = self.flow_rate_lps(); // lps
         if total_flow_rate == 0.0 {
             return 0.0; // Avoid division by zero
         }
 
         let mut weighted_density_sum = 0.0;
         for fuel in self.fuels {
-            let flow_rate = fuel.flow_rate();
-            let density = fuel.density();
+            let flow_rate = fuel.flow_rate_lps();
+            let mut density = fuel.density();
+            if fuel.is_gas() && hp_fuel {
+                //let uncompressed_volume = 97.193;
+                //let compressed_volume = 19438.6;
+                //let compression_ratio = compressed_volume / uncompressed_volume;
+                density *= 200.0;
+            }
             weighted_density_sum += flow_rate * density;
         }
 
@@ -31,7 +37,7 @@ impl FuelMix {
         weighted_density_sum / total_flow_rate
     }
 
-    /// Returns the flow rate of this fuel mixture
+    /// Returns the flow rate of this fuel mixture in kg/s
     pub fn flow_rate(&self) -> f64 {
         let mut flow_rate_sum = 0.0;
         for fuel in self.fuels {
@@ -40,15 +46,36 @@ impl FuelMix {
         flow_rate_sum
     }
 
+    /// Returns the flow rate of this fuel mixture in L/s
+    pub fn flow_rate_lps(&self) -> f64 {
+        let mut flow_rate_sum = 0.0;
+        for fuel in self.fuels {
+            flow_rate_sum += fuel.flow_rate_lps();
+        }
+        flow_rate_sum
+    }
+
     /// Returns the maximum volume of fuel that an engine can burn through in
     /// its rated burn time. Unit = liters
-    pub fn max_volume(&self, rated_burn_time: f64) -> f64 {
-        self.flow_rate() * rated_burn_time
+    pub fn max_volume(&self, rated_burn_time: f64, hp_fuel: bool) -> f64 {
+        // 1) How many kilograms will be burned in `rated_burn_time`?
+        let mass_consumed_kg = self.flow_rate() * rated_burn_time; // (kg/s) × (s) = kg
+
+        // 2) “density(...)” already accounts for compression if hp_fuel == true:
+        let compressed_density_kg_per_l = self.density(hp_fuel);
+
+        if compressed_density_kg_per_l <= 0.0 {
+            // Avoid dividing by zero (e.g., if no propellant at all).
+            return 0.0;
+        }
+
+        // 3) Convert mass → volume (L):
+        mass_consumed_kg / compressed_density_kg_per_l
     }
 
     /// Returns the mass of this fuel mixture when filling the specified volume.
-    pub fn mass(&self, volume: f64) -> f64 {
-        self.density() * volume
+    pub fn mass(&self, volume: f64, hp_fuel: bool) -> f64 {
+        self.density(hp_fuel) * volume
     }
 
     /// Returns the fuel volumes for this mixture to fill up a volume.
@@ -71,21 +98,21 @@ impl FuelMix {
 #[derive(Debug, PartialEq, Clone, Copy, Serialize)]
 #[allow(non_camel_case_types)]
 pub enum FuelType {
-    RP1(f64),
+    RP1(f64, f64),
     PSPC,
-    AnilineFurfuryl_22p(f64),
-    AnilineFurfuryl_37p(f64),
-    IRFNA_III(f64),
-    Nitrogen(f64),
-    Kerosene(f64),
-    AK20(f64),
-    Water(f64),
+    AnilineFurfuryl_22p(f64, f64),
+    AnilineFurfuryl_37p(f64, f64),
+    IRFNA_III(f64, f64),
+    Nitrogen(f64, f64),
+    Kerosene(f64, f64),
+    AK20(f64, f64),
+    Water(f64, f64),
     NGNC(f64),
-    Ethanol_75(f64),
-    Ethanol_90(f64),
-    Liquid_Oxygen(f64),
-    HTP(f64),
-    Hydyne(f64),
+    Ethanol_75(f64, f64),
+    Ethanol_90(f64, f64),
+    Liquid_Oxygen(f64, f64),
+    HTP(f64, f64),
+    Hydyne(f64, f64),
     Helium(f64, f64), // flow_rate_Lps, flow_rate_kgps
     Turpentine(f64, f64),
     IWFNA(f64, f64),
@@ -95,64 +122,87 @@ impl FuelType {
     /// Returns the density of this fuel in kg/L
     pub fn density(&self) -> f64 {
         match self {
-            Self::RP1(_) => 0.80655,
+            Self::RP1(lps, kgps) => kgps / lps,
             //Self::PSPC => 1.73874, // Measured, actual 0.00174
             Self::PSPC => 1.74,
-            Self::AnilineFurfuryl_22p(_) => 1.04410,
-            Self::AnilineFurfuryl_37p(_) => 1.05827,
+            Self::AnilineFurfuryl_22p(lps, kgps) => kgps / lps,
+            Self::AnilineFurfuryl_37p(lps, kgps) => kgps / lps,
             //Self::IRFNA_III(_) => 1.56377, // Measured, actual 0.001658
-            Self::IRFNA_III(_) => 1.658,
+            Self::IRFNA_III(lps, kgps) => kgps / lps,
             //Self::Nitrogen(_) => 0.82310,
-            Self::Nitrogen(_) => 0.824907,
+            Self::Nitrogen(lps, kgps) => kgps / lps,
             //Self::Kerosene(_) => 0.77531, // Measured, actual 0.00082
-            Self::Kerosene(_) => 0.82,
+            Self::Kerosene(lps, kgps) => kgps / lps,
             //Self::AK20(_) => 1.53390, // Measured, actual from CommonResources.cfg: 0.001499
-            Self::AK20(_) => 1.499,
+            Self::AK20(lps, kgps) => kgps / lps,
             //Self::Water(_) => 1.00229,
-            Self::Water(_) => 1.0,
+            Self::Water(lps, kgps) => kgps / lps,
             //Self::NGNC(_) => 1.59941, // Measured, actual 0.0016
-            Self::NGNC(_) => 1.6,
+            Self::NGNC(lps) => *lps,
             //Self::Ethanol_75(_) => 0.84102, // Measured, actual: 0.00084175
-            Self::Ethanol_75(_) => 0.84175,
-            Self::Ethanol_90(_) => 0.81078,
+            Self::Ethanol_75(lps, kgps) => kgps / lps,
+            Self::Ethanol_90(lps, kgps) => kgps / lps,
             //Self::Liquid_Oxygen(_) => 1.13967, // Measured, actual 0.001141
-            Self::Liquid_Oxygen(_) => 1.141,
+            Self::Liquid_Oxygen(lps, kgps) => kgps / lps,
             //Self::HTP(_) => 1.43236, // Measured, actual 0.001431
-            Self::HTP(_) => 1.431,
-            Self::Hydyne(_) => 0.85962,
-            Self::Helium(fr_liters_per_sec, fr_kg_per_sec) => fr_liters_per_sec / fr_kg_per_sec,
-            Self::Turpentine(lps, kgps) => lps / kgps,
-            Self::IWFNA(lps, kgps) => lps / kgps,
+            Self::HTP(lps, kgps) => kgps / lps,
+            Self::Hydyne(lps, kgps) => kgps / lps,
+            Self::Helium(lps, kgps) => kgps / lps,
+            Self::Turpentine(lps, kgps) => kgps / lps,
+            Self::IWFNA(lps, kgps) => kgps / lps,
         }
     }
-    /// Returns the fuel flow rate for a specific engine in L/s
+    /// Returns the fuel flow rate for a specific engine in kg/s
     pub fn flow_rate(&self) -> f64 {
         match self {
-            Self::RP1(flow_rate) => *flow_rate,
-            Self::AnilineFurfuryl_22p(flow_rate) => *flow_rate,
-            Self::AnilineFurfuryl_37p(flow_rate) => *flow_rate,
-            Self::IRFNA_III(flow_rate) => *flow_rate,
+            Self::RP1(_, kgps) => *kgps,
+            Self::AnilineFurfuryl_22p(_lps, kgps) => *kgps,
+            Self::AnilineFurfuryl_37p(_, kgps) => *kgps,
+            Self::IRFNA_III(_lps, kgps) => *kgps,
             Self::PSPC => todo!(),
-            Self::Nitrogen(flow_rate) => *flow_rate,
-            Self::Kerosene(flow_rate) => *flow_rate,
-            Self::AK20(flow_rate) => *flow_rate,
-            Self::Water(flow_rate) => *flow_rate,
+            Self::Nitrogen(_lps, kgps) => *kgps,
+            Self::Kerosene(_, kgps) => *kgps,
+            Self::AK20(_, kgps) => *kgps,
+            Self::Water(_, kgps) => *kgps,
             Self::NGNC(flow_rate) => *flow_rate,
-            Self::Ethanol_75(flow_rate) => *flow_rate,
-            Self::Ethanol_90(flow_rate) => *flow_rate,
-            Self::Liquid_Oxygen(flow_rate) => *flow_rate,
-            Self::HTP(flow_rate) => *flow_rate,
-            Self::Hydyne(flow_rate) => *flow_rate,
-            Self::Helium(flow_rate, _) => *flow_rate,
-            Self::Turpentine(flow_rate, _) => *flow_rate,
-            Self::IWFNA(flow_rate, _) => *flow_rate,
+            Self::Ethanol_75(_, kgps) => *kgps,
+            Self::Ethanol_90(_, kgps) => *kgps,
+            Self::Liquid_Oxygen(_, kgps) => *kgps,
+            Self::HTP(_, kgps) => *kgps,
+            Self::Hydyne(_, kgps) => *kgps,
+            Self::Helium(_, kgps) => *kgps,
+            Self::Turpentine(_, kgps) => *kgps,
+            Self::IWFNA(_, kgps) => *kgps,
+        }
+    }
+
+    pub fn flow_rate_lps(&self) -> f64 {
+        match self {
+            Self::RP1(lps, _kgps) => *lps,
+            Self::AnilineFurfuryl_22p(lps, _kgps) => *lps,
+            Self::AnilineFurfuryl_37p(lps, _kgps) => *lps,
+            Self::IRFNA_III(lps, _kgps) => *lps,
+            Self::PSPC => todo!(),
+            Self::Nitrogen(lps, _kgps) => *lps,
+            Self::Kerosene(lps, _kgps) => *lps,
+            Self::AK20(lps, _kgps) => *lps,
+            Self::Water(lps, _kgps) => *lps,
+            Self::NGNC(flow_rate) => *flow_rate,
+            Self::Ethanol_75(lps, _kgps) => *lps,
+            Self::Ethanol_90(lps, _kgps) => *lps,
+            Self::Liquid_Oxygen(lps, _kgps) => *lps,
+            Self::HTP(lps, _kgps) => *lps,
+            Self::Hydyne(lps, _kgps) => *lps,
+            Self::Helium(lps, _kgps) => *lps,
+            Self::Turpentine(lps, _kgps) => *lps,
+            Self::IWFNA(lps, _kgps) => *lps,
         }
     }
 
     /// Returns the maximum volume of fuel that an engine can burn through in
     /// its rated burn time. Unit: Liters
     pub fn max_volume(&self, rated_burn_time: f64) -> f64 {
-        self.flow_rate() * rated_burn_time
+        self.flow_rate_lps() * rated_burn_time
     }
 
     /// Returns the mass of this fuel given some volume. Unit: kg
@@ -162,30 +212,108 @@ impl FuelType {
 
     pub fn name(&self) -> &str {
         match self {
-            Self::AK20(_) => "AK20",
-            Self::AnilineFurfuryl_22p(_) => "Aniline-Furfuryl 22%",
-            Self::AnilineFurfuryl_37p(_) => "Aniline-Furfuryl 37%",
-            Self::Ethanol_75(_) => "Ethanol 75",
-            Self::Ethanol_90(_) => "Ethanol 90",
-            Self::HTP(_) => "HTP",
-            Self::IRFNA_III(_) => "IRFNA_III",
-            Self::Kerosene(_) => "Kerosene",
-            Self::Liquid_Oxygen(_) => "Liquid Oxygen",
+            Self::AK20(_, _) => "AK20",
+            Self::AnilineFurfuryl_22p(_, _) => "Aniline-Furfuryl 22%",
+            Self::AnilineFurfuryl_37p(_, _) => "Aniline-Furfuryl 37%",
+            Self::Ethanol_75(_, _) => "Ethanol 75",
+            Self::Ethanol_90(_, _) => "Ethanol 90",
+            Self::HTP(_, _) => "HTP",
+            Self::IRFNA_III(_, _) => "IRFNA_III",
+            Self::Kerosene(_, _) => "Kerosene",
+            Self::Liquid_Oxygen(_, _) => "Liquid Oxygen",
             Self::NGNC(_) => "NGNC",
-            Self::Nitrogen(_) => "Nitrogen",
+            Self::Nitrogen(_, _) => "Nitrogen",
             Self::PSPC => "PSPC",
-            Self::RP1(_) => "RP-1",
-            Self::Water(_) => "Water",
-            Self::Hydyne(_) => "Hydyne",
+            Self::RP1(_, _) => "RP-1",
+            Self::Water(_, _) => "Water",
+            Self::Hydyne(_, _) => "Hydyne",
             Self::Helium(_, _) => "Helium",
             Self::Turpentine(_, _) => "Turpentine",
             Self::IWFNA(_, _) => "IWFNA",
+        }
+    }
+
+    pub fn is_gas(&self) -> bool {
+        match self {
+            Self::AK20(_, _) => false,
+            Self::AnilineFurfuryl_22p(_, _) => false,
+            Self::AnilineFurfuryl_37p(_, _) => false,
+            Self::Ethanol_75(_, _) => false,
+            Self::Ethanol_90(_, _) => false,
+            Self::HTP(_, _) => false,
+            Self::IRFNA_III(_, _) => false,
+            Self::Kerosene(_, _) => false,
+            Self::Liquid_Oxygen(_, _) => false,
+            Self::NGNC(_) => false,
+            Self::Nitrogen(_, _) => true,
+            Self::PSPC => false,
+            Self::RP1(_, _) => false,
+            Self::Water(_, _) => false,
+            Self::Hydyne(_, _) => false,
+            Self::Helium(_, _) => true,
+            Self::Turpentine(_, _) => false,
+            Self::IWFNA(_, _) => false,
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::modules::engines::ENGINES;
+
+    use super::*;
+
+    #[test]
+    fn max_volume_tests() {
+        let engine = ENGINES.iter().find(|e| e.name == "Aerobee").unwrap();
+        let actual_value = engine.fuel_mix.max_volume(engine.rated_burn_time, engine.hp_fuel);
+
+        let expected_value = 144.7293;
+
+        let diff = actual_value - expected_value;
+        assert!(diff.abs() < 1e-4, "Aerobee max volume should be {} but was found to be {}", expected_value, actual_value);
+    }
+
+    mod sanity_checks {
+        use super::*;
+
+        #[test]
+        fn single_liquid() {
+            let mix = FuelMix::new(&[FuelType::Ethanol_90(1.0, 2.0)]);
+
+            assert_eq!(mix.density(false), 2.0);
+            assert_eq!(mix.density(true), 2.0);
+        }
+
+        #[test]
+        fn single_gas() {
+            let mix = FuelMix::new(&[FuelType::Helium(1.0, 2.0)]);
+            assert_eq!(mix.density(false), 2.0);
+            assert_eq!(mix.density(true), 400.0);
+        }
+
+        #[test]
+        fn nitrogen_compressed_density() {
+            let engine = ENGINES.iter().find(|e| e.name == "Aerobee").unwrap();
+            let expected_density = (92.2 - 56.0) / 144.7293;
+            let nitrogen = engine.fuel_mix.fuels[2];
+            let diff = nitrogen.density() * 200.0 - expected_density;
+            assert!(diff.abs() < 0.001);
+        }
+
+        #[test]
+        fn density_sanity_check() {
+            let engine = ENGINES.iter().find(|e| e.name == "Aerobee").unwrap();
+
+            let flow_rate_kgps = engine.fuel_mix.flow_rate();
+            let flow_rate_lps = engine.fuel_mix.flow_rate_lps();
+            let expected_density = flow_rate_kgps / flow_rate_lps;
+            let actual_density = engine.fuel_mix.density(false);
+
+            assert_eq!(expected_density, actual_density);
+        }
+    }
+
     /// Calculates the density of a fuel.
     ///
     /// Arguments:

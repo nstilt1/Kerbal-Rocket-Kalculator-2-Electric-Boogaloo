@@ -14,6 +14,7 @@ serde = "1.0.215"
 serde_json = "1.0.132"
 serde-wasm-bindgen = "0.6"
 wasm-bindgen = { version = "0.2" }
+# wasm-bindgen-futures = "0.4"
 
 [dev-dependencies]
 charming = "0.5"

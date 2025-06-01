@@ -26,6 +26,37 @@ macro_rules! debug {
     ($($arg:tt)*) => {};
 }
 
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+#[cfg(target_arch="wasm32")]
+extern "C" {
+    #[wasm_bindgen(js_namespace = console)]
+    pub fn log(s: &str);
+}
+
+#[cfg(target_arch="wasm32")]
+#[macro_export]
+macro_rules! console_log {
+    ($($arg:tt)*) => {
+        if true {
+            let x = format!($($arg)*);
+            crate::modules::log(&x);
+        }
+    };
+}
+
+#[cfg(not(target_arch="wasm32"))]
+#[macro_export]
+macro_rules! console_log {
+    ($($arg:tt)*) => {
+        if true {
+            println!($($arg)*);
+        }
+    };
+}
+
 #[derive(Debug, Clone)]
 pub enum Error {
     MissingTech(String),

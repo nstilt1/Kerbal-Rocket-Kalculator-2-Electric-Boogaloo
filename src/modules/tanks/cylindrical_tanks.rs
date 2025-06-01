@@ -173,7 +173,7 @@ pub fn tank_height_given_max_volume(
         );
         return Err(Error::InvalidHeight);
     }
-    let fuel_density = engine.fuel_mix.density();
+    let fuel_density = engine.fuel_mix.density(engine.hp_fuel);
     // max_volume = tank_volume(d, h)
     // max_volume = 1000 * (ellipsoid_volume + cylinder_volume(r, h)) - correction_factor
     // (max_volume + correction_factor)/1000 = ellipsoid_volume + cylinder_volume(r,h)
@@ -291,7 +291,7 @@ pub fn compute_tank_height(
     debug!("engine_mass_total = {} kg", engine_mass_total);
 
     // convert kg/L to kg/m^3
-    let fuel_density = engine.fuel_mix.density() * 1000.0;
+    let fuel_density = engine.fuel_mix.density(engine.hp_fuel) * 1000.0;
     let structural_density = fuselage.density * 1000.0;
     let utilization = fuselage.utilization;
     debug_assert!(
@@ -354,7 +354,7 @@ pub fn compute_tank_height(
         + engine_mass_total
         + fuselage.density * tank_volume * (1.0 - fuselage.utilization) * num_tanks;
     let wet_mass =
-        dry_mass + tank_volume * fuselage.utilization * engine.fuel_mix.density() * num_tanks;
+        dry_mass + tank_volume * fuselage.utilization * engine.fuel_mix.density(engine.hp_fuel) * num_tanks;
     let thrust_n = if in_vacuum {
         engine.thrust_vac
     } else {
@@ -424,7 +424,7 @@ pub fn compute_tank_height_for_delta_v(
     let ellipsoid_volume_total = ellipsoid_volume(r, r, r / 2.0) * num_tanks as f64;
     let correction_total = (K * d * d * d * num_tanks as f64) * 0.001;
 
-    let fuel_density = engine.fuel_mix.density() * 1000.0;
+    let fuel_density = engine.fuel_mix.density(engine.hp_fuel) * 1000.0;
     let structural_density = fuselage.density * 1000.0;
 
     let num_1 = (payload_mass + engine_mass) * (1.0 - e0);
@@ -442,7 +442,7 @@ pub fn compute_tank_height_for_delta_v(
     let volume = tank_volume(d, h) * num_tanks as f64;
     let dry_mass =
         payload_mass + engine_mass + volume * fuselage.density * (1.0 - fuselage.utilization);
-    let wet_mass = dry_mass + volume * engine.fuel_mix.density() * fuselage.utilization;
+    let wet_mass = dry_mass + volume * engine.fuel_mix.density(engine.hp_fuel) * fuselage.utilization;
     let thrust_n = if in_vacuum {
         engine.thrust_vac
     } else {
@@ -456,10 +456,32 @@ pub fn compute_tank_height_for_delta_v(
 #[cfg(test)]
 mod tests {
     use crate::modules::engines::{Engine, ENGINES};
+    use crate::modules::tanks::nose_tanks::NoseConeVariant;
     use crate::G;
 
     use super::densities::*;
     use super::*;
+
+    #[test]
+    fn max_tank_height_given_max_volume() {
+        let max_total_volume = 1000.0;
+        let nose_height = 0.0;
+        let nose_fuselages = NoseConeVariant::init_fuselage_types();
+        let nose_fuselage = nose_fuselages.hp_fuselages.get(format!("HP {}", STEEL_FUSELAGE_NAME).as_str()).unwrap();
+        let nose_cores = NoseConeVariant::nosecones();
+        let nose_core = nose_cores.cores[0];
+        let cyl_fuselages = CylindricalTank::init_fuselage_types();
+        let cyl_fuselage = cyl_fuselages.hp_fuselages.get(format!("HP {}", STEEL_FUSELAGE_NAME).as_str()).unwrap();
+        let engine = ENGINES[4];
+        let num_tanks = 1;
+        let payload_mass = 0.087;
+        let in_vacuum = false;
+
+        let (h, _twr, _wet, _dry) = tank_height_given_max_volume(max_total_volume, nose_height, nose_fuselage, &nose_core, cyl_fuselage, &engine, num_tanks, payload_mass, in_vacuum).unwrap();
+        let v = tank_volume(engine.size.get_diameter(), h);
+        let diff = v - max_total_volume;
+        assert!(diff.abs() < 0.0001);
+    }
 
     #[test]
     fn tank_height_delta_v_tests() {
@@ -486,7 +508,7 @@ mod tests {
 
         let dry_mass =
             payload_mass_tons * 1000.0 + engine.mass * 1000.0 * num_tanks as f64 + structural_mass;
-        let wet_mass = dry_mass + volume * engine.fuel_mix.density() * fuselage.utilization;
+        let wet_mass = dry_mass + volume * engine.fuel_mix.density(engine.hp_fuel) * fuselage.utilization;
         let delta_v = engine.isp_asl * G * f64::ln(wet_mass / dry_mass);
         let diff = target_dv - delta_v;
         assert!(diff.abs() < 0.00001);
@@ -522,7 +544,7 @@ mod tests {
 
         let volume = tank_volume(diameter, h);
         let mut wet_mass = payload_mass_kg + engine_mass_kg;
-        wet_mass += engines[0].fuel_mix.mass(volume * fuselage.utilization);
+        wet_mass += engines[0].fuel_mix.mass(volume * fuselage.utilization, engine.hp_fuel);
         wet_mass += volume * (1.0 - fuselage.utilization) * fuselage.density;
         assert!(fuselage.utilization < 1.0);
         assert!(engine.mass < 1.0);
@@ -550,7 +572,7 @@ mod tests {
 
             let volume = tank_volume(diameter, h) * num_tanks as f64;
             let mut wet_mass = payload_mass_kg + engine_mass_kg * num_tanks as f64;
-            let fuel_mass = engines[0].fuel_mix.mass(volume * fuselage.utilization);
+            let fuel_mass = engines[0].fuel_mix.mass(volume * fuselage.utilization, engine.hp_fuel);
             //println!("Fuel mass in test: {} kg", fuel_mass);
             wet_mass += fuel_mass;
             let structural_mass = volume * (1.0 - fuselage.utilization) * fuselage.density;
@@ -630,7 +652,7 @@ mod tests {
                             let volume = tank_volume(*diameter, h) * num_tanks as f64;
                             let mut wet_mass =
                                 *payload_mass_kg as f64 + engine_mass_kg * num_tanks as f64;
-                            let fuel_mass = engine.fuel_mix.mass(volume * fuselage.utilization);
+                            let fuel_mass = engine.fuel_mix.mass(volume * fuselage.utilization, engine.hp_fuel);
                             wet_mass += fuel_mass;
                             let structural_mass =
                                 volume * (1.0 - fuselage.utilization) * fuselage.density;

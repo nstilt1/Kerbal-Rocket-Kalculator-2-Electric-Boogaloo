@@ -1,5 +1,6 @@
 use crate::{
     debug,
+    console_log,
     modules::tanks::{
         cylindrical_tanks::compute_tank_height_for_delta_v,
         nose_tanks::compute_tank_height_with_nose_for_delta_v,
@@ -248,7 +249,7 @@ impl Calculator {
 
                     let fuel = &engine.fuel_mix;
 
-                    let max_volume_per_stack = fuel.max_volume(engine.rated_burn_time);
+                    let max_volume_per_stack = fuel.max_volume(engine.rated_burn_time, engine.hp_fuel);
                     if self.use_nosecone {
                         'nosecone_core_loop: for nosecone_core in nosecone_cores {
                             let core_base_length_x_diameter =
@@ -382,6 +383,7 @@ impl Calculator {
     }
 
     pub fn max_dv(&self, extra_fuel_percentage: f64) -> Result<Vec<Rocket>, Error> {
+        console_log!("use_nosecone: {}", self.use_nosecone);
         let mut result: Vec<Rocket> = Vec::new();
         let mut engine_tech_map = Engine::init_all_engines(Engine::init_rp1_engines());
         let mut engines: Vec<Engine> = Vec::with_capacity(engine_tech_map.len() * 4);
@@ -467,6 +469,10 @@ impl Calculator {
                 )
             };
 
+            let fuel = &engine.fuel_mix;
+            let max_volume_per_stack = fuel.max_volume(engine.rated_burn_time, engine.hp_fuel)
+                * (extra_fuel_percentage / 100.0 + 1.0);
+
             for (nose_fuselage, cyl_fuselage) in nose_fuselages.iter().zip(cyl_fuselages) {
                 'num_engine_loop: for num_engines in 1..=MAX_ENGINES {
                     let partial_mass = (num_engines as f64 * engine.mass * 1000.0) + self.mass;
@@ -479,10 +485,6 @@ impl Calculator {
                         continue 'engine_loop;
                     }
                     let thrust = engine_thrust * num_engines as f64 * 1000.0;
-
-                    let fuel = &engine.fuel_mix;
-                    let max_volume_per_stack = fuel.max_volume(engine.rated_burn_time)
-                        * (extra_fuel_percentage / 100.0 + 1.0);
 
                     if self.use_nosecone {
                         'nosecone_core_loop: for nosecone_core in nosecone_cores {
@@ -615,7 +617,19 @@ impl Calculator {
                         // we have the minimum TWR, but are we over the maximum volume of fuel
                         // given the engine's rated burn time * extra fuel?
                         let (h, twr, wet_mass, dry_mass, volume) = h_twr_wet_dry.unwrap();
-                        if volume > max_volume_per_stack * extra_fuel_percentage {
+                        console_log!("volume = {}\nmax_volume_per_stack = {}\nengine = {}", volume, max_volume_per_stack, engine.name);
+                        #[cfg(test)]
+                        if engine.name.eq("Aerobee") {
+                            console_log!("\n\n\n\n");
+                            console_log!("h = {}\nmax_volume_per_stack = {}", h, max_volume_per_stack);
+                            console_log!("v_tank = {}", volume);
+                            console_log!("fuel density = {}", engine.fuel_mix.density(engine.hp_fuel));
+                            assert_eq!(tank_volume(d, h) * cyl_fuselage.utilization, volume);
+                            assert_eq!(cyl_fuselage.utilization, 0.75);
+                            //assert_eq!((0.893 + 1.64 + 78.1)*engine.rated_burn_time  * (extra_fuel_percentage / 100.0 + 1.0), max_volume_per_stack);
+                        }
+                        if volume > max_volume_per_stack {
+                            console_log!("volume exceeded max volume\n");
                             let h_twr_wet_dry = tank_height_given_max_volume(
                                 max_volume_per_stack,
                                 0.0,
@@ -630,10 +644,14 @@ impl Calculator {
                             if h_twr_wet_dry.as_ref().is_err() {
                                 continue 'num_engine_loop;
                             }
+                            console_log!("Old h = {}\nOld twr = {}", h, twr);
+                            let (h, twr, wet_mass, dry_mass) = h_twr_wet_dry.unwrap();
                             debug_assert!(twr > self.minimum_twr - 0.0001);
                             if twr > self.maximum_twr {
                                 continue 'num_engine_loop;
                             }
+                            console_log!("New h = {}", h);
+                            console_log!("New twr = {}", twr);
                             // TWR is within the range. This is the most delta-v
                             // that this tank will be able to have
                             result.push(Rocket::new(
@@ -761,9 +779,9 @@ mod tests {
     fn max_dv_test() {
         let mut calculator = Calculator::new();
         calculator.prepare_for_max_dv(
-            0.5,
+            0.087,
             false,
-            1.02,
+            1.0,
             false,
             false,
             "Steel Fuselage".to_string(),

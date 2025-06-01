@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde::{ser::SerializeStruct, Serialize};
 
 use crate::{debug, G};
 
@@ -8,7 +8,7 @@ use super::{
     utils::ln,
 };
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct Rocket {
     nose: Option<NoseCone>,
     tank: Option<CylindricalTank>,
@@ -26,6 +26,29 @@ pub struct Rocket {
     delta_v_asl: f64,
     delta_v_vac: f64,
     twr: f64,
+}
+
+impl Serialize for Rocket {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: serde::Serializer {
+        let len = 13;
+        let mut state = serializer.serialize_struct("Rocket", len)?;
+        state.serialize_field("engine", self.engine.name)?;
+        state.serialize_field("numEngines", &self.num_engines)?;
+        state.serialize_field("diameter", &self.diameter)?;
+        state.serialize_field("wetMass", &self.mass)?;
+        state.serialize_field("dryMass", &self.dry_mass)?;
+        state.serialize_field("deltaVAsl", &self.delta_v_asl)?;
+        state.serialize_field("deltaVVac", &self.delta_v_vac)?;
+        state.serialize_field("twr", &self.twr)?;
+        state.serialize_field("noseCore", self.nose_core.unwrap_or("N/A"))?;
+        state.serialize_field("noseFuselage", self.nose_fuselage.unwrap_or("N/A"))?;
+        state.serialize_field("noseLength", &self.nose_length.unwrap_or(0.0))?;
+        state.serialize_field("cylFuselage", &self.cyl_fuselage.unwrap_or("N/A"))?;
+        state.serialize_field("cylLength", &self.cyl_length.unwrap_or(0.0))?;
+        state.end()
+    }
 }
 
 impl Rocket {
