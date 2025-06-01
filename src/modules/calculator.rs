@@ -1,6 +1,5 @@
 use crate::{
-    debug,
-    console_log,
+    console_log, debug,
     modules::tanks::{
         cylindrical_tanks::compute_tank_height_for_delta_v,
         nose_tanks::compute_tank_height_with_nose_for_delta_v,
@@ -249,7 +248,8 @@ impl Calculator {
 
                     let fuel = &engine.fuel_mix;
 
-                    let max_volume_per_stack = fuel.max_volume(engine.rated_burn_time, engine.hp_fuel);
+                    let max_volume_per_stack =
+                        fuel.max_volume(engine.rated_burn_time, engine.hp_fuel);
                     if self.use_nosecone {
                         'nosecone_core_loop: for nosecone_core in nosecone_cores {
                             let core_base_length_x_diameter =
@@ -617,13 +617,25 @@ impl Calculator {
                         // we have the minimum TWR, but are we over the maximum volume of fuel
                         // given the engine's rated burn time * extra fuel?
                         let (h, twr, wet_mass, dry_mass, volume) = h_twr_wet_dry.unwrap();
-                        console_log!("volume = {}\nmax_volume_per_stack = {}\nengine = {}", volume, max_volume_per_stack, engine.name);
+                        console_log!(
+                            "volume = {}\nmax_volume_per_stack = {}\nengine = {}",
+                            volume,
+                            max_volume_per_stack,
+                            engine.name
+                        );
                         #[cfg(test)]
                         if engine.name.eq("Aerobee") {
                             console_log!("\n\n\n\n");
-                            console_log!("h = {}\nmax_volume_per_stack = {}", h, max_volume_per_stack);
+                            console_log!(
+                                "h = {}\nmax_volume_per_stack = {}",
+                                h,
+                                max_volume_per_stack
+                            );
                             console_log!("v_tank = {}", volume);
-                            console_log!("fuel density = {}", engine.fuel_mix.density(engine.hp_fuel));
+                            console_log!(
+                                "fuel density = {}",
+                                engine.fuel_mix.density(engine.hp_fuel)
+                            );
                             assert_eq!(tank_volume(d, h) * cyl_fuselage.utilization, volume);
                             assert_eq!(cyl_fuselage.utilization, 0.75);
                             //assert_eq!((0.893 + 1.64 + 78.1)*engine.rated_burn_time  * (extra_fuel_percentage / 100.0 + 1.0), max_volume_per_stack);

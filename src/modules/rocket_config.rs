@@ -30,8 +30,9 @@ pub struct Rocket {
 
 impl Serialize for Rocket {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: serde::Serializer {
+    where
+        S: serde::Serializer,
+    {
         let len = 13;
         let mut state = serializer.serialize_struct("Rocket", len)?;
         state.serialize_field("engine", self.engine.name)?;
