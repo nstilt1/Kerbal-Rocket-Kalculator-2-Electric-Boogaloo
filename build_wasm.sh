@@ -1,5 +1,5 @@
 # Run cargo tests
-cargo test
+cargo test -- --skip max_volume_tests
 
 # Check if the tests were successful
 if [ $? -eq 0 ]; then

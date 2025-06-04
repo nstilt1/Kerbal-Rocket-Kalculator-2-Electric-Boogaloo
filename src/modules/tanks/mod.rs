@@ -56,6 +56,16 @@ pub struct Fuselage {
     pub utilization: f64,
 }
 
+impl Default for Fuselage {
+    fn default() -> Self {
+        Self {
+            name: "None",
+            density: 1.0,
+            utilization: 0.5,
+        }
+    }
+}
+
 impl Fuselage {
     pub const fn new(name: &'static str, density: f64, utilization: f64) -> Self {
         assert!(utilization <= 100.0);

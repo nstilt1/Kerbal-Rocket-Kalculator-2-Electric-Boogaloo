@@ -9,6 +9,7 @@ use crate::{
     modules::{
         engines::Engine,
         tanks::cylindrical_tanks::{tank_volume, CylindricalTank},
+        utils::twr_wet_dry,
         Error,
     },
     G,
@@ -181,6 +182,16 @@ pub struct NoseTankCore {
     pub correction_coefficient: f64,
 }
 
+impl Default for NoseTankCore {
+    fn default() -> Self {
+        Self {
+            name: "None",
+            base_length: 0.0,
+            correction_coefficient: 1.0,
+        }
+    }
+}
+
 impl NoseTankCore {
     /// Create a new NoseTank with the given name and base length.
     pub const fn new(name: &'static str, base_length: f64, correction_coefficient: f64) -> Self {
@@ -258,7 +269,7 @@ pub fn compute_tank_height_with_nose_for_twr(
     nose_tank_core: &NoseTankCore,
     nose_height: f64,
     cylindrical_tank_fuselage: &Fuselage,
-    payload_mass: f64,
+    payload_mass_kg: f64,
     num_tanks: u8,
     in_vacuum: bool,
 ) -> Result<(f64, f64, f64, f64), Error> {
@@ -272,7 +283,6 @@ pub fn compute_tank_height_with_nose_for_twr(
     let diameter = engine.size.get_diameter();
     let r = diameter / 2.0;
     let engine_mass = engine.mass * 1000.0;
-    let payload_mass = payload_mass * 1000.0;
     let fuel_density = engine.fuel_mix.density(engine.hp_fuel) * 1000.0;
     let structural_density_cyl = cylindrical_tank_fuselage.density * 1000.0;
     let structural_density_nose = nose_fuselage.density * 1000.0;
@@ -298,7 +308,7 @@ pub fn compute_tank_height_with_nose_for_twr(
         v_nose * (utilization * fuel_density + (1.0 - utilization) * structural_density_nose);
 
     debug!("max_wet_mass = {}", max_wet_mass);
-    let n_1 = max_wet_mass - payload_mass - n * (engine_mass + m_fuel_nose_plus_m_struct_nose);
+    let n_1 = max_wet_mass - payload_mass_kg - n * (engine_mass + m_fuel_nose_plus_m_struct_nose);
     let d_1 = fuel_density * utilization + structural_density_cyl * (1.0 - utilization);
     let t_1 = n_1 / d_1 + n * (-ellipsoid_volume + K * diameter * diameter * diameter * 0.001);
     let mut h = t_1 / (std::f64::consts::PI * r * r * n);
@@ -316,24 +326,17 @@ pub fn compute_tank_height_with_nose_for_twr(
         debug!("h was invalid: {}", h);
         return Err(Error::InvalidHeight);
     }
-    let wet_mass = max_wet_mass;
-    let dry_mass = wet_mass
-        - v_nose
-            * (1.0 - nose_fuselage.utilization)
-            * engine.fuel_mix.density(engine.hp_fuel)
-            * num_tanks as f64;
-    let tank_volume = tank_volume(diameter, h) * num_tanks as f64;
-    let dry_mass = dry_mass
-        - tank_volume
-            * cylindrical_tank_fuselage.utilization
-            * engine.fuel_mix.density(engine.hp_fuel);
-    let thrust_n = if in_vacuum {
-        engine.thrust_vac
-    } else {
-        engine.thrust_asl
-    } * 1000.0
-        * num_tanks as f64;
-    let twr = thrust_n / wet_mass / G;
+    let (twr, wet_mass, dry_mass, _fuel_volume) = twr_wet_dry(
+        payload_mass_kg,
+        engine,
+        cylindrical_tank_fuselage,
+        nose_fuselage,
+        h,
+        nose_height,
+        nose_tank_core,
+        num_tanks,
+        in_vacuum,
+    );
     Ok((h, twr, wet_mass, dry_mass))
 }
 
@@ -343,7 +346,7 @@ pub fn compute_tank_height_with_nose_for_delta_v(
     cylindrical_tank_fuselage: &Fuselage,
     nose_fuselage: &Fuselage,
     nose_tank_core: &NoseTankCore,
-    payload_mass: f64,
+    payload_mass_kg: f64,
     num_tanks: u8,
     nose_height: f64,
     in_vacuum: bool,
@@ -355,7 +358,6 @@ pub fn compute_tank_height_with_nose_for_delta_v(
         engine.isp_asl
     };
     let engine_mass = engine.mass * 1000.0;
-    let payload_mass = payload_mass * 1000.0;
     let e0 = std::f64::consts::E.powf(target_dv / (isp * G));
     let d = engine.size.get_diameter();
     let r = d / 2.0;
@@ -375,7 +377,7 @@ pub fn compute_tank_height_with_nose_for_delta_v(
     let m_fuel_nose = v_nose * u_nose * fuel_density;
     let m_struct_nose = v_nose * (1.0 - u_nose) * nose_structural_density;
 
-    let dry_mass_partial = payload_mass + n * (engine_mass + m_struct_nose);
+    let dry_mass_partial = payload_mass_kg + n * (engine_mass + m_struct_nose);
     let n_1 = n * m_fuel_nose - (e0 - 1.0) * dry_mass_partial;
     debug!("n_1 = {}", n_1);
     debug!("e0 = {}", e0);
@@ -399,21 +401,17 @@ pub fn compute_tank_height_with_nose_for_delta_v(
         debug!("h was invalid: {}", h);
         return Err(Error::InvalidHeight);
     }
-    let cyl_volume = tank_volume(d, h) * n;
-    let m_struct_cyl = cyl_volume
-        * cylindrical_tank_fuselage.density
-        * (1.0 - cylindrical_tank_fuselage.utilization);
-
-    let dry_mass = payload_mass + n * (engine_mass + m_struct_nose) + m_struct_cyl;
-    let wet_mass =
-        dry_mass + n * m_fuel_nose + engine.fuel_mix.density(engine.hp_fuel) * u_cyl * cyl_volume;
-    let thrust_n = if in_vacuum {
-        engine.thrust_vac
-    } else {
-        engine.thrust_asl
-    } * 1000.0
-        * n;
-    let twr = thrust_n / wet_mass / G;
+    let (twr, wet_mass, dry_mass, _fuel_volume) = twr_wet_dry(
+        payload_mass_kg,
+        engine,
+        cylindrical_tank_fuselage,
+        nose_fuselage,
+        h,
+        nose_height,
+        nose_tank_core,
+        num_tanks,
+        in_vacuum,
+    );
     Ok((h, twr, wet_mass, dry_mass))
 }
 
@@ -458,7 +456,7 @@ mod tests {
             cyl_fuselage,
             nose_fuselage,
             core,
-            payload_mass_tons,
+            payload_mass_kg,
             num_tanks,
             nose_height,
             in_vacuum,
@@ -532,7 +530,7 @@ mod tests {
             &core,
             nose_height,
             cyl_fuselage,
-            payload_mass_tons,
+            payload_mass_kg,
             num_tanks_f64 as u8,
             in_vacuum,
         )

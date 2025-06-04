@@ -1,0 +1,1 @@
+cargo test modules::fuel_type::tests::max_volume_tests -- --nocapture --test-threads=1

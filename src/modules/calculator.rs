@@ -94,7 +94,7 @@ impl Calculator {
     }
 
     pub fn change_mass(&mut self, mass: f64) {
-        self.mass = mass;
+        self.mass = mass * 1000.0;
     }
 
     pub fn change_minimum_twr(&mut self, twr: f64) {
@@ -374,12 +374,13 @@ impl Calculator {
         unlocked_tech: String,
         nose_height: f64,
     ) {
-        self.mass = mass;
+        self.mass = mass * 1000.0;
         self.in_vacuum = in_vacuum;
         self.use_nosecone = use_nosecone;
         self.minimum_twr = minimum_twr;
         self.unlocked_fusalages = unlocked_fuselages;
         self.unlocked_tech = unlocked_tech;
+        self.nose_height = nose_height;
     }
 
     pub fn max_dv(&self, extra_fuel_percentage: f64) -> Result<Vec<Rocket>, Error> {
@@ -480,11 +481,11 @@ impl Calculator {
                         engine.thrust_vac
                     } else {
                         engine.thrust_asl
-                    };
+                    } * 1000.0;
                     if engine_thrust * num_engines as f64 / self.mass / G < self.minimum_twr {
+                        debug!("ERROR: engine_thrust * num_engines / self.mass / G was less than minimum TWR");
                         continue 'engine_loop;
                     }
-                    let thrust = engine_thrust * num_engines as f64 * 1000.0;
 
                     if self.use_nosecone {
                         'nosecone_core_loop: for nosecone_core in nosecone_cores {
@@ -611,6 +612,7 @@ impl Calculator {
                             self.in_vacuum,
                         );
                         if h_twr_wet_dry.as_ref().is_err() {
+                            debug!("Error: compute_tank_height was an error.");
                             continue 'num_engine_loop;
                         }
 
@@ -654,12 +656,14 @@ impl Calculator {
                                 self.in_vacuum,
                             );
                             if h_twr_wet_dry.as_ref().is_err() {
+                                debug!("ERROR: tank_height_given_max_volume resulted in an error");
                                 continue 'num_engine_loop;
                             }
                             console_log!("Old h = {}\nOld twr = {}", h, twr);
                             let (h, twr, wet_mass, dry_mass) = h_twr_wet_dry.unwrap();
                             debug_assert!(twr > self.minimum_twr - 0.0001);
                             if twr > self.maximum_twr {
+                                debug!("ERROR: twr > self.maximum_twr");
                                 continue 'num_engine_loop;
                             }
                             console_log!("New h = {}", h);
@@ -772,19 +776,20 @@ mod tests {
         calculator.init(
             0.141,
             10.0,
-            1.05,
+            0.05,
             20000.0,
             false,
             false,
             false,
             0.0,
-            Size::Sm,
+            Size::Xs,
             "Steel Fuselage".to_string(),
             "start".to_string(),
         );
-        let mut n_c_results = calculator.calculate().unwrap();
-        let mut output: Vec<Rocket> = Vec::new();
-        output.append(&mut n_c_results);
+        let mut output = calculator.calculate().unwrap();
+        output.sort_by(|x, y| x.mass.partial_cmp(&y.mass).unwrap());
+
+        println!("Rocket: {}", output[0].to_string().replace('\n', "/n"));
         assert_ne!(output.len(), 0);
     }
 
@@ -806,5 +811,35 @@ mod tests {
             "Results: {}",
             serde_json::to_string_pretty(&results[0]).unwrap()
         );
+    }
+
+    mod sanity_checks {
+        use crate::modules::engines::ENGINES;
+
+        use super::*;
+
+        #[test]
+        fn aerobee_1x_test() {
+            let target_dv = 10.0;
+            let engine = ENGINES.iter().find(|e| e.name == "Aerobee").unwrap();
+            let fuselages = CylindricalTank::init_fuselage_types();
+            let fuselage = fuselages.hp_fuselages.get("HP Steel Fuselage").unwrap();
+            let payload_mass_kg = 0.087 * 1000.0;
+            let num_tanks = 1;
+            let in_vacuum = false;
+            let (h, twr, wet, dry) = compute_tank_height_for_delta_v(
+                target_dv,
+                engine,
+                fuselage,
+                payload_mass_kg,
+                num_tanks,
+                in_vacuum,
+            )
+            .unwrap();
+            assert!(h < 0.1);
+            assert!(twr > 5.0);
+            assert!(wet < 100.0);
+            assert!(dry < wet);
+        }
     }
 }
