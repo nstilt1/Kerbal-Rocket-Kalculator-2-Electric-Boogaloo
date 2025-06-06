@@ -9,7 +9,8 @@ use wasm_bindgen::prelude::*;
 
 pub mod modules;
 
-const G: f64 = 9.80665;
+//const G: f64 = 9.80665;
+const G: f64 = 9.81;
 
 pub const TECH_TREE: &[&'static str] = &[
     "start",

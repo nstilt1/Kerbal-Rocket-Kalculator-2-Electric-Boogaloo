@@ -115,6 +115,38 @@ impl FuelMix {
     }
 }
 
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub struct Fuel {
+    pub name: &'static str,
+    pub volume_sample_liters: f64,
+    pub tank_dry_mass_kg: f64,
+    pub tank_wet_mass_kg: f64,
+    pub fuel_mix_proportion: f64,
+    pub is_gas: bool,
+}
+
+impl Fuel {
+    pub fn new(name: &'static str, volume_sample_liters: f64, tank_dry_mass_kg: f64, tank_wet_mass_kg: f64, fuel_mix_proportion: f64, is_gas: bool) -> Self {
+        Self { 
+            name, 
+            volume_sample_liters, 
+            tank_dry_mass_kg, 
+            tank_wet_mass_kg, 
+            fuel_mix_proportion, 
+            is_gas
+        }
+    }
+    pub fn density(&self) -> f64 {
+        (self.tank_wet_mass_kg - self.tank_dry_mass_kg) / self.volume_sample_liters
+    }
+    pub fn flow_rate_kgps(&self, thrust: f64, isp: f64) -> f64 {
+        self.flow_rate_lps(thrust, isp) * self.density()
+    }
+    pub fn flow_rate_lps(&self, thrust: f64, isp: f64) -> f64 {
+        thrust * 1000.0 / (isp * G) * self.fuel_mix_proportion
+    }
+}
+
 #[derive(Debug, PartialEq, Clone, Copy, Serialize)]
 #[allow(non_camel_case_types)]
 pub enum FuelType {
@@ -297,6 +329,28 @@ mod tests {
     use crate::modules::engines::ENGINES;
 
     use super::*;
+
+    mod fuel_refactor_tests {
+        use super::*;
+
+        #[test]
+        fn aerobee_fuel() {
+            let engine = ENGINES.iter().find(|e| e.name == "Aerobee").unwrap();
+            let fuel_mix = [
+                Fuel::new("Aniline Furfuryl 22%", 224.4629, 86.8, 321.0, 0.3531, false),
+                Fuel::new("IRFNA-III", 224.4629, 86.8, 438.0, 0.6469, false),
+                Fuel::new("Nitrogen", 224.4629, 86.8, 143.0, 30.9, true),
+            ];
+            let thrust = engine.thrust_asl;
+            let isp = engine.isp_asl;
+            let anfa22_mass_flow_rate = fuel_mix[0].flow_rate_kgps(thrust, isp);
+            assert_eq!(anfa22_mass_flow_rate, 0.930);
+            let irfna_mass_flow_rate = fuel_mix[1].flow_rate_kgps(thrust, isp);
+            assert_eq!(irfna_mass_flow_rate, 2.56);
+            let nitrogen_mass_flow_rate = fuel_mix[2].flow_rate_kgps(thrust, isp);
+            assert_eq!(nitrogen_mass_flow_rate, 0.0978);
+        }
+    }
 
     mod max_volume_tests {
         use super::*;
