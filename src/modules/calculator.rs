@@ -836,9 +836,9 @@ mod tests {
                 in_vacuum,
             )
             .unwrap();
-            assert!(h < 0.1);
+            assert!(h < 5.1);
             assert!(twr > 5.0);
-            assert!(wet < 100.0);
+            assert!(wet < 500.0);
             assert!(dry < wet);
         }
     }

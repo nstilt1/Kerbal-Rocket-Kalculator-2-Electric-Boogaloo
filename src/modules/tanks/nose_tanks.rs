@@ -559,8 +559,8 @@ mod tests {
             + cyl_wet_mass * num_tanks_f64;
 
         let expected_twr = thrust_n / wet_mass / G;
-        assert_eq!(expected_twr, target_twr);
-        assert_eq!(expected_twr, twr);
+        assert!((expected_twr - target_twr).abs() < 0.00001);
+        assert!((expected_twr - twr).abs() < 0.0001);
     }
 
     const N1: f64 = NOSE_1_CORRECTION_COEF;

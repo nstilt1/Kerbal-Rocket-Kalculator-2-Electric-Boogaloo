@@ -421,6 +421,9 @@ pub fn compute_tank_height_for_delta_v(
         return Err(Error::HeightTooLarge);
     }
     if h < 0.0 || h.is_nan() || h.is_infinite() {
+        debug!("h = {}", h);
+        debug!("den_2 = {}\nnum_2 = {}\nnum_1 = {}\nden_1 = {}", den_2, num_2, num_1, den_1);
+        debug!("e0 = {}\n1.0 - e0 = {}", e0, 1.0 - e0);
         return Err(Error::InvalidHeight);
     }
     let volume = tank_volume(d, h) * num_tanks as f64;

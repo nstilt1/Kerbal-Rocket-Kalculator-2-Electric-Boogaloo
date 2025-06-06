@@ -201,8 +201,8 @@ impl Engine {
             Engine::new(
                 "Aerobee", // Engine 0
                 false,
-                6.7,
-                7.7,
+                6.672,
+                7.733,
                 100.0,
                 195.0,
                 226.0,
@@ -218,7 +218,8 @@ impl Engine {
                 Size::Xs,
                 0.0,
                 FuelMix::new(&[
-                    FuelType::AnilineFurfuryl_22p(0.893, 0.930),
+                    FuelType::AnilineFurfuryl_22p_v2(224.4629, 324.0 - 86.8),
+                    //FuelType::AnilineFurfuryl_22p(0.893, 0.930),
                     FuelType::IRFNA_III(1.64, 2.56),
                     FuelType::Nitrogen(78.1, 0.0978),
                 ]),
