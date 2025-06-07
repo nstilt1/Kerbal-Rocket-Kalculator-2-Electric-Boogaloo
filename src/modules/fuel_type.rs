@@ -2,11 +2,42 @@
 
 use serde::Serialize;
 
-use crate::G;
+use crate::{modules::utils::burn_time_secs, G};
+
+//pub type FuelMix = FuelMixture;
 
 #[derive(Debug, PartialEq, Clone, Copy, Serialize)]
 pub struct FuelMix {
     pub fuels: &'static [FuelType],
+}
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub struct FuelMixture {
+    pub fuels: &'static [Fuel]
+}
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub struct Fuel {
+    pub name: &'static str,
+    pub density: f64,
+    pub flow_rate_lps: f64,
+    pub flow_rate_kgps: f64,
+    pub volume_ratio: f64,
+    pub is_hp: bool,
+}
+
+impl Fuel {
+    pub const fn new(name: &'static str, total_volume: f64, fuel_volume: f64, tank_dry_mass: f64, tank_wet_mass: f64, burn_time_minutes: u32, burn_time_seconds: f64, is_hp: bool) -> Self {
+        let burn_time = burn_time_secs(burn_time_minutes, burn_time_seconds);
+        Self {
+            name,
+            density: (tank_wet_mass - tank_dry_mass) / fuel_volume,
+            flow_rate_kgps: (tank_wet_mass - tank_dry_mass) / burn_time,
+            flow_rate_lps: fuel_volume / burn_time,
+            volume_ratio: fuel_volume / total_volume,
+            is_hp,
+        }
+    }
 }
 
 impl FuelMix {

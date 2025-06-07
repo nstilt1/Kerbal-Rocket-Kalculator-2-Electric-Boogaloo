@@ -70,6 +70,11 @@ pub fn twr_wet_dry(
     (twr, wet_mass, dry_mass, fuel_volume)
 }
 
+/// Converts burn times from minutes + seconds to seconds
+pub const fn burn_time_secs(minutes: u32, seconds: f64) -> f64 {
+    minutes as f64 * 60.0 + seconds
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

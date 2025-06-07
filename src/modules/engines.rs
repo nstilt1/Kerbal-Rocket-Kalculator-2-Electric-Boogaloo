@@ -11,7 +11,7 @@ use super::{
 
 const MAX_ENGINE_CONFIGS: usize = 4;
 pub const ENGINES: [Engine; NUM_EGINES] = Engine::init_rp1_engines();
-
+pub type EngineV2 = Engine;
 #[derive(Debug, PartialEq, Clone, Copy, Serialize)]
 pub struct Engine {
     pub name: &'static str,
