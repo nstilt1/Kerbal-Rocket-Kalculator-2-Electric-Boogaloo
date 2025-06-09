@@ -248,8 +248,7 @@ impl Calculator {
 
                     let fuel = &engine.fuel_mix;
 
-                    let max_volume_per_stack =
-                        fuel.max_volume(engine.rated_burn_time, engine.hp_fuel);
+                    let max_volume_per_stack = engine.max_volume();
                     if self.use_nosecone {
                         'nosecone_core_loop: for nosecone_core in nosecone_cores {
                             let core_base_length_x_diameter =
@@ -304,8 +303,8 @@ impl Calculator {
                                     diameter: engine.size.get_diameter(),
                                     fuselage: **cyl_fuselage,
                                 }),
-                                *engine,
-                                engine.fuel_mix.fuel_volumes(0.0),
+                                engine.clone(),
+                                "".to_string(),
                                 num_engines,
                                 wet_mass,
                                 dry_mass,
@@ -349,8 +348,8 @@ impl Calculator {
                             diameter: engine.size.get_diameter(),
                             fuselage: **cyl_fuselage,
                         }),
-                        *engine,
-                        fuel.fuel_volumes(0.0),
+                        engine.clone(),
+                        "".to_string(),
                         num_engines,
                         wet_mass,
                         dry_mass,
@@ -471,7 +470,7 @@ impl Calculator {
             };
 
             let fuel = &engine.fuel_mix;
-            let max_volume_per_stack = fuel.max_volume(engine.rated_burn_time, engine.hp_fuel)
+            let max_volume_per_stack = engine.max_volume()
                 * (extra_fuel_percentage / 100.0 + 1.0);
 
             for (nose_fuselage, cyl_fuselage) in nose_fuselages.iter().zip(cyl_fuselages) {
@@ -563,7 +562,7 @@ impl Calculator {
                                         diameter: d,
                                         fuselage: **cyl_fuselage,
                                     }),
-                                    *engine,
+                                    engine.clone(),
                                     "".to_string(),
                                     num_engines,
                                     wet_mass,
@@ -587,7 +586,7 @@ impl Calculator {
                                         diameter: d,
                                         fuselage: **cyl_fuselage,
                                     }),
-                                    *engine,
+                                    engine.clone(),
                                     "".to_string(),
                                     num_engines,
                                     wet_mass,
@@ -636,7 +635,7 @@ impl Calculator {
                             console_log!("v_tank = {}", volume);
                             console_log!(
                                 "fuel density = {}",
-                                engine.fuel_mix.density(engine.hp_fuel)
+                                engine.fuel_density()
                             );
                             assert_eq!(tank_volume(d, h) * cyl_fuselage.utilization, volume);
                             assert_eq!(cyl_fuselage.utilization, 0.75);
@@ -663,7 +662,7 @@ impl Calculator {
                             let (h, twr, wet_mass, dry_mass) = h_twr_wet_dry.unwrap();
                             debug_assert!(twr > self.minimum_twr - 0.0001);
                             if twr > self.maximum_twr {
-                                debug!("ERROR: twr > self.maximum_twr");
+                                debug!("*not an error*: twr > self.maximum_twr");
                                 continue 'num_engine_loop;
                             }
                             console_log!("New h = {}", h);
@@ -678,8 +677,8 @@ impl Calculator {
                                     diameter: d,
                                     fuselage: **cyl_fuselage,
                                 }),
-                                *engine,
-                                fuel.fuel_volumes(volume),
+                                engine.clone(),
+                                "".to_string(),
                                 num_engines,
                                 wet_mass,
                                 dry_mass,
@@ -696,8 +695,8 @@ impl Calculator {
                                     diameter: d,
                                     fuselage: **cyl_fuselage,
                                 }),
-                                *engine,
-                                fuel.fuel_volumes(volume),
+                                engine.clone(),
+                                "".to_string(),
                                 num_engines,
                                 wet_mass,
                                 dry_mass,
@@ -714,6 +713,8 @@ impl Calculator {
 
 #[cfg(test)]
 mod tests {
+    use crate::modules::{engines::ENGINES, tanks::{fuselage_names::STEEL_FUSELAGE_NAME, nose_tanks::NoseTankCore}};
+
     use super::*;
 
     #[test]
@@ -774,7 +775,7 @@ mod tests {
     fn calculator_test() {
         let mut calculator = Calculator::new();
         calculator.init(
-            0.141,
+            0.039,
             10.0,
             0.05,
             20000.0,
@@ -797,13 +798,13 @@ mod tests {
     fn max_dv_test() {
         let mut calculator = Calculator::new();
         calculator.prepare_for_max_dv(
-            0.087,
+            0.039,
             false,
             1.0,
             false,
             false,
             "Steel Fuselage".to_string(),
-            "start".to_string(),
+            "start,Post-War Rocketry Testing".to_string(),
             0.0,
         );
         let results = calculator.max_dv(1.5).unwrap();
@@ -842,4 +843,116 @@ mod tests {
             assert!(dry < wet);
         }
     }
+
+    #[test]
+    fn xasr_1_test() {
+        let engines = Engine::init_all_engines(Engine::init_rp1_engines());
+        let post_war = engines.get("Post-War Rocketry Testing").unwrap();
+        let engine = post_war.iter().find(|e| e.name.contains("XASR-1")).unwrap();
+        let max_volume = engine.max_volume();
+        let fuselages = CylindricalTank::init_fuselage_types();
+        let fuselage = fuselages.hp_fuselages.get("HP Steel Fuselage").unwrap();
+        debug!("XASR-1 max volume = {}", max_volume);
+        let (h, twr, wet, dry) = tank_height_given_max_volume(
+            max_volume, 
+            0.0, 
+            &Fuselage::default(), 
+            &NoseTankCore::default(), 
+            fuselage, 
+            engine, 
+            1, 
+            37.0, 
+            false
+        ).unwrap();
+        debug!("h = {}\ntwr = {}\nwet = {}\ndry = {}", h, twr, wet, dry);
+        let r = Rocket::new(None, Some(CylindricalTank { 
+            length: h, 
+            diameter: 0.3, 
+            fuselage: fuselage.clone()
+        }),
+            engine.clone(),
+            "".to_string(),
+            1,
+            wet,
+            dry,
+            twr
+        );
+        debug!("{}", serde_json::to_string_pretty(&r).unwrap())
+    }
+
+    macro_rules! engine_test {
+        ($test_name:ident, $engine_name:literal, $tech_level:literal) => {
+            #[test]
+            fn $test_name() {
+                let engines = Engine::init_all_engines(Engine::init_rp1_engines());
+                let engines_at_tech_level = engines.get($tech_level).unwrap();
+                let engine = engines_at_tech_level.iter().find(|e| e.name == $engine_name).unwrap();
+                let max_volume = engine.max_volume();
+                let fuselages = CylindricalTank::init_fuselage_types();
+                let fuselage = if engine.hp_fuel {
+                    fuselages.hp_fuselages.get("HP Steel Fuselage").unwrap()
+                } else {
+                    fuselages.non_hp_fuselages.get("Steel Fuselage").unwrap()
+                };
+                debug!("{} max_volume = {}", $engine_name, max_volume);
+                let (h, twr, wet, dry) = tank_height_given_max_volume(
+                    max_volume,
+                    0.0,
+                    &Fuselage::default(),
+                    &NoseTankCore::default(),
+                    fuselage,
+                    engine,
+                    1,
+                    37.0,
+                    false
+                ).unwrap();
+                debug!("h = {}\ntwr = {}\nwet = {}\ndry = {}", h, twr, wet, dry);
+                let r = Rocket::new(None, Some(CylindricalTank { 
+                    length: h, 
+                    diameter: 0.3, 
+                    fuselage: fuselage.clone()
+                }),
+                    engine.clone(),
+                    "".to_string(),
+                    1,
+                    wet,
+                    dry,
+                    twr
+                );
+                debug!("{}", serde_json::to_string_pretty(&r).unwrap())
+            }
+        };
+    }
+
+    engine_test!(u_1250_test, "U-1250", "start");
+
+    engine_test!(u_1700_test, "U-1700", "Post-War Rocketry Testing");
+
+    engine_test!(u_2000_test, "U-2000", "Early Rocketry");
+
+    engine_test!(veronique_test, "Veronique", "start");
+
+    engine_test!(veronique_agi_test, "VeroniqueAGI", "Basic Rocketry");
+
+    engine_test!(veronique_61_test, "Veronique61", "1956-1957 Orbital Rocketry");
+
+    engine_test!(a4_test, "A-4", "start");
+
+    engine_test!(a9_test, "A-9", "Post-War Rocketry Testing");
+
+    engine_test!(rd_100_test, "RD-100", "Post-War Rocketry Testing");
+
+    engine_test!(rd_101_test, "RD-101", "Early Rocketry");
+
+    engine_test!(xlr_10_test, "XLR10", "Post-War Rocketry Testing");
+
+    engine_test!(xlr_11_test, "XLR11", "Post-War Rocketry Testing");
+
+    engine_test!(xlr_41_test, "XLR41", "Post-War Rocketry Testing");
+
+    engine_test!(orm_65_test, "ORM-65", "Post-War Rocketry Testing");
+
+    engine_test!(rda_1_150_test, "RDA-1-150", "Post-War Rocketry Testing");
+
+    engine_test!(rda_1_300_test, "RDA-1-300", "Early Rocketry");
 }

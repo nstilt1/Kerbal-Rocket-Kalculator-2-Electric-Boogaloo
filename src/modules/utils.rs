@@ -59,8 +59,8 @@ pub fn twr_wet_dry(
         nose_volume * nose_fuselage.density * (1.0 - nose_fuselage.utilization);
     let tank_fuel_volume = tank_volume * cyl_fuselage.utilization;
     let nose_fuel_volume = nose_volume * nose_fuselage.utilization;
-    let tank_fuel_mass = tank_fuel_volume * engine.fuel_mix.density(engine.hp_fuel);
-    let nose_fuel_mass = nose_fuel_volume * engine.fuel_mix.density(engine.hp_fuel);
+    let tank_fuel_mass = tank_fuel_volume * engine.fuel_density();
+    let nose_fuel_mass = nose_fuel_volume * engine.fuel_density();
     let dry_mass = payload_mass_kg
         + num_engines as f64 * (tank_structural_mass + nose_structural_mass + engine_mass_kg);
     let wet_mass = dry_mass + num_engines as f64 * (tank_fuel_mass + nose_fuel_mass);
