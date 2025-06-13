@@ -75,7 +75,7 @@ pub fn calculate(
         in_vacuum,
         use_nosecone,
         nose_height,
-        size,
+        diameter,
         unlocked_fuselages,
         unlocked_tech,
     );
@@ -102,6 +102,8 @@ pub fn max_dv(
     unlocked_tech: Array,
     extra_fuel_percentage: f64,
     nose_height: f64,
+    use_custom_diameter: bool,
+    custom_diameter: f64,
 ) -> Result<String, JsError> {
     let mut calculator = Calculator::new();
     let unlocked_fuselages: Vec<String> = unlocked_fuselages
@@ -124,7 +126,7 @@ pub fn max_dv(
         unlocked_tech,
         nose_height,
     );
-    let mut result = calculator.max_dv(extra_fuel_percentage)?;
+    let mut result = calculator.max_dv(extra_fuel_percentage, use_custom_diameter, custom_diameter)?;
     result.sort_by(|a, b| a.partial_cmp(&b).unwrap());
     Ok(serde_json::to_string(&result).expect("serde_error"))
 }

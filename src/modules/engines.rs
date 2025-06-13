@@ -32,7 +32,7 @@ pub struct EngineV1 {
     pub throttleable: bool,
     pub ullage: bool,
     pub ignitions: u8,
-    pub size: Size,
+    pub diameter: f64,
     pub tank_volume_liters: f64,
     pub fuel_mix: Vec<Fuel>,
     pub configurations: Vec<EngineConfiguration>,
@@ -213,7 +213,7 @@ impl Engine {
         throttleable: bool,
         ullage: bool,
         ignitions: u8,
-        size: Size,
+        diameter: f64,
         tank_volume_liters: f64,
         fuel_mix: Vec<Fuel>,
         tech_tree_node: &'static str,
@@ -236,7 +236,7 @@ impl Engine {
             throttleable,
             ullage,
             ignitions,
-            size,
+            diameter,
             tank_volume_liters,
             fuel_mix,
             configurations: Vec::new(),
@@ -263,7 +263,7 @@ impl Engine {
                 false,
                 true,
                 1,
-                Size::Xs,
+                0.3,
                 0.0,
                 vec![
                     Fuel::new("Aniline Furfuryl 22%", 703.7168, 215.229453240051, 38.1, 262.0, 3, 48.4, true),
@@ -292,7 +292,7 @@ impl Engine {
                 false,
                 true,
                 1,
-                Size::Xs,
+                0.3,
                 1.0,
                 vec![
                     Fuel::new("Kerosene", 854.5133, 254.17617555427, 45.9, 243.0, 2, 19.7, true),
@@ -321,7 +321,7 @@ impl Engine {
                 false,
                 true,
                 1,
-                Size::Xs,
+                0.3,
                 1.0,
                 vec![
                     Fuel::new("Kerosene", 1252.9931, 430.967022848892, 69.8, 405.0, 1, 15.8, true),
@@ -350,7 +350,7 @@ impl Engine {
                 false,
                 true,
                 1,
-                Size::Sm,
+                1.25,
                 0.0,
                 vec![
                     Fuel::new("Ethanol 75", 13002.0069, 6723.71115826852, 292.0, 5952.0, 1, 45.2, false),
@@ -379,7 +379,7 @@ impl Engine {
                 false,
                 true,
                 1,
-                Size::Sm,
+                1.25,
                 0.0,
                 vec![
                     Fuel::new("Ethanol 75", 17090.265, 8976.61930184596, 1082.0, 8638.0, 2, 5.2, false),
@@ -408,7 +408,7 @@ impl Engine {
                 false,
                 true,
                 1,
-                Size::Sm,
+                1.25,
                 0.0,
                 vec![
                     Fuel::new("Ethanol 90", 6641.8164, 3625.7163182091, 152.0, 3089.0, 1, 58.4, false),
@@ -437,7 +437,7 @@ impl Engine {
                 true,
                 false,
                 u8::MAX,
-                Size::Sm,
+                1.25,
                 0.0,
                 vec![
                     Fuel::new("Ethanol 75", 1628.6019, 747.961904080594, 98.6, 728.0, 2, 3.6, true),
@@ -466,7 +466,7 @@ impl Engine {
                 false,
                 true,
                 1,
-                Size::Sm,
+                1.25,
                 0.0,
                 vec![
                     Fuel::new("Ethanol 75", 16455.6654, 8352.14606173453, 367.0, 7398.0, 1, 52.7, false),
@@ -495,7 +495,7 @@ impl Engine {
                 true,
                 true,
                 1,
-                Size::Xs,
+                0.3,
                 0.0,
                 vec![
                     Fuel::new("Kerosene", 116.2389, 32.2899408302602, 6.15, 31.2, 2, 22.2, true),

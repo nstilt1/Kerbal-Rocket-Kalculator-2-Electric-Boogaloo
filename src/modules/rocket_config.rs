@@ -84,7 +84,7 @@ impl Rocket {
             cyl_length: tank_length,
             cyl_fuselage: tank_fuselage,
             engine: engine.clone(),
-            diameter: engine.size.get_diameter(),
+            diameter: engine.diameter,
             fuel,
             num_engines,
             mass,

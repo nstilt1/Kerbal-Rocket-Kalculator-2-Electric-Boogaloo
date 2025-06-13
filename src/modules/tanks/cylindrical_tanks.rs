@@ -162,7 +162,7 @@ pub fn tank_height_given_max_volume(
     in_vacuum: bool,
 ) -> Result<(f64, f64, f64, f64), Error> {
     let n = num_tanks as f64;
-    let d = engine.size.get_diameter();
+    let d = engine.diameter;
     let r = d / 2.0;
     let nose_volume = calculate_corrected_volume(d, nose_height, nose_core.correction_coefficient)
         * nose_fuselage.utilization;
@@ -228,7 +228,7 @@ pub fn compute_tank_height(
     //debug!("Target wet mass = {}", max_wet_mass);
     //debug!("thrust_total = {}", thrust_total);
     //debug!("Engine.mass = {}", engine.mass);
-    let diameter = engine.size.get_diameter();
+    let diameter = engine.diameter;
     let r = diameter / 2.0;
     let engine_mass_total = engine.mass * 1000.0 * n;
 
@@ -403,7 +403,7 @@ pub fn compute_tank_height_for_delta_v(
     let engine_mass = engine.mass * 1000.0 * num_tanks as f64;
     let e0 = std::f64::consts::E.powf(target_dv / (isp * G));
     //let e0 = f64::exp(target_dv / (isp * g));
-    let d = engine.size.get_diameter();
+    let d = engine.diameter;
     let r = d / 2.0;
     let ellipsoid_volume_total = ellipsoid_volume(r, r, r / 2.0) * num_tanks as f64;
     let correction_total = (K * d * d * d * num_tanks as f64) * 0.001;
@@ -478,7 +478,7 @@ mod tests {
             .get(format!("HP {}", STEEL_FUSELAGE_NAME).as_str())
             .unwrap();
         let nose_core = NoseConeVariant::nosecones().cores[0];
-        let diameter = engine.size.get_diameter();
+        let diameter = engine.diameter;
 
         let (h, twr_from_fn, wet, dry) = tank_height_given_max_volume(
             engine.max_volume(),
@@ -540,7 +540,7 @@ mod tests {
             in_vacuum,
         )
         .unwrap();
-        let v = tank_volume(engine.size.get_diameter(), h) * cyl_fuselage.utilization;
+        let v = tank_volume(engine.diameter, h) * cyl_fuselage.utilization;
         let diff = v - max_total_volume;
         assert!(diff.abs() < 0.0001);
     }
@@ -550,7 +550,7 @@ mod tests {
         let payload_mass_kg = 0.4 * 1000.0;
         let engines = &ENGINES;
         let engine = &engines[0];
-        let diameter = engine.size.get_diameter();
+        let diameter = engine.diameter;
         let fuselages = CylindricalTank::init_fuselage_types();
         let fuselage = fuselages.non_hp_fuselages.get(STEEL_FUSELAGE_NAME).unwrap();
         let target_dv = 789.123;
@@ -590,7 +590,7 @@ mod tests {
         //let engine_mass_tons = engine.mass;
         let thrust_n = engine.thrust_asl * 1000.0;
         let target_twr = 3.8;
-        let diameter = engine.size.get_diameter();
+        let diameter = engine.diameter;
         let fuselage_types = super::CylindricalTank::init_fuselage_types();
         let non_hp_fuselages = fuselage_types.non_hp_fuselages;
         let fuselage = non_hp_fuselages.get(STEEL_FUSELAGE_NAME).unwrap();
@@ -679,7 +679,7 @@ mod tests {
         const MAX_NUM_TANKS: u8 = 9;
         const MAX_PAYLOAD_KG: usize = 400;
         for engine in engines.iter() {
-            let diameter = &engine.size.get_diameter();
+            let diameter = &engine.diameter;
             let engine_mass_kg = engine.mass * 1000.0;
             let thrust_n = if IN_VACUUM {
                 engine.thrust_vac

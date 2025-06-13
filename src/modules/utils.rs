@@ -42,7 +42,7 @@ pub fn twr_wet_dry(
     in_vacuum: bool,
 ) -> (f64, f64, f64, f64) {
     let engine_mass_kg = engine.mass * 1000.0;
-    let diameter = engine.size.get_diameter();
+    let diameter = engine.diameter;
 
     let thrust_n = if in_vacuum {
         engine.thrust_vac

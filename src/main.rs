@@ -139,7 +139,7 @@ fn main() {
             is_vacuum,
             use_nosecone,
             0.0,
-            size,
+            diameter,
             unlocked_fuselages.clone(),
             "start".to_string(),
         );

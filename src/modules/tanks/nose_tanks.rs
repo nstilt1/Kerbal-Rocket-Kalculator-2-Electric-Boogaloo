@@ -280,7 +280,7 @@ pub fn compute_tank_height_with_nose_for_twr(
         engine.thrust_asl
     } * n;
     let max_wet_mass = thrust_total / (min_twr * G) * 1000.0;
-    let diameter = engine.size.get_diameter();
+    let diameter = engine.diameter;
     let r = diameter / 2.0;
     let engine_mass = engine.mass * 1000.0;
     let fuel_density = engine.fuel_density() * 1000.0;
@@ -359,7 +359,7 @@ pub fn compute_tank_height_with_nose_for_delta_v(
     };
     let engine_mass = engine.mass * 1000.0;
     let e0 = std::f64::consts::E.powf(target_dv / (isp * G));
-    let d = engine.size.get_diameter();
+    let d = engine.diameter;
     let r = d / 2.0;
     let ellipsoid_volume = ellipsoid_volume(r, r, r / 2.0);
     let correction = K * d * d * d * 0.001;
@@ -438,7 +438,7 @@ mod tests {
         let payload_mass_tons = 5.5;
         let payload_mass_kg = payload_mass_tons * 1000.0;
         let engine_mass_kg = engine.mass * 1000.0 * num_tanks_f64;
-        let diameter = engine.size.get_diameter();
+        let diameter = engine.diameter;
         let cyl_fuselage_types = CylindricalTank::init_fuselage_types();
         let nose_fuselage_types = NoseConeVariant::init_fuselage_types();
         let cyl_fuselage = cyl_fuselage_types
@@ -512,7 +512,7 @@ mod tests {
         let engine_mass_kg = engine.mass * 1000.0 * num_tanks_f64;
         let thrust_n = engine.thrust_asl * 1000.0 * num_tanks_f64;
         let in_vacuum = false;
-        let diameter = engine.size.get_diameter();
+        let diameter = engine.diameter;
         let cyl_fuselage_types = CylindricalTank::init_fuselage_types();
         let nose_fuselage_types = NoseConeVariant::init_fuselage_types();
         let cyl_fuselage = cyl_fuselage_types

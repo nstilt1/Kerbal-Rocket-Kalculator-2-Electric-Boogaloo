@@ -31,7 +31,7 @@ const MAX_ENGINES: u8 = 9;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Calculator {
-    size: Size,
+    diameter: f64,
     target_dv: f64,
     mass: f64,
     minimum_twr: f64,
@@ -47,7 +47,7 @@ pub struct Calculator {
 impl Calculator {
     pub fn new() -> Self {
         Calculator {
-            size: Size::Xs,
+            diameter: 0.01,
             target_dv: 0.0,
             mass: 0.0,
             minimum_twr: 0.0,
@@ -72,7 +72,7 @@ impl Calculator {
         in_vacuum: bool,
         use_nosecone: bool,
         nose_height: f64,
-        size: Size,
+        diameter: f64,
         unlocked_fuselages: String,
         unlocked_tech: String,
     ) {
@@ -82,7 +82,7 @@ impl Calculator {
         self.maximum_twr = maximum_twr;
         self.needs_gimballing = needs_gimballing;
         self.in_vacuum = in_vacuum;
-        self.size = size;
+        self.diameter = diameter;
         self.use_nosecone = use_nosecone;
         self.nose_height = nose_height;
         self.unlocked_fusalages = unlocked_fuselages;
@@ -114,7 +114,7 @@ impl Calculator {
             self.mass,
             self.target_dv,
             self.minimum_twr,
-            self.size.get_diameter()
+            self.diameter
         );
         let mut result: Vec<Rocket> = Vec::new();
 
@@ -185,7 +185,7 @@ impl Calculator {
         unlocked_cylinder_non_hp_fuselages.sort_by_key(|s| s.name);
 
         let mut only_cylinder_results: Vec<Rocket> = Vec::new();
-        'engine_loop: for engine in engines.iter() {
+        'engine_loop: for engine in engines.iter_mut() {
             let (cyl_fuselages, nose_fuselages) = if engine.hp_fuel {
                 (
                     &unlocked_cylinder_hp_fuselages,
@@ -216,15 +216,13 @@ impl Calculator {
             );
 
             for (nose_fuselage, cyl_fuselage) in nose_fuselages.iter().zip(cyl_fuselages) {
-                if engine.size.ne(&self.size) {
-                    continue 'engine_loop;
-                }
                 if self.needs_gimballing && !engine.has_gimbal {
                     continue 'engine_loop;
                 }
                 if engine.is_solid {
                     continue 'engine_loop;
                 }
+                engine.diameter = self.diameter;
 
                 'num_engine_loop: for num_engines in 1..=MAX_ENGINES {
                     // if num_engines == 2 || num_engines == 6 || num_engines == 8 {
@@ -252,7 +250,7 @@ impl Calculator {
                     if self.use_nosecone {
                         'nosecone_core_loop: for nosecone_core in nosecone_cores {
                             let core_base_length_x_diameter =
-                                nosecone_core.base_length * engine.size.get_diameter();
+                                nosecone_core.base_length * engine.diameter;
                             let min_nose_height =
                                 core_base_length_x_diameter * NoseConeVariant::MIN_VSA;
                             let max_nose_height =
@@ -295,12 +293,12 @@ impl Calculator {
                                 Some(NoseCone {
                                     core: *nosecone_core,
                                     length: self.nose_height,
-                                    diameter: engine.size.get_diameter(),
+                                    diameter: engine.diameter,
                                     fuselage: **nose_fuselage,
                                 }),
                                 Some(CylindricalTank {
                                     length: h,
-                                    diameter: engine.size.get_diameter(),
+                                    diameter: engine.diameter,
                                     fuselage: **cyl_fuselage,
                                 }),
                                 engine.clone(),
@@ -315,7 +313,7 @@ impl Calculator {
                     }
                     /* No nosecones!! */
                     let min_cyl_height =
-                        0.1f64.max(self.size.get_diameter() * CylindricalTank::MIN_VSA);
+                        0.1f64.max(self.diameter * CylindricalTank::MIN_VSA);
                     let max_cyl_height = CylindricalTank::MAX_VSA;
                     let mut cyl_height = min_cyl_height;
 
@@ -345,7 +343,7 @@ impl Calculator {
                         None,
                         Some(CylindricalTank {
                             length: h,
-                            diameter: engine.size.get_diameter(),
+                            diameter: engine.diameter,
                             fuselage: **cyl_fuselage,
                         }),
                         engine.clone(),
@@ -382,7 +380,7 @@ impl Calculator {
         self.nose_height = nose_height;
     }
 
-    pub fn max_dv(&self, extra_fuel_percentage: f64) -> Result<Vec<Rocket>, Error> {
+    pub fn max_dv(&self, extra_fuel_percentage: f64, use_custom_diameter: bool, custom_diameter: f64) -> Result<Vec<Rocket>, Error> {
         console_log!("use_nosecone: {}", self.use_nosecone);
         let mut result: Vec<Rocket> = Vec::new();
         let mut engine_tech_map = Engine::init_all_engines(Engine::init_rp1_engines());
@@ -390,6 +388,9 @@ impl Calculator {
         let unlocked_tech: Vec<&str> = self.unlocked_tech.split(',').collect();
         for tech in unlocked_tech.iter() {
             if let Some(vec) = engine_tech_map.get_mut(tech) {
+                if use_custom_diameter {
+                    vec.iter_mut().for_each(|engine| engine.diameter = custom_diameter);
+                }
                 engines.append(vec);
                 continue;
             }
@@ -450,7 +451,7 @@ impl Calculator {
         unlocked_cylinder_non_hp_fuselages.sort_by_key(|s| s.name);
 
         'engine_loop: for engine in engines.iter() {
-            let d = engine.size.get_diameter();
+            let d = engine.diameter;
             if !engine.has_gimbal && self.needs_gimballing {
                 continue 'engine_loop;
             }
@@ -489,7 +490,7 @@ impl Calculator {
                     if self.use_nosecone {
                         'nosecone_core_loop: for nosecone_core in nosecone_cores {
                             let core_base_length_x_diameter =
-                                nosecone_core.base_length * engine.size.get_diameter();
+                                nosecone_core.base_length * engine.diameter;
                             let min_height = core_base_length_x_diameter * NoseConeVariant::MIN_VSA;
                             let max_height = core_base_length_x_diameter * NoseConeVariant::MAX_VSA;
                             if self.nose_height < min_height || self.nose_height > max_height {
@@ -516,7 +517,7 @@ impl Calculator {
                             // we have the minimum TWR, but are we over the maximum volume of fuel
                             // given the engine's rated burn time * extra fuel?
                             let (h, twr, wet_mass, dry_mass) = h_twr_wet_dry.unwrap();
-                            let tank_volume = tank_volume(engine.size.get_diameter(), h);
+                            let tank_volume = tank_volume(engine.diameter, h);
                             let nose_volume = calculate_corrected_volume(
                                 d,
                                 self.nose_height,
@@ -599,7 +600,7 @@ impl Calculator {
                     } else {
                         // no nosecones!
                         let min_cyl_height =
-                            0.1f64.max(engine.size.get_diameter() * CylindricalTank::MIN_VSA);
+                            0.1f64.max(engine.diameter * CylindricalTank::MIN_VSA);
                         let max_cyl_height = CylindricalTank::MAX_VSA;
 
                         let h_twr_wet_dry = compute_tank_height(
@@ -783,7 +784,7 @@ mod tests {
             false,
             false,
             0.0,
-            Size::Xs,
+            0.3,
             "Steel Fuselage".to_string(),
             "start".to_string(),
         );
@@ -807,7 +808,7 @@ mod tests {
             "start,Post-War Rocketry Testing".to_string(),
             0.0,
         );
-        let results = calculator.max_dv(1.5).unwrap();
+        let results = calculator.max_dv(1.5, false, 0.01).unwrap();
         println!(
             "Results: {}",
             serde_json::to_string_pretty(&results[0]).unwrap()
