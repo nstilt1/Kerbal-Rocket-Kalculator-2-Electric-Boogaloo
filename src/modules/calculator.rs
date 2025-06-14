@@ -956,4 +956,12 @@ mod tests {
     engine_test!(rda_1_150_test, "RDA-1-150", "Post-War Rocketry Testing");
 
     engine_test!(rda_1_300_test, "RDA-1-300", "Early Rocketry");
+
+    engine_test!(naa_75_110_a_test, "NAA-75-110 A-Series", "Early Rocketry");
+
+    engine_test!(rd_200_test, "RD-200", "Early Rocketry");
+
+    engine_test!(xlr_11_rm_5_test, "XLR-11-RM-5", "Early Rocketry");
+
+    engine_test!(xlr_35_rm_1_test, "XLR-35-RM-1", "Early Rocketry");
 }

@@ -131,7 +131,7 @@ impl EngineConfiguration {
 }
 
 //const NUM_ENGINES: usize = 10;
-const NUM_ENGINES: usize = 9;
+const NUM_ENGINES: usize = 11;
 
 impl Engine {
     pub fn max_volume(&self) -> f64 {
@@ -507,6 +507,64 @@ impl Engine {
                 ],
                 "Post-War Rocketry Testing",
             ),
+            Engine::new(
+                "NAA-75-110 A-Series", // Engine 9
+                false,
+                333.6,
+                383.0,
+                100.0,
+                216.0,
+                248.0,
+                0.74,
+                0.3,
+                65.0,
+                true,
+                false,
+                false,
+                false,
+                true,
+                1,
+                1.85,
+                0.0,
+                vec![
+                    Fuel::new("Ethanol75", 20055.1365, 9861.01679923026, 443.0, 8743.0, 2, 3.5, false),
+                    Fuel::new("Liquid Oxygen", 20055.1365, 9849.19106173433, 443.0, 11681.0, 2, 3.5, false),
+                    Fuel::new("HTP", 20055.1365, 344.928639035405, 305.0, 798.0, 2, 3.5, false),
+                    // FuelType::Kerosene(0.218, 0.169),
+                    // FuelType::AK20(0.441, 0.677),
+                    // FuelType::Nitrogen(25.0, 31.3),
+                ],
+                "Early Rocketry",
+            ),
+            Engine::new(
+                "RD-200", // Engine 10
+                false,
+                88.4,
+                98.5,
+                100.0,
+                210.0,
+                234.0,
+                0.169,
+                0.3,
+                85.0,
+                true,
+                false,
+                false,
+                false,
+                true,
+                1,
+                1.25,
+                0.0,
+                vec![
+                    Fuel::new("Kerosene", 5751.4672, 1960.62387095336, 114.0, 1638.0, 2, 47.8, true),
+                    Fuel::new("AK20", 5751.4672, 3733.89811218518, 140.0, 5868.0, 2, 47.8, true),
+                    Fuel::new("HTP", 5751.4672, 56.9452168614608, 86.8, 168.0, 2, 47.8, true),
+                    // FuelType::Kerosene(0.218, 0.169),
+                    // FuelType::AK20(0.441, 0.677),
+                    // FuelType::Nitrogen(25.0, 31.3),
+                ],
+                "Early Rocketry",
+            ),
         ];
         // Aerobee engine configurations
         engines[0].configurations.push(EngineConfiguration::new(
@@ -752,6 +810,48 @@ impl Engine {
         ));
         // XLR11 engine configurations
         //engines[7].configurations[0] = EngineConfiguration::new("XLR11")
+        engines[6].configurations.push(EngineConfiguration::new(
+            "XLR-11-RM-5",
+            24.5,
+            25.0,
+            0.212,
+            209.0,
+            228.0,
+            300.0,
+            false,
+            false,
+            u8::MAX,
+            vec![
+                Fuel::new("Ethanol75", 3918.2987, 2056.91286053099, 88.4, 1820.0, 5, 16.3, false),
+                Fuel::new("Liquid Oxygen", 3918.2987, 1822.59080369389, 85.0, 2165.0, 5, 16.3, false),
+                Fuel::new("HTP", 3918.2987, 38.7950357751122, 59.1, 115.0, 5, 16.3, false),
+                // FuelType::Kerosene(0.178, 0.279),
+                // FuelType::AK20(0.361, 1.12),
+                // FuelType::Nitrogen(20.5, 0.0516),
+            ],
+            "Early Rocketry",
+        ));
+        engines[6].configurations.push(EngineConfiguration::new(
+            "XLR-35-RM-1",
+            33.8,
+            100.0,
+            0.185,
+            211.0,
+            234.4,
+            220.0,
+            false,
+            false,
+            1,
+            vec![
+                Fuel::new("Ethanol75", 3918.2987, 2056.91286053099, 88.4, 1820.0, 3, 52.0, false),
+                Fuel::new("Liquid Oxygen", 3918.2987, 1822.59080369389, 85.0, 2165.0, 3, 52.0, false),
+                Fuel::new("HTP", 3918.2987, 38.7950357751122, 59.1, 115.0, 3, 52.0, false),
+                // FuelType::Kerosene(0.178, 0.279),
+                // FuelType::AK20(0.361, 1.12),
+                // FuelType::Nitrogen(20.5, 0.0516),
+            ],
+            "Early Rocketry",
+        ));
         engines
     }
 
