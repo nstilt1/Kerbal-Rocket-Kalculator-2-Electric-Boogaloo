@@ -3,11 +3,20 @@ use std::{collections::HashMap, sync::LazyLock};
 
 pub use early_engines::*;
 
-use crate::{modules::fuel_type::Fuel, TECH_TREE};
+use crate::modules::fuel_type::Fuel;
 
 pub static ENGINES: LazyLock<[Engine; NUM_ENGINES]> = LazyLock::new(|| Engine::init_rp1_engines());
 
 pub type Engine = EngineV1;
+
+pub const TECH_TREE: &[&'static str] = &[
+    "start",
+    "Post-War Rocketry Testing",
+    "Early Rocketry",
+    "Basic Rocketry",
+    "1956-1957 Orbital Rocketry",
+    "Lunar Landing",
+];
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct EngineV1 {
@@ -239,26 +248,29 @@ impl Engine {
         }
     }
 
-    pub fn init_all_engines(engines: [Engine; NUM_ENGINES]) -> HashMap<&'static str, Vec<Engine>> {
+    pub fn init_all_engines() -> HashMap<&'static str, Vec<Engine>> {
         let mut result: HashMap<&'static str, Vec<Engine>> =
             HashMap::with_capacity(TECH_TREE.len());
-        for engine in engines.iter() {
-            if let Some(vec) = result.get_mut(&engine.tech_tree_node) {
-                vec.push(engine.clone());
-            } else {
-                result.insert(&engine.tech_tree_node, vec![engine.clone()]);
-            }
-            let configurations = &engine.configurations;
-            for config in configurations.iter() {
-                if !config.is_initialized {
-                    break;
-                }
-                let engine = config.to_engine(&engine);
+        let engine_groups = &[&ENGINES];
+        for engines in engine_groups.iter() {
+            for engine in engines.iter() {
                 if let Some(vec) = result.get_mut(&engine.tech_tree_node) {
-                    vec.push(engine);
+                    vec.push(engine.clone());
                 } else {
-                    let vec = vec![engine.clone()];
-                    result.insert(&engine.tech_tree_node, vec);
+                    result.insert(&engine.tech_tree_node, vec![engine.clone()]);
+                }
+                let configurations = &engine.configurations;
+                for config in configurations.iter() {
+                    if !config.is_initialized {
+                        break;
+                    }
+                    let engine = config.to_engine(&engine);
+                    if let Some(vec) = result.get_mut(&engine.tech_tree_node) {
+                        vec.push(engine);
+                    } else {
+                        let vec = vec![engine.clone()];
+                        result.insert(&engine.tech_tree_node, vec);
+                    }
                 }
             }
         }

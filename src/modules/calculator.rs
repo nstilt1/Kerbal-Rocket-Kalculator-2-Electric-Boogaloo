@@ -115,7 +115,7 @@ impl Calculator {
         );
         let mut result: Vec<Rocket> = Vec::new();
 
-        let mut engine_tech_map = Engine::init_all_engines(Engine::init_rp1_engines());
+        let mut engine_tech_map = Engine::init_all_engines();
         let mut engines: Vec<Engine> = Vec::with_capacity(engine_tech_map.len() * 4);
         let unlocked_tech: Vec<&str> = self.unlocked_tech.split(',').collect();
         for tech in unlocked_tech.iter() {
@@ -384,7 +384,7 @@ impl Calculator {
     ) -> Result<Vec<Rocket>, Error> {
         console_log!("use_nosecone: {}", self.use_nosecone);
         let mut result: Vec<Rocket> = Vec::new();
-        let mut engine_tech_map = Engine::init_all_engines(Engine::init_rp1_engines());
+        let mut engine_tech_map = Engine::init_all_engines();
         let mut engines: Vec<Engine> = Vec::with_capacity(engine_tech_map.len() * 4);
         let unlocked_tech: Vec<&str> = self.unlocked_tech.split(',').collect();
         for tech in unlocked_tech.iter() {
@@ -847,7 +847,7 @@ mod tests {
 
     #[test]
     fn xasr_1_test() {
-        let engines = Engine::init_all_engines(Engine::init_rp1_engines());
+        let engines = Engine::init_all_engines();
         let post_war = engines.get("Post-War Rocketry Testing").unwrap();
         let engine = post_war.iter().find(|e| e.name.contains("XASR-1")).unwrap();
         let max_volume = engine.max_volume();
@@ -888,7 +888,7 @@ mod tests {
         ($test_name:ident, $engine_name:literal, $tech_level:literal) => {
             #[test]
             fn $test_name() {
-                let engines = Engine::init_all_engines(Engine::init_rp1_engines());
+                let engines = Engine::init_all_engines();
                 let engines_at_tech_level = engines.get($tech_level).unwrap();
                 let engine = engines_at_tech_level
                     .iter()

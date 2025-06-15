@@ -12,14 +12,6 @@ pub mod modules;
 const G: f64 = 9.81;
 //const G: f64 = 9.80665;
 
-pub const TECH_TREE: &[&'static str] = &[
-    "start",
-    "Post-War Rocketry Testing",
-    "Early Rocketry",
-    "Basic Rocketry",
-    "1956-1957 Orbital Rocketry",
-];
-
 #[wasm_bindgen]
 #[cfg(target_arch = "wasm32")]
 pub fn calculate(
