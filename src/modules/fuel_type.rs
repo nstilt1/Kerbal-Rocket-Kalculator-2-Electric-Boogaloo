@@ -13,7 +13,7 @@ pub struct FuelMix {
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct FuelMixture {
-    pub fuels: &'static [Fuel]
+    pub fuels: &'static [Fuel],
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -28,14 +28,14 @@ pub struct Fuel {
 
 impl Fuel {
     pub const fn new(
-        name: &'static str, 
-        total_volume: f64, 
-        fuel_volume: f64, 
-        tank_dry_mass: f64, 
-        tank_wet_mass: f64, 
-        burn_time_minutes: u32, 
-        burn_time_seconds: f64, 
-        is_hp: bool
+        name: &'static str,
+        total_volume: f64,
+        fuel_volume: f64,
+        tank_dry_mass: f64,
+        tank_wet_mass: f64,
+        burn_time_minutes: u32,
+        burn_time_seconds: f64,
+        is_hp: bool,
     ) -> Self {
         let burn_time = burn_time_secs(burn_time_minutes, burn_time_seconds);
         Self {

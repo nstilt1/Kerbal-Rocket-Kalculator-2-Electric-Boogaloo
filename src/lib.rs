@@ -126,7 +126,8 @@ pub fn max_dv(
         unlocked_tech,
         nose_height,
     );
-    let mut result = calculator.max_dv(extra_fuel_percentage, use_custom_diameter, custom_diameter)?;
+    let mut result =
+        calculator.max_dv(extra_fuel_percentage, use_custom_diameter, custom_diameter)?;
     result.sort_by(|a, b| a.partial_cmp(&b).unwrap());
     Ok(serde_json::to_string(&result).expect("serde_error"))
 }

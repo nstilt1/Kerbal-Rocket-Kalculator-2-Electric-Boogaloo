@@ -35,6 +35,7 @@ impl Serialize for Rocket {
     {
         let len = 13;
         let mut state = serializer.serialize_struct("Rocket", len)?;
+        state.serialize_field("engine", &self.engine.get_name())?;
         state.serialize_field("engine", self.engine.name)?;
         state.serialize_field("numEngines", &self.num_engines)?;
         state.serialize_field("diameter", &self.diameter)?;

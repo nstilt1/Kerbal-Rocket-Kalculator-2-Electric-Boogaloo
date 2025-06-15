@@ -476,14 +476,8 @@ mod tests {
             + engine_mass_kg
             + num_tanks_f64 * (nose_structural_mass + cyl_structural_mass);
         let wet_mass = dry_mass
-            + num_tanks_f64
-                * cyl_volume
-                * cyl_fuselage.utilization
-                * engine.fuel_density()
-            + num_tanks_f64
-                * nose_volume
-                * nose_fuselage.utilization
-                * engine.fuel_density();
+            + num_tanks_f64 * cyl_volume * cyl_fuselage.utilization * engine.fuel_density()
+            + num_tanks_f64 * nose_volume * nose_fuselage.utilization * engine.fuel_density();
         let delta_v = engine.isp_asl * G * f64::ln(wet_mass / dry_mass);
         let diff = delta_v - target_dv;
         assert!(diff.abs() < 0.0001);
@@ -542,15 +536,12 @@ mod tests {
         let nose_volume =
             calculate_corrected_volume(diameter, nose_height, core.correction_coefficient);
         let nose_dry_mass = nose_volume * (1.0 - nose_fuselage.utilization) * nose_fuselage.density;
-        let nose_wet_mass = nose_dry_mass
-            + engine
-                .fuel_mass(nose_volume * nose_fuselage.utilization);
+        let nose_wet_mass =
+            nose_dry_mass + engine.fuel_mass(nose_volume * nose_fuselage.utilization);
 
         let cyl_volume = tank_volume(diameter, h);
         let cyl_dry_mass = cyl_volume * (1.0 - cyl_fuselage.utilization) * cyl_fuselage.density;
-        let cyl_wet_mass = cyl_dry_mass
-            + engine
-                .fuel_mass(cyl_fuselage.utilization * cyl_volume);
+        let cyl_wet_mass = cyl_dry_mass + engine.fuel_mass(cyl_fuselage.utilization * cyl_volume);
 
         //let dry_mass = engine_mass_kg + payload_mass_kg + nose_dry_mass * num_tanks_f64 + cyl_dry_mass * num_tanks_f64;
         let wet_mass = engine_mass_kg
