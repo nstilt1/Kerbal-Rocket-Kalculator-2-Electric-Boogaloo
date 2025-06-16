@@ -630,6 +630,7 @@ mod tests {
         let engine = EngineConfiguration {
             name: "Aerobee XASR-1",
             thrust_kn: 13.8,
+            thrust_vac: 16.24536,
             min_thrust_percentage: 100.0,
             isp_asl: 200.0,
             isp_vac: 235.44,

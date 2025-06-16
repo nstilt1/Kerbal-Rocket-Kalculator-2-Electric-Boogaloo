@@ -1,12 +1,16 @@
-pub mod early_engines;
+mod early_engines;
+mod lunar_landing;
+mod or_2019_2028;
+mod or_2009_2013;
+mod orsc_2014_2018;
 use std::{collections::HashMap, sync::LazyLock};
 
-pub use early_engines::*;
-
-use crate::modules::fuel_type::Fuel;
+use crate::modules::{engines::{lunar_landing::LUNAR_LANDING_ENGINES, or_2009_2013::OR_2009_2013_ENGINES, or_2019_2028::OR_2019_2028_ENGINES, orsc_2014_2018::ORSC_2014_2018_ENGINES}, fuel_type::Fuel};
 
 pub static ENGINES: LazyLock<[Engine; NUM_ENGINES]> = LazyLock::new(|| Engine::init_rp1_engines());
 
+//const NUM_ENGINES: usize = 10;
+const NUM_ENGINES: usize = 11;
 pub type Engine = EngineV1;
 
 pub const TECH_TREE: &[&'static str] = &[
@@ -16,6 +20,8 @@ pub const TECH_TREE: &[&'static str] = &[
     "Basic Rocketry",
     "1956-1957 Orbital Rocketry",
     "Lunar Landing",
+    "2009-2013 Orbital Rocketry",
+    "2019-2028 Orbital Rocketry",
 ];
 
 #[derive(Debug, PartialEq, Clone)]
@@ -48,6 +54,7 @@ pub struct EngineV1 {
 pub struct EngineConfiguration {
     pub name: &'static str,
     pub thrust_kn: f64, // thrust of the engine config, presumuably ASL
+    pub thrust_vac: f64,
     pub min_thrust_percentage: f64,
     pub mass: f64, // mass in tons
     pub isp_asl: f64,
@@ -79,6 +86,7 @@ impl EngineConfiguration {
         Self {
             name,
             thrust_kn,
+            thrust_vac: thrust_kn * (isp_vac / isp_asl),
             min_thrust_percentage,
             mass,
             isp_asl,
@@ -101,6 +109,7 @@ impl EngineConfiguration {
         Self {
             name: "",
             thrust_kn: 0.0,
+            thrust_vac: 0.0,
             min_thrust_percentage: 0.0,
             mass: 0.0,
             isp_asl: 0.0,
@@ -134,9 +143,6 @@ impl EngineConfiguration {
         result
     }
 }
-
-//const NUM_ENGINES: usize = 10;
-const NUM_ENGINES: usize = 11;
 
 impl Engine {
     pub fn max_volume(&self) -> f64 {
@@ -251,7 +257,13 @@ impl Engine {
     pub fn init_all_engines() -> HashMap<&'static str, Vec<Engine>> {
         let mut result: HashMap<&'static str, Vec<Engine>> =
             HashMap::with_capacity(TECH_TREE.len());
-        let engine_groups = &[&ENGINES];
+        let engine_groups = &[
+            &ENGINES.as_slice(), 
+            &LUNAR_LANDING_ENGINES.as_slice(),
+            &OR_2009_2013_ENGINES.as_slice(),
+            &ORSC_2014_2018_ENGINES.as_slice(),
+            &OR_2019_2028_ENGINES.as_slice(),
+        ];
         for engines in engine_groups.iter() {
             for engine in engines.iter() {
                 if let Some(vec) = result.get_mut(&engine.tech_tree_node) {

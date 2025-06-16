@@ -977,4 +977,24 @@ mod tests {
     engine_test!(xlr_11_rm_5_test, "XLR-11-RM-5", "Early Rocketry");
 
     engine_test!(xlr_35_rm_1_test, "XLR-35-RM-1", "Early Rocketry");
+
+    engine_test!(lmae_test, "LMAE", "Lunar Landing");
+
+    engine_test!(rs_18_test, "RS-18", "2019-2028 Orbital Rocketry");
+
+    engine_test!(lmde_test, "LMDE", "Lunar Landing");
+
+    engine_test!(f1b_test, "F-1B", "2019-2028 Orbital Rocketry");
+
+    engine_test!(merlin_1a_test, "Merlin 1A", "2009-2013 Orbital Rocketry");
+
+    engine_test!(merlin_1c_test, "Merlin 1C", "2009-2013 Orbital Rocketry");
+
+    engine_test!(merlin_1c_vac_test, "Merlin 1C Vacuum", "2009-2013 Orbital Rocketry");
+
+    engine_test!(merlin_1d_test, "Merlin 1D", "2009-2013 Orbital Rocketry");
+
+    engine_test!(merlin_1d_vac_test, "Merlin 1D Vacuum", "2009-2013 Orbital Rocketry");
+
+    engine_test!(rd_191_test, "RD-191", "2014-2018 ORSC Engines");
 }
