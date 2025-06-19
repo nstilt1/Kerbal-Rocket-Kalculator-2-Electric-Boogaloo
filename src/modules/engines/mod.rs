@@ -21,6 +21,7 @@ pub const TECH_TREE: &[&'static str] = &[
     "1956-1957 Orbital Rocketry",
     "Lunar Landing",
     "2009-2013 Orbital Rocketry",
+    "2014-2018 ORSC Engines",
     "2019-2028 Orbital Rocketry",
 ];
 
@@ -100,6 +101,40 @@ impl EngineConfiguration {
             tech_tree_node,
         }
     }
+
+    pub const fn new_v2(
+        name: &'static str,
+        thrust_asl: f64,
+        thrust_vac: f64,
+        min_thrust_percentage: f64,
+        mass: f64,
+        isp_asl: f64,
+        isp_vac: f64,
+        rated_burn_time: f64,
+        ullage: bool,
+        hp_fuel: bool,
+        num_ignitions: u8,
+        fuel_mix: Vec<Fuel>,
+        tech_tree_node: &'static str,
+    ) -> Self {
+        Self {
+            name,
+            thrust_kn: thrust_asl,
+            thrust_vac,
+            min_thrust_percentage,
+            mass,
+            isp_asl,
+            isp_vac,
+            rated_burn_time,
+            ullage,
+            hp_fuel,
+            num_ignitions,
+            is_initialized: true,
+            fuel_mix,
+            tech_tree_node,
+        }
+    }
+
     /// Calculates the thrust (vac) for a configuration.
     pub const fn thrust_vac(&self) -> f64 {
         self.thrust_kn * (self.isp_vac / self.isp_asl)
