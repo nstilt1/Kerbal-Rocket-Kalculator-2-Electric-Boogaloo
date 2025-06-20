@@ -1,11 +1,12 @@
 mod early_engines;
 mod lunar_landing;
 mod or_2019_2028;
+mod or_2014_2018;
 mod or_2009_2013;
 mod orsc_2014_2018;
 use std::{collections::HashMap, sync::LazyLock};
 
-use crate::modules::{engines::{lunar_landing::LUNAR_LANDING_ENGINES, or_2009_2013::OR_2009_2013_ENGINES, or_2019_2028::OR_2019_2028_ENGINES, orsc_2014_2018::ORSC_2014_2018_ENGINES}, fuel_type::Fuel};
+use crate::modules::{engines::{lunar_landing::LUNAR_LANDING_ENGINES, or_2009_2013::OR_2009_2013_ENGINES, or_2014_2018::OR_2014_2018_ENGINES, or_2019_2028::OR_2019_2028_ENGINES, orsc_2014_2018::ORSC_2014_2018_ENGINES}, fuel_type::Fuel};
 
 pub static ENGINES: LazyLock<[Engine; NUM_ENGINES]> = LazyLock::new(|| Engine::init_rp1_engines());
 
@@ -266,6 +267,7 @@ impl Engine {
             &OR_2009_2013_ENGINES.as_slice(),
             &ORSC_2014_2018_ENGINES.as_slice(),
             &OR_2019_2028_ENGINES.as_slice(),
+            &OR_2014_2018_ENGINES.as_slice(),
         ];
         for engines in engine_groups.iter() {
             for engine in engines.iter() {

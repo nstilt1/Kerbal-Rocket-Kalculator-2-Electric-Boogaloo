@@ -997,4 +997,16 @@ mod tests {
     engine_test!(merlin_1d_vac_test, "Merlin 1D Vacuum", "2009-2013 Orbital Rocketry");
 
     engine_test!(rd_191_test, "RD-191", "2014-2018 ORSC Engines");
+
+    engine_test!(rd_181_test, "RD-181", "2014-2018 ORSC Engines");
+
+    engine_test!(rutherford_vacuum_test, "Rutherford Vacuum", "2014-2018 Orbital Rocketry");
+
+    engine_test!(rutherford_test, "Rutherford", "2014-2018 Orbital Rocketry");
+
+    engine_test!(merlin_1d_plus_test, "Merlin 1D+", "2014-2018 Orbital Rocketry");
+
+    engine_test!(merlin_1d_plus_plus_test, "Merlin 1D++", "2014-2018 Orbital Rocketry");
+
+    engine_test!(merlin_1d_vac_plus_test, "Merlin 1D Vac+", "2014-2018 Orbital Rocketry");
 }

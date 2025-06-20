@@ -7,7 +7,7 @@ pub static ORSC_2014_2018_ENGINES: LazyLock<[Engine; NUM_ENGINES]> = LazyLock::n
 
 #[rustfmt::skip]
 fn init_orsc_2014_2018_engines() -> [Engine; NUM_ENGINES] {
-    let engines = [
+    let mut engines = [
         Engine::new(
             "RD-191", // Engine 0
             false,
@@ -37,5 +37,26 @@ fn init_orsc_2014_2018_engines() -> [Engine; NUM_ENGINES] {
             "2014-2018 ORSC Engines",
         ),
     ];
+
+    engines.iter_mut().find(|e| e.name == "RD-191").unwrap().configurations.push(
+        EngineConfiguration::new(
+            "RD-181",
+            1917.2,
+            2085.0,
+            47.0,
+            2.2,
+            311.9, 
+            339.2,
+            255.0,
+            true,
+            false,
+            1,
+            vec![
+                Fuel::new("RP-1", 188554.5109, 66408.897038561, 3782.0, 57374.0, 5, 5.8, false),
+                Fuel::new("Liquid Oxygen", 188554.5109, 122145.613861439, 4590.0, 143958.0, 5, 5.8, false)
+            ],
+            "2014-2018 ORSC Engines",
+        )
+    );
     engines
 }

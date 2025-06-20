@@ -1,13 +1,13 @@
 use std::sync::LazyLock;
 
-use crate::modules::{engines::{lunar_landing::NUM_LUNAR_LANDING_ENGINES, Engine, EngineConfiguration}, fuel_type::Fuel};
+use crate::modules::{engines::{lunar_landing::NUM_LUNAR_LANDING_ENGINES, or_2014_2018::orbital_rocketry_2014_2018_mod, Engine, EngineConfiguration}, fuel_type::Fuel};
 
-const NUM_ENGINES: usize = 5;
-pub static OR_2009_2013_ENGINES: LazyLock<[Engine; NUM_ENGINES]> = LazyLock::new(|| init_orbital_rocketry_2009_2013_engines());
+pub(super) const NUM_OR_2009_2013_ENGINES: usize = 5;
+pub static OR_2009_2013_ENGINES: LazyLock<[Engine; NUM_OR_2009_2013_ENGINES]> = LazyLock::new(|| init_orbital_rocketry_2009_2013_engines());
 
 #[rustfmt::skip]
-fn init_orbital_rocketry_2009_2013_engines() -> [Engine; NUM_ENGINES] {
-    let engines = [
+fn init_orbital_rocketry_2009_2013_engines() -> [Engine; NUM_OR_2009_2013_ENGINES] {
+    let mut engines = [
         Engine::new(
             "Merlin 1A", // Engine 0
             false,
@@ -149,6 +149,8 @@ fn init_orbital_rocketry_2009_2013_engines() -> [Engine; NUM_ENGINES] {
             "2009-2013 Orbital Rocketry",
         ),
     ];
+
+    orbital_rocketry_2014_2018_mod(&mut engines);
     engines
 }
 
