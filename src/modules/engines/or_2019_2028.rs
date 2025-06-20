@@ -46,6 +46,7 @@ pub(super) fn orbital_rocketry_2019_2028_lmae_mod(lunar_engines: &mut [Engine; N
         EngineConfiguration::new(
             "RS-18",
             5.0,
+            24.5,
             100.0,
             0.095,
             72.0,

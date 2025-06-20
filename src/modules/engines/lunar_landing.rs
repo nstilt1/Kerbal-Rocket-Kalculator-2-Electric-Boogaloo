@@ -78,7 +78,7 @@ mod tests {
     use super::*;
 
     #[test]
-    #[ignore = "test fails probably because asl_isp is not completely accurate"]
+    #[ignore = "test fails probably because asl_isp is not completely accurate "]
     fn extreme_thrust_difference_test() {
         let thrust_asl = 0.000005;
         let isp_asl = 1.0;

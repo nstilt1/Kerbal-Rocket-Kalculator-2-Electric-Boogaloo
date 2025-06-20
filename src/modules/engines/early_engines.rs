@@ -333,6 +333,7 @@ impl Engine {
         engines[0].configurations.push(EngineConfiguration::new(
             "XASR-1",
             11.7,
+            13.8,
             100.0,
             0.010,
             200.0,
@@ -354,6 +355,7 @@ impl Engine {
         engines[0].configurations.push(EngineConfiguration::new(
             "XASR-2",
             11.7,
+            13.8,
             100.0,
             0.010,
             200.0,
@@ -375,6 +377,7 @@ impl Engine {
         engines[0].configurations.push(EngineConfiguration::new(
             "AJ10-27",
             18.2,
+            21.3,
             100.0,
             0.012,
             198.0,
@@ -398,6 +401,7 @@ impl Engine {
         engines[1].configurations.push(EngineConfiguration::new(
             "U-1700",
             17.0,
+            19.4,
             100.0,
             0.015,
             206.5,
@@ -419,6 +423,7 @@ impl Engine {
         engines[1].configurations.push(EngineConfiguration::new(
             "U-2000",
             19.6,
+            23.0,
             100.0,
             0.013,
             205.6,
@@ -442,6 +447,7 @@ impl Engine {
         engines[2].configurations.push(EngineConfiguration::new(
             "VeroniqueAGI",
             39.3,
+            49.3,
             100.0,
             0.150,
             208.0,
@@ -463,6 +469,7 @@ impl Engine {
         engines[2].configurations.push(EngineConfiguration::new(
             "Veronique61",
             58.8,
+            73.8,
             100.0,
             0.150,
             208.0,
@@ -486,6 +493,7 @@ impl Engine {
         engines[3].configurations.push(EngineConfiguration::new(
             "A-9",
             249.1,
+            288.7,
             100.0,
             0.972,
             220.0,
@@ -509,6 +517,7 @@ impl Engine {
         engines[4].configurations.push(EngineConfiguration::new(
             "RD-101",
             358.0,
+            404.0,
             100.0,
             0.888,
             210.0,
@@ -532,6 +541,7 @@ impl Engine {
         engines[8].configurations.push(EngineConfiguration::new(
             "RDA-1-150",
             1.4,
+            1.5,
             34.0,
             0.012,
             210.0,
@@ -552,6 +562,7 @@ impl Engine {
         ));
         engines[8].configurations.push(EngineConfiguration::new(
             "RDA-1-300",
+            2.9,
             2.9,
             34.0,
             0.012,
@@ -576,6 +587,7 @@ impl Engine {
         engines[6].configurations.push(EngineConfiguration::new(
             "XLR-11-RM-5",
             24.5,
+            26.7,
             25.0,
             0.212,
             209.0,
@@ -595,8 +607,9 @@ impl Engine {
             "Early Rocketry",
         ));
         engines[6].configurations.push(EngineConfiguration::new(
-            "XLR-35-RM-1",
+            "XLR35-RM-1",
             33.8,
+            37.6,
             100.0,
             0.185,
             211.0,

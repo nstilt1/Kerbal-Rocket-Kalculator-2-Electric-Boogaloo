@@ -72,38 +72,6 @@ pub struct EngineConfiguration {
 impl EngineConfiguration {
     pub const fn new(
         name: &'static str,
-        thrust_kn: f64,
-        min_thrust_percentage: f64,
-        mass: f64,
-        isp_asl: f64,
-        isp_vac: f64,
-        rated_burn_time: f64,
-        ullage: bool,
-        hp_fuel: bool,
-        num_ignitions: u8,
-        fuel_mix: Vec<Fuel>,
-        tech_tree_node: &'static str,
-    ) -> Self {
-        Self {
-            name,
-            thrust_kn,
-            thrust_vac: thrust_kn * (isp_vac / isp_asl),
-            min_thrust_percentage,
-            mass,
-            isp_asl,
-            isp_vac,
-            rated_burn_time,
-            ullage,
-            hp_fuel,
-            num_ignitions,
-            is_initialized: true,
-            fuel_mix,
-            tech_tree_node,
-        }
-    }
-
-    pub const fn new_v2(
-        name: &'static str,
         thrust_asl: f64,
         thrust_vac: f64,
         min_thrust_percentage: f64,
@@ -120,7 +88,7 @@ impl EngineConfiguration {
         Self {
             name,
             thrust_kn: thrust_asl,
-            thrust_vac,
+            thrust_vac: thrust_vac,
             min_thrust_percentage,
             mass,
             isp_asl,
