@@ -130,7 +130,7 @@ impl EngineConfiguration {
     /// Turns an engine configuration into an engine
     pub fn to_engine(&self, parent: &Engine) -> Engine {
         let mut result = parent.clone();
-        result.parent_name = parent.parent_name;
+        result.parent_name = parent.name;
         result.name = self.name;
         result.thrust_asl = self.thrust_kn;
         result.thrust_vac = self.thrust_vac();

@@ -28,6 +28,11 @@ pub struct Rocket {
     twr: f64,
 }
 
+/// Rounds a number to a specific number of decimal places
+fn round(value: f64, decimal_places: usize) -> f64 {
+    format!("{:.*}", decimal_places, value).parse().unwrap()
+}
+
 impl Serialize for Rocket {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -36,19 +41,18 @@ impl Serialize for Rocket {
         let len = 13;
         let mut state = serializer.serialize_struct("Rocket", len)?;
         state.serialize_field("engine", &self.engine.get_name())?;
-        state.serialize_field("engine", self.engine.name)?;
         state.serialize_field("numEngines", &self.num_engines)?;
         state.serialize_field("diameter", &self.diameter)?;
-        state.serialize_field("wetMass", &self.mass)?;
-        state.serialize_field("dryMass", &self.dry_mass)?;
-        state.serialize_field("deltaVAsl", &self.delta_v_asl)?;
-        state.serialize_field("deltaVVac", &self.delta_v_vac)?;
-        state.serialize_field("twr", &self.twr)?;
+        state.serialize_field("wetMass", &round(self.mass, 3))?;
+        state.serialize_field("dryMass", &round(self.dry_mass, 3))?;
+        state.serialize_field("deltaVAsl", &round(self.delta_v_asl, 0))?;
+        state.serialize_field("deltaVVac", &round(self.delta_v_vac, 0))?;
+        state.serialize_field("twr", &round(self.twr, 2))?;
         state.serialize_field("noseCore", self.nose_core.unwrap_or("N/A"))?;
         state.serialize_field("noseFuselage", self.nose_fuselage.unwrap_or("N/A"))?;
-        state.serialize_field("noseLength", &self.nose_length.unwrap_or(0.0))?;
+        state.serialize_field("noseLength", &round(self.nose_length.unwrap_or(0.0), 2))?;
         state.serialize_field("cylFuselage", &self.cyl_fuselage.unwrap_or("N/A"))?;
-        state.serialize_field("cylLength", &self.cyl_length.unwrap_or(0.0))?;
+        state.serialize_field("cylLength", &round(self.cyl_length.unwrap_or(0.0), 3))?;
         state.end()
     }
 }

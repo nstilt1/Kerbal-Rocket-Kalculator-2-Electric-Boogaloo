@@ -25,7 +25,7 @@ fn init_orbital_rocketry_2019_2028_engines() -> [Engine; NUM_ENGINES] {
             true,
             true,
             1,
-            3.75,
+            5.5,
             0.0,
             vec![
                 Fuel::new("RP-1", 1012149.41, 388462.955086835, 20.763 * 1000.0, 334.252 * 1000.0, 5, 38.8, false),

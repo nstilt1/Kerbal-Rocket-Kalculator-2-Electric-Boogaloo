@@ -976,7 +976,7 @@ mod tests {
 
     engine_test!(xlr_11_rm_5_test, "XLR-11-RM-5", "Early Rocketry");
 
-    engine_test!(xlr_35_rm_1_test, "XLR-35-RM-1", "Early Rocketry");
+    engine_test!(xlr_35_rm_1_test, "XLR35-RM-1", "Early Rocketry");
 
     engine_test!(lmae_test, "LMAE", "Lunar Landing");
 
