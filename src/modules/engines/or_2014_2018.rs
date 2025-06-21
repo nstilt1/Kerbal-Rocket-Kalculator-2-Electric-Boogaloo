@@ -1,6 +1,9 @@
 use std::sync::LazyLock;
 
-use crate::modules::{engines::{or_2009_2013::NUM_OR_2009_2013_ENGINES, Engine, EngineConfiguration}, fuel_type::Fuel};
+use crate::modules::{
+    engines::{or_2009_2013::NUM_OR_2009_2013_ENGINES, Engine, EngineConfiguration},
+    fuel_type::Fuel,
+};
 
 const NUM_ENGINES: usize = 2;
 pub static OR_2014_2018_ENGINES: LazyLock<[Engine; NUM_ENGINES]> = LazyLock::new(|| init_engines());

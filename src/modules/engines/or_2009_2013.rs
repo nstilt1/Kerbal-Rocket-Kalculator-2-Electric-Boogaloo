@@ -1,9 +1,16 @@
 use std::sync::LazyLock;
 
-use crate::modules::{engines::{lunar_landing::NUM_LUNAR_LANDING_ENGINES, or_2014_2018::orbital_rocketry_2014_2018_mod, Engine, EngineConfiguration}, fuel_type::Fuel};
+use crate::modules::{
+    engines::{
+        lunar_landing::NUM_LUNAR_LANDING_ENGINES, or_2014_2018::orbital_rocketry_2014_2018_mod,
+        Engine, EngineConfiguration,
+    },
+    fuel_type::Fuel,
+};
 
 pub(super) const NUM_OR_2009_2013_ENGINES: usize = 5;
-pub static OR_2009_2013_ENGINES: LazyLock<[Engine; NUM_OR_2009_2013_ENGINES]> = LazyLock::new(|| init_orbital_rocketry_2009_2013_engines());
+pub static OR_2009_2013_ENGINES: LazyLock<[Engine; NUM_OR_2009_2013_ENGINES]> =
+    LazyLock::new(|| init_orbital_rocketry_2009_2013_engines());
 
 #[rustfmt::skip]
 fn init_orbital_rocketry_2009_2013_engines() -> [Engine; NUM_OR_2009_2013_ENGINES] {

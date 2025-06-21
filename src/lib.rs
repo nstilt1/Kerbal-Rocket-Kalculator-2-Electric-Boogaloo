@@ -26,8 +26,10 @@ pub fn calculate(
     unlocked_fuselages: Array,
     unlocked_tech: Array,
     nose_height: f64,
+    use_custom_diameter: bool,
+    custom_diameter: f64,
 ) -> Result<String, JsError> {
-    use modules::{rocket_config::Rocket, size::Size};
+    use modules::size::Size;
 
     assert!(target_delta_v > 0.0, "Target delta v was not positive");
     assert!(minimum_twr >= 0.01, "minimum twr was less than 0.01");
@@ -72,14 +74,11 @@ pub fn calculate(
         unlocked_tech,
     );
 
-    let mut output = calculator.calculate()?;
+    let mut output = calculator.calculate(use_custom_diameter, custom_diameter)?;
 
-    if output.is_empty() {
-        return Ok("No rockets found".to_string());
-    }
     output.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
-    return Ok(output[0].to_string());
+    return Ok(serde_json::to_string(&output).expect("serde error"));
 }
 
 #[wasm_bindgen]

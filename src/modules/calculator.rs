@@ -108,7 +108,11 @@ impl Calculator {
     /// Calculates the parts required to build a rocket with specific arguments.
     ///
     /// Returns (nose+cylinder_results, cylinder_results, nose_results)
-    pub fn calculate(&self) -> Result<Vec<Rocket>, Error> {
+    pub fn calculate(
+        &self,
+        use_custom_diameter: bool,
+        custom_diameter: f64,
+    ) -> Result<Vec<Rocket>, Error> {
         debug!(
             "Mass = {}\ntarget_dv = {}\nminimum twr = {}\nsize = {}",
             self.mass, self.target_dv, self.minimum_twr, self.diameter
@@ -120,6 +124,10 @@ impl Calculator {
         let unlocked_tech: Vec<&str> = self.unlocked_tech.split(',').collect();
         for tech in unlocked_tech.iter() {
             if let Some(vec) = engine_tech_map.get_mut(tech) {
+                if use_custom_diameter {
+                    vec.iter_mut()
+                        .for_each(|engine| engine.diameter = custom_diameter);
+                }
                 engines.append(vec);
                 continue;
             }
@@ -788,7 +796,7 @@ mod tests {
             "Steel Fuselage".to_string(),
             "start".to_string(),
         );
-        let mut output = calculator.calculate().unwrap();
+        let mut output = calculator.calculate(false, 0.0).unwrap();
         output.sort_by(|x, y| x.mass.partial_cmp(&y.mass).unwrap());
 
         println!("Rocket: {}", output[0].to_string().replace('\n', "/n"));
@@ -990,23 +998,47 @@ mod tests {
 
     engine_test!(merlin_1c_test, "Merlin 1C", "2009-2013 Orbital Rocketry");
 
-    engine_test!(merlin_1c_vac_test, "Merlin 1C Vacuum", "2009-2013 Orbital Rocketry");
+    engine_test!(
+        merlin_1c_vac_test,
+        "Merlin 1C Vacuum",
+        "2009-2013 Orbital Rocketry"
+    );
 
     engine_test!(merlin_1d_test, "Merlin 1D", "2009-2013 Orbital Rocketry");
 
-    engine_test!(merlin_1d_vac_test, "Merlin 1D Vacuum", "2009-2013 Orbital Rocketry");
+    engine_test!(
+        merlin_1d_vac_test,
+        "Merlin 1D Vacuum",
+        "2009-2013 Orbital Rocketry"
+    );
 
     engine_test!(rd_191_test, "RD-191", "2014-2018 ORSC Engines");
 
     engine_test!(rd_181_test, "RD-181", "2014-2018 ORSC Engines");
 
-    engine_test!(rutherford_vacuum_test, "Rutherford Vacuum", "2014-2018 Orbital Rocketry");
+    engine_test!(
+        rutherford_vacuum_test,
+        "Rutherford Vacuum",
+        "2014-2018 Orbital Rocketry"
+    );
 
     engine_test!(rutherford_test, "Rutherford", "2014-2018 Orbital Rocketry");
 
-    engine_test!(merlin_1d_plus_test, "Merlin 1D+", "2014-2018 Orbital Rocketry");
+    engine_test!(
+        merlin_1d_plus_test,
+        "Merlin 1D+",
+        "2014-2018 Orbital Rocketry"
+    );
 
-    engine_test!(merlin_1d_plus_plus_test, "Merlin 1D++", "2014-2018 Orbital Rocketry");
+    engine_test!(
+        merlin_1d_plus_plus_test,
+        "Merlin 1D++",
+        "2014-2018 Orbital Rocketry"
+    );
 
-    engine_test!(merlin_1d_vac_plus_test, "Merlin 1D Vac+", "2014-2018 Orbital Rocketry");
+    engine_test!(
+        merlin_1d_vac_plus_test,
+        "Merlin 1D Vac+",
+        "2014-2018 Orbital Rocketry"
+    );
 }
