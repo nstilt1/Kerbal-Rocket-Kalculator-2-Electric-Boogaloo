@@ -350,7 +350,7 @@ pub fn compute_tank_height_with_nose_for_delta_v(
     num_tanks: u8,
     nose_height: f64,
     in_vacuum: bool,
-) -> Result<(f64, f64, f64, f64), Error> {
+) -> Result<(f64, f64, f64, f64, f64), Error> {
     let n = num_tanks as f64;
     let isp = if in_vacuum {
         engine.isp_vac
@@ -401,7 +401,7 @@ pub fn compute_tank_height_with_nose_for_delta_v(
         debug!("h was invalid: {}", h);
         return Err(Error::InvalidHeight);
     }
-    let (twr, wet_mass, dry_mass, _fuel_volume) = twr_wet_dry(
+    let (twr, wet_mass, dry_mass, fuel_volume) = twr_wet_dry(
         payload_mass_kg,
         engine,
         cylindrical_tank_fuselage,
@@ -412,7 +412,7 @@ pub fn compute_tank_height_with_nose_for_delta_v(
         num_tanks,
         in_vacuum,
     );
-    Ok((h, twr, wet_mass, dry_mass))
+    Ok((h, twr, wet_mass, dry_mass, fuel_volume))
 }
 
 #[cfg(test)]
@@ -451,7 +451,7 @@ mod tests {
             .unwrap();
         let nosecones = NoseConeVariant::nosecones();
         let core = &nosecones.cores[0];
-        let (h, twr, _wet_mass, _dry_mass) = compute_tank_height_with_nose_for_delta_v(
+        let (h, twr, _wet_mass, _dry_mass, _volume) = compute_tank_height_with_nose_for_delta_v(
             target_dv,
             &engine,
             cyl_fuselage,

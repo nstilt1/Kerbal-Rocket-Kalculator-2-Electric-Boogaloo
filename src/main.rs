@@ -29,7 +29,7 @@ fn read(text: &str) -> String {
 
 #[cfg(not(target_arch = "wasm32"))]
 fn handle_output(mass: f64, target_delta_v: f64, minimum_twr: f64, calculator: &mut Calculator) {
-    let mut output = calculator.calculate(false, 0.0).unwrap();
+    let mut output = calculator.calculate(false, 0.0, 0.0).unwrap();
 
     output.sort_by(|a, b| a.partial_cmp(b).unwrap());
     let mut outputs: Vec<Option<Rocket>> = Vec::new();

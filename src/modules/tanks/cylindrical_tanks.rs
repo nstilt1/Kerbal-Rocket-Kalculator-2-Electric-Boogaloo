@@ -394,7 +394,7 @@ pub fn compute_tank_height_for_delta_v(
     payload_mass_kg: f64,
     num_tanks: u8,
     in_vacuum: bool,
-) -> Result<(f64, f64, f64, f64), Error> {
+) -> Result<(f64, f64, f64, f64, f64), Error> {
     let isp = if in_vacuum {
         engine.isp_vac
     } else {
@@ -429,18 +429,18 @@ pub fn compute_tank_height_for_delta_v(
         debug!("e0 = {}\n1.0 - e0 = {}", e0, 1.0 - e0);
         return Err(Error::InvalidHeight);
     }
-    let volume = tank_volume(d, h) * num_tanks as f64;
-    let dry_mass =
-        payload_mass_kg + engine_mass + volume * fuselage.density * (1.0 - fuselage.utilization);
-    let wet_mass = dry_mass + volume * engine.fuel_density() * fuselage.utilization;
-    let thrust_n = if in_vacuum {
-        engine.thrust_vac
-    } else {
-        engine.thrust_asl
-    } * 1000.0
-        * num_tanks as f64;
-    let twr = thrust_n / wet_mass / G;
-    Ok((h, twr, wet_mass, dry_mass))
+    let (twr, wet_mass, dry_mass, volume) = twr_wet_dry(
+        payload_mass_kg, 
+        engine, 
+        fuselage, 
+        &Fuselage::default(), 
+        h, 
+        0.0, 
+        &NoseTankCore::default(), 
+        num_tanks, 
+        in_vacuum
+    );
+    Ok((h, twr, wet_mass, dry_mass, volume))
 }
 
 #[cfg(test)]
@@ -556,7 +556,7 @@ mod tests {
         let fuselage = fuselages.non_hp_fuselages.get(STEEL_FUSELAGE_NAME).unwrap();
         let target_dv = 789.123;
         let num_tanks = 3;
-        let (h, twr, _wet_mass, _dry_mass) = compute_tank_height_for_delta_v(
+        let (h, twr, _wet_mass, _dry_mass, _volume) = compute_tank_height_for_delta_v(
             target_dv,
             &engine,
             fuselage,

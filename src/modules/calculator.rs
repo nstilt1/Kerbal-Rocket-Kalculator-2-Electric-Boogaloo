@@ -112,6 +112,7 @@ impl Calculator {
         &self,
         use_custom_diameter: bool,
         custom_diameter: f64,
+        extra_fuel_percentage: f64,
     ) -> Result<Vec<Rocket>, Error> {
         debug!(
             "Mass = {}\ntarget_dv = {}\nminimum twr = {}\nsize = {}",
@@ -249,9 +250,7 @@ impl Calculator {
                     } * num_engines as f64
                         * 1000.0;
 
-                    let fuel = &engine.fuel_mix;
-
-                    let max_volume_per_stack = engine.max_volume();
+                    let max_volume_per_stack = engine.max_volume() * (extra_fuel_percentage / 100.0 + 1.0);
                     if self.use_nosecone {
                         'nosecone_core_loop: for nosecone_core in nosecone_cores {
                             let core_base_length_x_diameter =
@@ -289,9 +288,17 @@ impl Calculator {
                             }
 
                             // we have enough delta-v, but do we have enough TWR?
-                            let (h, twr, wet_mass, dry_mass) = h_twr_wet_dry.unwrap();
+                            let (h, twr, wet_mass, dry_mass, volume) = h_twr_wet_dry.unwrap();
                             if twr < self.minimum_twr || twr > self.maximum_twr {
                                 // TODO: determine if this should be nosecone_core_loop or num_engine_loop
+                                continue 'nosecone_core_loop;
+                            }
+                            if volume > max_volume_per_stack {
+                                // different nosecone cores could have different 
+                                // volumes, but ultimately this should probably 
+                                // continue the num_engines loop. But these 
+                                // computations are highly optimized so it should 
+                                // not matter
                                 continue 'nosecone_core_loop;
                             }
                             result.push(Rocket::new(
@@ -334,12 +341,16 @@ impl Calculator {
                         // TODO: Determine if this is the right loop to continue
                         continue 'num_engine_loop;
                     }
-                    let (h, twr, wet_mass, dry_mass) = h_twr_wet_dry.unwrap();
+                    let (h, twr, wet_mass, dry_mass, volume) = h_twr_wet_dry.unwrap();
 
                     // we have enough delta-v, but do we heve enough TWR?
                     if twr < self.minimum_twr || twr > self.maximum_twr {
                         // TODO: determine if a different loop needs to be continued
                         // depending on which condition is true
+                        continue 'num_engine_loop;
+                    }
+
+                    if volume > max_volume_per_stack {
                         continue 'num_engine_loop;
                     }
 
@@ -796,7 +807,7 @@ mod tests {
             "Steel Fuselage".to_string(),
             "start".to_string(),
         );
-        let mut output = calculator.calculate(false, 0.0).unwrap();
+        let mut output = calculator.calculate(false, 0.0, 0.0).unwrap();
         output.sort_by(|x, y| x.mass.partial_cmp(&y.mass).unwrap());
 
         println!("Rocket: {}", output[0].to_string().replace('\n', "/n"));
@@ -837,7 +848,7 @@ mod tests {
             let payload_mass_kg = 0.087 * 1000.0;
             let num_tanks = 1;
             let in_vacuum = false;
-            let (h, twr, wet, dry) = compute_tank_height_for_delta_v(
+            let (h, twr, wet, dry, _volume) = compute_tank_height_for_delta_v(
                 target_dv,
                 engine,
                 fuselage,

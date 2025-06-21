@@ -28,6 +28,7 @@ pub fn calculate(
     nose_height: f64,
     use_custom_diameter: bool,
     custom_diameter: f64,
+    extra_fuel_percentage: f64,
 ) -> Result<String, JsError> {
     use modules::size::Size;
 
@@ -74,7 +75,7 @@ pub fn calculate(
         unlocked_tech,
     );
 
-    let mut output = calculator.calculate(use_custom_diameter, custom_diameter)?;
+    let mut output = calculator.calculate(use_custom_diameter, custom_diameter, extra_fuel_percentage)?;
 
     output.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
