@@ -35,6 +35,7 @@ pub const TECH_TREE: &[&'static str] = &[
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct EngineV1 {
+    pub num_engines: u8,
     pub name: &'static str,
     pub parent_name: &'static str,
     pub is_solid: bool,
@@ -112,6 +113,8 @@ impl EngineConfiguration {
     }
 
     /// Calculates the thrust (vac) for a configuration.
+    #[cfg(test)]
+    #[deprecated(note = "Use the thrust_vac property rather than the thrust_vac() method")]
     pub const fn thrust_vac(&self) -> f64 {
         self.thrust_kn * (self.isp_vac / self.isp_asl)
     }
@@ -140,7 +143,7 @@ impl EngineConfiguration {
         result.parent_name = parent.name;
         result.name = self.name;
         result.thrust_asl = self.thrust_kn;
-        result.thrust_vac = self.thrust_vac();
+        result.thrust_vac = self.thrust_vac;
         result.min_thrust = self.min_thrust_percentage;
         result.mass = self.mass;
         result.isp_asl = self.isp_asl;
@@ -240,6 +243,7 @@ impl Engine {
         tech_tree_node: &'static str,
     ) -> Self {
         Engine {
+            num_engines: 1,
             name,
             parent_name: "",
             is_solid,
@@ -265,7 +269,13 @@ impl Engine {
         }
     }
 
-    pub fn init_all_engines() -> HashMap<&'static str, Vec<Engine>> {
+    pub fn init_all_engines(
+        use_multiple_engines: bool,
+        mut max_num_engines: u8,
+    ) -> HashMap<&'static str, Vec<Engine>> {
+        if !use_multiple_engines {
+            max_num_engines = 1;
+        }
         let mut result: HashMap<&'static str, Vec<Engine>> =
             HashMap::with_capacity(TECH_TREE.len());
         let engine_groups = &[
@@ -280,8 +290,14 @@ impl Engine {
             for engine in engines.iter() {
                 if let Some(vec) = result.get_mut(&engine.tech_tree_node) {
                     vec.push(engine.clone());
+                    (2..=max_num_engines)
+                        .for_each(|num_engines| vec.push(engine.group_engines(num_engines)));
                 } else {
-                    result.insert(&engine.tech_tree_node, vec![engine.clone()]);
+                    let mut vec = Vec::with_capacity(1 + max_num_engines as usize);
+                    vec.push(engine.clone());
+                    (2..=max_num_engines)
+                        .for_each(|num_engines| vec.push(engine.group_engines(num_engines)));
+                    result.insert(&engine.tech_tree_node, vec);
                 }
                 let configurations = &engine.configurations;
                 for config in configurations.iter() {
@@ -290,9 +306,14 @@ impl Engine {
                     }
                     let engine = config.to_engine(&engine);
                     if let Some(vec) = result.get_mut(&engine.tech_tree_node) {
-                        vec.push(engine);
+                        vec.push(engine.clone());
+                        (2..=max_num_engines)
+                            .for_each(|num_engines| vec.push(engine.group_engines(num_engines)));
                     } else {
-                        let vec = vec![engine.clone()];
+                        let mut vec = Vec::with_capacity(1 + max_num_engines as usize);
+                        vec.push(engine.clone());
+                        (2..=max_num_engines)
+                            .for_each(|num_engines| vec.push(engine.group_engines(num_engines)));
                         result.insert(&engine.tech_tree_node, vec);
                     }
                 }
@@ -303,9 +324,34 @@ impl Engine {
 
     /// Gets the name of this engine, including the parent engine's name.
     pub fn get_name(&self) -> String {
-        match self.parent_name.is_empty() {
+        let name = match self.parent_name.is_empty() {
             true => self.name.to_string(),
             false => format!("{}: {}", self.name, self.parent_name),
+        };
+        format!("{}x {}", self.num_engines, name)
+    }
+
+    /// Converts this single engine into a group of engines.
+    pub fn group_engines(&self, num_engines: u8) -> Self {
+        let mut engine = self.clone();
+        let n = num_engines as f64;
+        engine.num_engines = num_engines;
+        engine.thrust_asl *= n;
+        engine.thrust_vac *= n;
+        engine.mass *= n;
+        engine.fuel_mix.iter_mut().for_each(|fuel| {
+            fuel.flow_rate_kgps *= n;
+            fuel.flow_rate_lps *= n;
+        });
+        if num_engines == 1 {
+            engine.diameter = engine.diameter;
+        } else if num_engines < 7 {
+            engine.diameter =
+                engine.diameter / f64::sin(std::f64::consts::PI / n) + engine.diameter;
+        } else {
+            let r = f64::ceil((-3.0 + f64::sqrt(12.0 * n - 3.0)) / 6.0);
+            engine.diameter = (2.0 * r + 1.0) * engine.diameter;
         }
+        engine
     }
 }

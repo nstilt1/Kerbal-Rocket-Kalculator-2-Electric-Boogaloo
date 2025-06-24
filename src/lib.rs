@@ -29,6 +29,8 @@ pub fn calculate(
     use_custom_diameter: bool,
     custom_diameter: f64,
     extra_fuel_percentage: f64,
+    use_multiple_engines: bool,
+    max_num_engines: u8,
 ) -> Result<String, JsError> {
     use modules::size::Size;
 
@@ -75,7 +77,13 @@ pub fn calculate(
         unlocked_tech,
     );
 
-    let mut output = calculator.calculate(use_custom_diameter, custom_diameter, extra_fuel_percentage)?;
+    let mut output = calculator.calculate(
+        use_custom_diameter,
+        custom_diameter,
+        extra_fuel_percentage,
+        use_multiple_engines,
+        max_num_engines,
+    )?;
 
     output.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
@@ -96,6 +104,8 @@ pub fn max_dv(
     nose_height: f64,
     use_custom_diameter: bool,
     custom_diameter: f64,
+    use_multiple_engines: bool,
+    max_num_engines: u8,
 ) -> Result<String, JsError> {
     let mut calculator = Calculator::new();
     let unlocked_fuselages: Vec<String> = unlocked_fuselages
@@ -118,10 +128,18 @@ pub fn max_dv(
         unlocked_tech,
         nose_height,
     );
-    let mut result =
-        calculator.max_dv(extra_fuel_percentage, use_custom_diameter, custom_diameter)?;
+    let mut result = calculator.max_dv(
+        extra_fuel_percentage,
+        use_custom_diameter,
+        custom_diameter,
+        use_multiple_engines,
+        max_num_engines,
+    )?;
     result.sort_by(|a, b| a.partial_cmp(&b).unwrap());
-    Ok(serde_json::to_string(&result).expect("serde_error"))
+    let json = serde_json::to_string(&result).expect("serde_error");
+    let size_mb = json.len() as f64 / (1024.0 * 1024.0);
+    console_log_2!("JSON Size: {} MB", size_mb);
+    Ok(json)
 }
 
 #[cfg(not(target_arch = "wasm32"))]

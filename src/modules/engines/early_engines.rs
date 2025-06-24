@@ -639,6 +639,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[allow(deprecated)]
     fn engine_configs_thrust_vac() {
         let engine = EngineConfiguration {
             name: "Aerobee XASR-1",

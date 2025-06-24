@@ -430,15 +430,15 @@ pub fn compute_tank_height_for_delta_v(
         return Err(Error::InvalidHeight);
     }
     let (twr, wet_mass, dry_mass, volume) = twr_wet_dry(
-        payload_mass_kg, 
-        engine, 
-        fuselage, 
-        &Fuselage::default(), 
-        h, 
-        0.0, 
-        &NoseTankCore::default(), 
-        num_tanks, 
-        in_vacuum
+        payload_mass_kg,
+        engine,
+        fuselage,
+        &Fuselage::default(),
+        h,
+        0.0,
+        &NoseTankCore::default(),
+        num_tanks,
+        in_vacuum,
     );
     Ok((h, twr, wet_mass, dry_mass, volume))
 }

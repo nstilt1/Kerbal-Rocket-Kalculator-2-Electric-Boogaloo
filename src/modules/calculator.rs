@@ -1,10 +1,8 @@
 use crate::{
-    console_log, debug,
-    modules::tanks::{
+    console_log, console_log_2, debug, modules::tanks::{
         cylindrical_tanks::compute_tank_height_for_delta_v,
         nose_tanks::compute_tank_height_with_nose_for_delta_v,
-    },
-    G,
+    }, G
 };
 
 use super::{
@@ -113,6 +111,8 @@ impl Calculator {
         use_custom_diameter: bool,
         custom_diameter: f64,
         extra_fuel_percentage: f64,
+        use_multiple_engines: bool,
+        max_num_engines: u8,
     ) -> Result<Vec<Rocket>, Error> {
         debug!(
             "Mass = {}\ntarget_dv = {}\nminimum twr = {}\nsize = {}",
@@ -120,7 +120,7 @@ impl Calculator {
         );
         let mut result: Vec<Rocket> = Vec::new();
 
-        let mut engine_tech_map = Engine::init_all_engines();
+        let mut engine_tech_map = Engine::init_all_engines(use_multiple_engines, max_num_engines);
         let mut engines: Vec<Engine> = Vec::with_capacity(engine_tech_map.len() * 4);
         let unlocked_tech: Vec<&str> = self.unlocked_tech.split(',').collect();
         for tech in unlocked_tech.iter() {
@@ -250,7 +250,8 @@ impl Calculator {
                     } * num_engines as f64
                         * 1000.0;
 
-                    let max_volume_per_stack = engine.max_volume() * (extra_fuel_percentage / 100.0 + 1.0);
+                    let max_volume_per_stack =
+                        engine.max_volume() * (extra_fuel_percentage / 100.0 + 1.0);
                     if self.use_nosecone {
                         'nosecone_core_loop: for nosecone_core in nosecone_cores {
                             let core_base_length_x_diameter =
@@ -294,10 +295,10 @@ impl Calculator {
                                 continue 'nosecone_core_loop;
                             }
                             if volume > max_volume_per_stack {
-                                // different nosecone cores could have different 
-                                // volumes, but ultimately this should probably 
-                                // continue the num_engines loop. But these 
-                                // computations are highly optimized so it should 
+                                // different nosecone cores could have different
+                                // volumes, but ultimately this should probably
+                                // continue the num_engines loop. But these
+                                // computations are highly optimized so it should
                                 // not matter
                                 continue 'nosecone_core_loop;
                             }
@@ -400,10 +401,12 @@ impl Calculator {
         extra_fuel_percentage: f64,
         use_custom_diameter: bool,
         custom_diameter: f64,
+        use_multiple_engines: bool,
+        max_num_engines: u8,
     ) -> Result<Vec<Rocket>, Error> {
         console_log!("use_nosecone: {}", self.use_nosecone);
         let mut result: Vec<Rocket> = Vec::new();
-        let mut engine_tech_map = Engine::init_all_engines();
+        let mut engine_tech_map = Engine::init_all_engines(use_multiple_engines, max_num_engines);
         let mut engines: Vec<Engine> = Vec::with_capacity(engine_tech_map.len() * 4);
         let unlocked_tech: Vec<&str> = self.unlocked_tech.split(',').collect();
         for tech in unlocked_tech.iter() {
@@ -472,6 +475,7 @@ impl Calculator {
         unlocked_cylinder_non_hp_fuselages.sort_by_key(|s| s.name);
 
         'engine_loop: for engine in engines.iter() {
+            console_log_2!("Trying engine {}", engine.name);
             let d = engine.diameter;
             if !engine.has_gimbal && self.needs_gimballing {
                 continue 'engine_loop;
@@ -807,7 +811,7 @@ mod tests {
             "Steel Fuselage".to_string(),
             "start".to_string(),
         );
-        let mut output = calculator.calculate(false, 0.0, 0.0).unwrap();
+        let mut output = calculator.calculate(false, 0.0, 0.0, false, 1).unwrap();
         output.sort_by(|x, y| x.mass.partial_cmp(&y.mass).unwrap());
 
         println!("Rocket: {}", output[0].to_string().replace('\n', "/n"));
@@ -827,7 +831,7 @@ mod tests {
             "start,Post-War Rocketry Testing".to_string(),
             0.0,
         );
-        let results = calculator.max_dv(1.5, false, 0.01).unwrap();
+        let results = calculator.max_dv(1.5, false, 0.01, false, 1).unwrap();
         println!(
             "Results: {}",
             serde_json::to_string_pretty(&results[0]).unwrap()
@@ -866,7 +870,7 @@ mod tests {
 
     #[test]
     fn xasr_1_test() {
-        let engines = Engine::init_all_engines();
+        let engines = Engine::init_all_engines(false, 1);
         let post_war = engines.get("Post-War Rocketry Testing").unwrap();
         let engine = post_war.iter().find(|e| e.name.contains("XASR-1")).unwrap();
         let max_volume = engine.max_volume();
@@ -907,7 +911,7 @@ mod tests {
         ($test_name:ident, $engine_name:literal, $tech_level:literal) => {
             #[test]
             fn $test_name() {
-                let engines = Engine::init_all_engines();
+                let engines = Engine::init_all_engines(false, 1);
                 let engines_at_tech_level = engines.get($tech_level).unwrap();
                 let engine = engines_at_tech_level
                     .iter()

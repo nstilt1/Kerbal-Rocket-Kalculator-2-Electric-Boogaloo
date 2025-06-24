@@ -38,7 +38,7 @@ extern "C" {
 
 #[cfg(target_arch = "wasm32")]
 #[macro_export]
-macro_rules! console_log {
+macro_rules! console_log_2 {
     ($($arg:tt)*) => {
         if true {
             let x = format!($($arg)*);
@@ -49,9 +49,17 @@ macro_rules! console_log {
 
 #[cfg(not(target_arch = "wasm32"))]
 #[macro_export]
+macro_rules! console_log_2 {
+    ($($arg:tt)*) => {
+        if false {
+            println!($($arg)*);
+        }
+    };
+}
+#[macro_export]
 macro_rules! console_log {
     ($($arg:tt)*) => {
-        if true {
+        if false {
             println!($($arg)*);
         }
     };
