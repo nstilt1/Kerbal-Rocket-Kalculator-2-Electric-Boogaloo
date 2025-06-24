@@ -1,8 +1,5 @@
-pub mod tanks;
 use std::collections::HashMap;
 
-use serde::Serialize;
-pub use tanks::*;
 pub mod cylindrical_tanks;
 pub mod nose_tanks;
 
@@ -49,7 +46,7 @@ pub trait Tanks {
     fn init_fuselage_types() -> Fuselages;
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Fuselage {
     pub name: &'static str,
     pub density: f64,
@@ -150,7 +147,7 @@ mod tests {
                 .get(format!("HP {}", name).as_str())
                 .unwrap();
             let diff = (nose_hp_fuselage.density - cyl_hp_fuselage.density).abs();
-            //assert!(diff < 0.005, "Diff = {}\nHP {}", diff, name);
+            assert!(diff < 0.005, "Diff = {}\nHP {}", diff, name);
         }
     }
 }

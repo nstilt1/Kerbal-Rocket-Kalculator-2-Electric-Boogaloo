@@ -32,8 +32,6 @@ pub fn calculate(
     use_multiple_engines: bool,
     max_num_engines: u8,
 ) -> Result<String, JsError> {
-    use modules::size::Size;
-
     assert!(target_delta_v > 0.0, "Target delta v was not positive");
     assert!(minimum_twr >= 0.01, "minimum twr was less than 0.01");
     assert!(
@@ -47,12 +45,6 @@ pub fn calculate(
     assert!(unlocked_tech.length() > 0, "unlocked tech.len was 0");
 
     let mut calculator = Calculator::new();
-    let size = match diameter {
-        0.3 => Size::Xs,
-        1.25 => Size::Sm,
-        1.3 => Size::Sm,
-        _ => Size::Sm,
-    };
     let unlocked_fuselages: Vec<String> = unlocked_fuselages
         .iter()
         .map(|v| v.as_string().expect("Should be a string"))

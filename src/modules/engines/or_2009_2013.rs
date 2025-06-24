@@ -1,10 +1,7 @@
 use std::sync::LazyLock;
 
 use crate::modules::{
-    engines::{
-        lunar_landing::NUM_LUNAR_LANDING_ENGINES, or_2014_2018::orbital_rocketry_2014_2018_mod,
-        Engine, EngineConfiguration,
-    },
+    engines::{or_2014_2018::orbital_rocketry_2014_2018_mod, Engine},
     fuel_type::Fuel,
 };
 

@@ -1,30 +1,28 @@
 use crate::{
-    console_log, console_log_2, debug, modules::tanks::{
+    console_log, console_log_2, debug,
+    modules::tanks::{
         cylindrical_tanks::compute_tank_height_for_delta_v,
         nose_tanks::compute_tank_height_with_nose_for_delta_v,
-    }, G
+    },
+    G,
 };
 
 use super::{
     engines::Engine,
     rocket_config::Rocket,
-    size::Size,
     tanks::{
         cylindrical_tanks::{
-            compute_tank_height, cylindrical_dry_mass, tank_height_given_max_volume, tank_volume,
-            CylindricalTank,
+            compute_tank_height, tank_height_given_max_volume, tank_volume, CylindricalTank,
         },
         nose_tanks::{
-            calculate_corrected_volume, calculate_nose_dry_mass,
-            compute_tank_height_with_nose_for_twr, NoseCone, NoseConeVariant,
+            calculate_corrected_volume, compute_tank_height_with_nose_for_twr, NoseCone,
+            NoseConeVariant,
         },
         Fuselage, Tanks,
     },
     Error,
 };
 
-const HEIGHT_DECREMENT_AMT: f64 = 0.05;
-const HEIGHT_INCREMENT_AMT: f64 = 0.05;
 const MAX_ENGINES: u8 = 9;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -190,7 +188,6 @@ impl Calculator {
         unlocked_cylinder_hp_fuselages.sort_by_key(|s| s.name);
         unlocked_cylinder_non_hp_fuselages.sort_by_key(|s| s.name);
 
-        let mut only_cylinder_results: Vec<Rocket> = Vec::new();
         'engine_loop: for engine in engines.iter_mut() {
             let (cyl_fuselages, nose_fuselages) = if engine.hp_fuel {
                 (
@@ -211,15 +208,15 @@ impl Calculator {
             // wetMass/dryMass = e^(deltaV/g/engine.isp)
             // BUT... ln() might have better performance over e^(), but we only
             // calculate e^x once.
-            let target_ratio = std::f64::consts::E.powf(
-                self.target_dv
-                    / G
-                    / if self.in_vacuum {
-                        engine.isp_vac
-                    } else {
-                        engine.isp_asl
-                    },
-            );
+            // let target_ratio = std::f64::consts::E.powf(
+            //     self.target_dv
+            //         / G
+            //         / if self.in_vacuum {
+            //             engine.isp_vac
+            //         } else {
+            //             engine.isp_asl
+            //         },
+            // );
 
             for (nose_fuselage, cyl_fuselage) in nose_fuselages.iter().zip(cyl_fuselages) {
                 if self.needs_gimballing && !engine.has_gimbal {
@@ -234,21 +231,16 @@ impl Calculator {
                     // if num_engines == 2 || num_engines == 6 || num_engines == 8 {
                     //     continue 'num_engine_loop;
                     // }
-                    let mass_offset = 0.0;
+                    //let mass_offset = 0.0;
                     // partial mass = offset + engines' mass + payload mass
-                    let partial_mass =
-                        mass_offset + (num_engines as f64 * engine.mass * 1000.0) + self.mass;
-                    debug!(
-                        "engine.mass = {}\npartial_mass = {}",
-                        engine.mass * 1000.0,
-                        partial_mass
-                    );
-                    let thrust = if self.in_vacuum {
-                        engine.thrust_vac
-                    } else {
-                        engine.thrust_asl
-                    } * num_engines as f64
-                        * 1000.0;
+                    // let partial_mass =
+                    //     mass_offset + (num_engines as f64 * engine.mass * 1000.0) + self.mass;
+                    // let thrust = if self.in_vacuum {
+                    //     engine.thrust_vac
+                    // } else {
+                    //     engine.thrust_asl
+                    // } * num_engines as f64
+                    //     * 1000.0;
 
                     let max_volume_per_stack =
                         engine.max_volume() * (extra_fuel_percentage / 100.0 + 1.0);
@@ -327,7 +319,6 @@ impl Calculator {
                     /* No nosecones!! */
                     let min_cyl_height = 0.1f64.max(self.diameter * CylindricalTank::MIN_VSA);
                     let max_cyl_height = CylindricalTank::MAX_VSA;
-                    let mut cyl_height = min_cyl_height;
 
                     let h_twr_wet_dry = compute_tank_height_for_delta_v(
                         self.target_dv,
@@ -352,6 +343,13 @@ impl Calculator {
                     }
 
                     if volume > max_volume_per_stack {
+                        continue 'num_engine_loop;
+                    }
+
+                    if h > max_cyl_height {
+                        continue 'num_engine_loop;
+                    }
+                    if h < min_cyl_height {
                         continue 'num_engine_loop;
                     }
 
@@ -394,6 +392,7 @@ impl Calculator {
         self.unlocked_fusalages = unlocked_fuselages;
         self.unlocked_tech = unlocked_tech;
         self.nose_height = nose_height;
+        self.needs_gimballing = needs_gimballing;
     }
 
     pub fn max_dv(
@@ -495,12 +494,11 @@ impl Calculator {
                 )
             };
 
-            let fuel = &engine.fuel_mix;
             let max_volume_per_stack = engine.max_volume() * (extra_fuel_percentage / 100.0 + 1.0);
 
             for (nose_fuselage, cyl_fuselage) in nose_fuselages.iter().zip(cyl_fuselages) {
                 'num_engine_loop: for num_engines in 1..=MAX_ENGINES {
-                    let partial_mass = (num_engines as f64 * engine.mass * 1000.0) + self.mass;
+                    // let partial_mass = (num_engines as f64 * engine.mass * 1000.0) + self.mass;
                     let engine_thrust = if self.in_vacuum {
                         engine.thrust_vac
                     } else {
@@ -686,6 +684,12 @@ impl Calculator {
                                 debug!("*not an error*: twr > self.maximum_twr");
                                 continue 'num_engine_loop;
                             }
+                            if h > max_cyl_height {
+                                continue 'num_engine_loop;
+                            }
+                            if h < min_cyl_height {
+                                continue 'num_engine_loop;
+                            }
                             console_log!("New h = {}", h);
                             console_log!("New twr = {}", twr);
                             console_log!("New volume = {}", tank_volume(d, h));
@@ -734,10 +738,7 @@ impl Calculator {
 
 #[cfg(test)]
 mod tests {
-    use crate::modules::{
-        engines::ENGINES,
-        tanks::{fuselage_names::STEEL_FUSELAGE_NAME, nose_tanks::NoseTankCore},
-    };
+    use crate::modules::tanks::nose_tanks::NoseTankCore;
 
     use super::*;
 

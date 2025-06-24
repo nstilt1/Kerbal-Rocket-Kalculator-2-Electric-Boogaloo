@@ -3,7 +3,7 @@
 
 use std::io::{self, Write};
 
-use crate::modules::{calculator::Calculator, rocket_config::Rocket, size::Size};
+use crate::modules::{calculator::Calculator, rocket_config::Rocket};
 
 mod modules;
 pub const TECH_TREE: &[&'static str] = &[
@@ -53,7 +53,6 @@ fn handle_output(mass: f64, target_delta_v: f64, minimum_twr: f64, calculator: &
     }
 }
 
-const SIZES: [Size; 5] = [Size::Xs, Size::Sm, Size::Md, Size::Lg, Size::Xl];
 const SIZE_STRS: [&str; 5] = ["xs", "sm", "md", "lg", "xl"];
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
@@ -120,12 +119,6 @@ fn main() {
         let mut diameter = match read("Enter the payload's diameter in meters > ").parse::<f64>() {
             Ok(v) => v,
             Err(_) => break,
-        };
-        let size = match diameter {
-            0.3 => Size::Xs,
-            1.25 => Size::Sm,
-            1.3 => Size::Sm,
-            _ => Size::Sm,
         };
         let unlocked_fuselages =
             read("Enter your unlocked fuselages separated by commas and excluding HP prefixes > ")

@@ -79,8 +79,6 @@ pub fn init_lunar_landing_engines() -> [Engine; NUM_LUNAR_LANDING_ENGINES] {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     #[ignore = "test fails probably because asl_isp is not completely accurate "]
     fn extreme_thrust_difference_test() {

@@ -74,8 +74,3 @@ pub fn twr_wet_dry(
 pub const fn burn_time_secs(minutes: u32, seconds: f64) -> f64 {
     minutes as f64 * 60.0 + seconds
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-}

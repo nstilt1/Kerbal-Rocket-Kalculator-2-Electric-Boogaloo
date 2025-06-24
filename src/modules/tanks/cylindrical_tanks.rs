@@ -2,11 +2,9 @@
 
 use std::collections::HashMap;
 
-use serde::Serialize;
-
 use crate::{
     debug,
-    modules::{engines::Engine, fuel_type::FuelMix, utils::twr_wet_dry, Error},
+    modules::{engines::Engine, utils::twr_wet_dry, Error},
     G,
 };
 
@@ -48,7 +46,7 @@ mod densities {
     pub const HP_STEEL_STIR_WELDED_TANK_UTIL_PERCENT: f64 = 96.0;
 }
 
-#[derive(Debug, PartialEq, Clone, Serialize)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct CylindricalTank {
     pub length: f64,
     pub diameter: f64,
@@ -161,7 +159,6 @@ pub fn tank_height_given_max_volume(
     payload_mass: f64,
     in_vacuum: bool,
 ) -> Result<(f64, f64, f64, f64), Error> {
-    let n = num_tanks as f64;
     let d = engine.diameter;
     let r = d / 2.0;
     let nose_volume = calculate_corrected_volume(d, nose_height, nose_core.correction_coefficient)
@@ -174,7 +171,6 @@ pub fn tank_height_given_max_volume(
         );
         return Err(Error::InvalidHeight);
     }
-    let fuel_density = engine.fuel_density();
     // max_volume = tank_volume(d, h) * u
     // max_volume = 1000 * (ellipsoid_volume + cylinder_volume(r, h)) - correction_factor
     // (max_volume + correction_factor)/1000 = ellipsoid_volume + cylinder_volume(r,h)
@@ -320,19 +316,6 @@ pub fn compute_tank_height(
     let denominator_2 = std::f64::consts::PI * r * r * n;
     let mut h = numerator_2 / denominator_2;
 
-    #[cfg(test)]
-    {
-        //debug!("Computed height: {} m", h);
-        let structural_mass =
-            structural_density * 0.001 * (1.0 - utilization) * tank_volume(diameter, h) * n;
-        let fuel_mass = fuel_density * utilization * tank_volume(diameter, h) * 0.001 * n;
-        //debug!("Fuel mass inside fn: {} kg", fuel_mass);
-        //debug!("Structural mass inside fn: {} kg", structural_mass);
-        // debug!(
-        //     "Wet mass inside fn: {} kg",
-        //     payload_mass_kg + engine_mass_total + fuel_mass + structural_mass
-        // );
-    }
     if h > 50.0 {
         h = 50.0;
     }
@@ -712,7 +695,7 @@ mod tests {
                             num_tanks,
                             IN_VACUUM,
                         );
-                        if let Ok((h, twr, wet_mass, dry_mass, _volume)) = h {
+                        if let Ok((h, _twr, _wet_mass, _dry_mass, _volume)) = h {
                             if h == 50.0 {
                                 twr_errors_inner[target_twr_index - 1] = None;
                                 continue;
@@ -836,8 +819,8 @@ mod tests {
 
     fn draw_twr_error_chart_inner(
         payload_mass_kg: usize,
-        engine_mass: f64,
-        engine_thrust: f64,
+        _engine_mass: f64,
+        _engine_thrust: f64,
         twr_errors: &[Option<f64>],
         output_path: &str,
     ) -> Result<(), Box<dyn std::error::Error>> {
@@ -868,7 +851,7 @@ mod tests {
         }
         let rise = last_err - first_error;
         let run = (last_err_index - first_err_index) as f64 * 0.1;
-        let slope = rise / run;
+        let _slope = rise / run;
         //let normalized_slope = slope / engine_mass;
         //let normalized_slope = slope / engine_thrust;
         //println!("\tError % slope = {} % / twr", slope);

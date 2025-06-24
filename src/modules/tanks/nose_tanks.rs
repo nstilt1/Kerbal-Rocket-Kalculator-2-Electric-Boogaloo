@@ -7,10 +7,7 @@ use serde::Serialize;
 use crate::{
     debug,
     modules::{
-        engines::Engine,
-        tanks::cylindrical_tanks::{tank_volume, CylindricalTank},
-        utils::twr_wet_dry,
-        Error,
+        engines::Engine, tanks::cylindrical_tanks::CylindricalTank, utils::twr_wet_dry, Error,
     },
     G,
 };
@@ -62,7 +59,7 @@ mod densities {
 }
 
 /// A nosecone and its dimensions/features.
-#[derive(Debug, PartialEq, Clone, Serialize)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct NoseCone {
     pub core: NoseTankCore,
     pub length: f64,

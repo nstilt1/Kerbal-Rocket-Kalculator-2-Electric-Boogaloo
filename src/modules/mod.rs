@@ -6,7 +6,6 @@ pub mod calculator;
 pub mod engines;
 pub mod fuel_type;
 pub mod rocket_config;
-pub mod size;
 pub mod tanks;
 pub mod utils;
 
