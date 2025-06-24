@@ -801,9 +801,9 @@ mod tests {
         let mut calculator = Calculator::new();
         calculator.init(
             0.039,
-            10.0,
-            0.05,
-            20000.0,
+            100.0,
+            0.00005,
+            2000000.0,
             false,
             false,
             false,
@@ -812,7 +812,13 @@ mod tests {
             "Steel Fuselage".to_string(),
             "start".to_string(),
         );
-        let mut output = calculator.calculate(false, 0.0, 0.0, false, 1).unwrap();
+        let mut output = calculator.calculate(
+            false, 
+            0.0, 
+            0.0, 
+            true, 
+            1
+        ).unwrap();
         output.sort_by(|x, y| x.mass.partial_cmp(&y.mass).unwrap());
 
         println!("Rocket: {}", output[0].to_string().replace('\n', "/n"));
