@@ -4,13 +4,14 @@ mod or_2009_2013;
 mod or_2014_2018;
 mod or_2019_2028;
 mod orsc_2014_2018;
+mod orsc_2019_2028;
 use std::{collections::HashMap, sync::LazyLock};
 
 use crate::modules::{
     engines::{
         lunar_landing::LUNAR_LANDING_ENGINES, or_2009_2013::OR_2009_2013_ENGINES,
         or_2014_2018::OR_2014_2018_ENGINES, or_2019_2028::OR_2019_2028_ENGINES,
-        orsc_2014_2018::ORSC_2014_2018_ENGINES,
+        orsc_2014_2018::ORSC_2014_2018_ENGINES, orsc_2019_2028::ORSC_2019_2028_ENGINES,
     },
     fuel_type::Fuel,
 };
@@ -31,6 +32,7 @@ pub const TECH_TREE: &[&'static str] = &[
     "2009-2013 Orbital Rocketry",
     "2014-2018 ORSC Engines",
     "2019-2028 Orbital Rocketry",
+    "2019-2028 ORSC Engines"
 ];
 
 #[derive(Debug, PartialEq, Clone)]
@@ -285,6 +287,7 @@ impl Engine {
             &ORSC_2014_2018_ENGINES.as_slice(),
             &OR_2019_2028_ENGINES.as_slice(),
             &OR_2014_2018_ENGINES.as_slice(),
+            &ORSC_2019_2028_ENGINES.as_slice(),
         ];
         for engines in engine_groups.iter() {
             for engine in engines.iter() {

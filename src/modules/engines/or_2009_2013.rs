@@ -7,10 +7,10 @@ use crate::modules::{
 
 pub(super) const NUM_OR_2009_2013_ENGINES: usize = 5;
 pub static OR_2009_2013_ENGINES: LazyLock<[Engine; NUM_OR_2009_2013_ENGINES]> =
-    LazyLock::new(|| init_orbital_rocketry_2009_2013_engines());
+    LazyLock::new(|| init_engines());
 
 #[rustfmt::skip]
-fn init_orbital_rocketry_2009_2013_engines() -> [Engine; NUM_OR_2009_2013_ENGINES] {
+fn init_engines() -> [Engine; NUM_OR_2009_2013_ENGINES] {
     let mut engines = [
         Engine::new(
             "Merlin 1A", // Engine 0

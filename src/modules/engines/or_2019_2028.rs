@@ -7,10 +7,10 @@ use crate::modules::{
 
 const NUM_ENGINES: usize = 1;
 pub static OR_2019_2028_ENGINES: LazyLock<[Engine; NUM_ENGINES]> =
-    LazyLock::new(|| init_orbital_rocketry_2019_2028_engines());
+    LazyLock::new(|| init_engines());
 
 #[rustfmt::skip]
-fn init_orbital_rocketry_2019_2028_engines() -> [Engine; NUM_ENGINES] {
+fn init_engines() -> [Engine; NUM_ENGINES] {
     let engines = [
         Engine::new(
             "F-1B", // Engine 0

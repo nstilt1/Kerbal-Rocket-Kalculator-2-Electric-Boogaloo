@@ -7,10 +7,10 @@ use crate::modules::{
 
 pub(super) const NUM_LUNAR_LANDING_ENGINES: usize = 2;
 pub static LUNAR_LANDING_ENGINES: LazyLock<[Engine; NUM_LUNAR_LANDING_ENGINES]> =
-    LazyLock::new(|| init_lunar_landing_engines());
+    LazyLock::new(|| init_engines());
 
 #[rustfmt::skip]
-pub fn init_lunar_landing_engines() -> [Engine; NUM_LUNAR_LANDING_ENGINES] {
+pub fn init_engines() -> [Engine; NUM_LUNAR_LANDING_ENGINES] {
     let mut engines = [
         Engine::new(
             "LMAE", // Engine 0
