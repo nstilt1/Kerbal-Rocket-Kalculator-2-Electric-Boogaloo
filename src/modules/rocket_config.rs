@@ -39,7 +39,7 @@ impl Serialize for Rocket {
     where
         S: serde::Serializer,
     {
-        let len = 13;
+        let len = 14;
         let mut state = serializer.serialize_struct("Rocket", len)?;
         state.serialize_field("engine", &self.engine.get_name())?;
         state.serialize_field("numEngines", &self.num_engines)?;
@@ -54,6 +54,7 @@ impl Serialize for Rocket {
         state.serialize_field("noseLength", &round(self.nose_length.unwrap_or(0.0), 2))?;
         state.serialize_field("cylFuselage", &self.cyl_fuselage.unwrap_or("N/A"))?;
         state.serialize_field("cylLength", &round(self.cyl_length.unwrap_or(0.0), 3))?;
+        state.serialize_field("maxAltitude", &round(self.calculate_altitude(), 0))?;
         state.end()
     }
 }
@@ -103,6 +104,7 @@ impl Rocket {
         }
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn to_string(&self) -> String {
         let mut result = format!(
             "Mass: {}\nTWR: {}\n{}x {}\n{}x stacks",
@@ -124,6 +126,18 @@ impl Rocket {
 
         result
     }
+
+    /// Calculates the maximum altitude of this rocket, but it assumes constant 
+    /// thrust and constant Isp.
+    fn calculate_altitude(&self) -> f64 {
+        let flow_rate = (self.mass - self.dry_mass) / self.burn_time;
+        let burnout_velocity = self.engine.isp_asl * G * ln(self.mass / self.dry_mass) - G * self.burn_time;
+        let burnout_height = self.engine.isp_asl * G * (self.burn_time - self.dry_mass / flow_rate * ln(self.mass / self.dry_mass)) - 0.5 * G * self.burn_time * self.burn_time;
+        let coast_phase_altitude = burnout_velocity * burnout_velocity / 2.0 / G;
+        let max_altitude = burnout_height + coast_phase_altitude;
+        max_altitude
+    }
+
     #[cfg(not(target_arch = "wasm32"))]
     pub fn print(&self) {
         println!("Mass: {}\nThrust to weight ratio: {}", self.mass, self.twr);
