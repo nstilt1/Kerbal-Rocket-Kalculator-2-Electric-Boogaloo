@@ -29,7 +29,7 @@ fn read(text: &str) -> String {
 
 #[cfg(not(target_arch = "wasm32"))]
 fn handle_output(mass: f64, target_delta_v: f64, minimum_twr: f64, calculator: &mut Calculator) {
-    let mut output = calculator.calculate(false, 0.0, 0.0, false, 1).unwrap();
+    let mut output = calculator.calculate(false, 0.0, 0.0, false, 1, 9).unwrap();
 
     output.sort_by(|a, b| a.partial_cmp(b).unwrap());
     let mut outputs: Vec<Option<Rocket>> = Vec::new();
@@ -132,7 +132,6 @@ fn main() {
             is_vacuum,
             use_nosecone,
             0.0,
-            diameter,
             unlocked_fuselages.clone(),
             "start".to_string(),
         );

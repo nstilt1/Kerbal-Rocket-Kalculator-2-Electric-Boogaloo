@@ -26,6 +26,7 @@ pub struct Rocket {
     delta_v_asl: f64,
     delta_v_vac: f64,
     twr: f64,
+    burn_time: f64,
 }
 
 /// Rounds a number to a specific number of decimal places
@@ -42,7 +43,7 @@ impl Serialize for Rocket {
         let mut state = serializer.serialize_struct("Rocket", len)?;
         state.serialize_field("engine", &self.engine.get_name())?;
         state.serialize_field("numEngines", &self.num_engines)?;
-        state.serialize_field("diameter", &self.diameter)?;
+        state.serialize_field("diameter", &round(self.diameter, 3))?;
         state.serialize_field("wetMass", &round(self.mass, 3))?;
         state.serialize_field("dryMass", &round(self.dry_mass, 3))?;
         state.serialize_field("deltaVAsl", &round(self.delta_v_asl, 0))?;
@@ -67,6 +68,7 @@ impl Rocket {
         mass: f64,
         dry_mass: f64,
         twr: f64,
+        burn_time: f64,
     ) -> Self {
         let natural_logarithm_g = ln(mass / dry_mass) * G;
         debug!("Ln Ratio: {}", mass / dry_mass);
@@ -97,6 +99,7 @@ impl Rocket {
             delta_v_vac: natural_logarithm_g * engine.isp_vac,
             delta_v_asl: natural_logarithm_g * engine.isp_asl,
             twr,
+            burn_time,
         }
     }
 

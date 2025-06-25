@@ -22,7 +22,6 @@ pub fn calculate(
     in_vacuum: bool,
     needs_gimballing: bool,
     use_nosecone: bool,
-    diameter: f64,
     unlocked_fuselages: Array,
     unlocked_tech: Array,
     nose_height: f64,
@@ -31,6 +30,7 @@ pub fn calculate(
     extra_fuel_percentage: f64,
     use_multiple_engines: bool,
     max_num_engines: u8,
+    max_num_tanks: u8,
 ) -> Result<String, JsError> {
     assert!(target_delta_v > 0.0, "Target delta v was not positive");
     assert!(minimum_twr >= 0.01, "minimum twr was less than 0.01");
@@ -64,7 +64,6 @@ pub fn calculate(
         in_vacuum,
         use_nosecone,
         nose_height,
-        diameter,
         unlocked_fuselages,
         unlocked_tech,
     );
@@ -75,6 +74,7 @@ pub fn calculate(
         extra_fuel_percentage,
         use_multiple_engines,
         max_num_engines,
+        max_num_tanks,
     )?;
 
     output.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -98,6 +98,7 @@ pub fn max_dv(
     custom_diameter: f64,
     use_multiple_engines: bool,
     max_num_engines: u8,
+    max_num_tanks: u8,
 ) -> Result<String, JsError> {
     let mut calculator = Calculator::new();
     let unlocked_fuselages: Vec<String> = unlocked_fuselages
@@ -126,6 +127,7 @@ pub fn max_dv(
         custom_diameter,
         use_multiple_engines,
         max_num_engines,
+        max_num_tanks,
     )?;
     result.sort_by(|a, b| a.partial_cmp(&b).unwrap());
     let json = serde_json::to_string(&result).expect("serde_error");

@@ -23,8 +23,6 @@ use super::{
     Error,
 };
 
-const MAX_ENGINES: u8 = 9;
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct Calculator {
     diameter: f64,
@@ -68,7 +66,6 @@ impl Calculator {
         in_vacuum: bool,
         use_nosecone: bool,
         nose_height: f64,
-        diameter: f64,
         unlocked_fuselages: String,
         unlocked_tech: String,
     ) {
@@ -78,7 +75,6 @@ impl Calculator {
         self.maximum_twr = maximum_twr;
         self.needs_gimballing = needs_gimballing;
         self.in_vacuum = in_vacuum;
-        self.diameter = diameter;
         self.use_nosecone = use_nosecone;
         self.nose_height = nose_height;
         self.unlocked_fusalages = unlocked_fuselages;
@@ -111,6 +107,7 @@ impl Calculator {
         extra_fuel_percentage: f64,
         use_multiple_engines: bool,
         max_num_engines: u8,
+        max_tanks: u8,
     ) -> Result<Vec<Rocket>, Error> {
         debug!(
             "Mass = {}\ntarget_dv = {}\nminimum twr = {}\nsize = {}",
@@ -225,9 +222,11 @@ impl Calculator {
                 if engine.is_solid {
                     continue 'engine_loop;
                 }
-                engine.diameter = self.diameter;
+                if use_custom_diameter {
+                    engine.diameter = custom_diameter;
+                }
 
-                'num_engine_loop: for num_engines in 1..=MAX_ENGINES {
+                'num_engine_loop: for num_engines in 1..=max_tanks {
                     // if num_engines == 2 || num_engines == 6 || num_engines == 8 {
                     //     continue 'num_engine_loop;
                     // }
@@ -242,8 +241,10 @@ impl Calculator {
                     // } * num_engines as f64
                     //     * 1000.0;
 
+                    let burn_time_multiplier = extra_fuel_percentage / 100.0 + 1.0;
+                    let burn_time = engine.rated_burn_time * burn_time_multiplier;
                     let max_volume_per_stack =
-                        engine.max_volume() * (extra_fuel_percentage / 100.0 + 1.0);
+                        engine.max_volume() * burn_time_multiplier;
                     if self.use_nosecone {
                         'nosecone_core_loop: for nosecone_core in nosecone_cores {
                             let core_base_length_x_diameter =
@@ -312,6 +313,7 @@ impl Calculator {
                                 wet_mass,
                                 dry_mass,
                                 twr,
+                                burn_time,
                             ));
                             continue 'nosecone_core_loop;
                         }
@@ -366,6 +368,7 @@ impl Calculator {
                         wet_mass,
                         dry_mass,
                         twr,
+                        burn_time,
                     ));
                     continue 'num_engine_loop;
                 }
@@ -402,6 +405,7 @@ impl Calculator {
         custom_diameter: f64,
         use_multiple_engines: bool,
         max_num_engines: u8,
+        max_num_tanks: u8,
     ) -> Result<Vec<Rocket>, Error> {
         console_log!("use_nosecone: {}", self.use_nosecone);
         let mut result: Vec<Rocket> = Vec::new();
@@ -494,10 +498,12 @@ impl Calculator {
                 )
             };
 
-            let max_volume_per_stack = engine.max_volume() * (extra_fuel_percentage / 100.0 + 1.0);
+            let burn_time_multiplier = extra_fuel_percentage / 100.0 + 1.0;
+            let burn_time = engine.rated_burn_time * burn_time_multiplier;
+            let max_volume_per_stack = engine.max_volume() * burn_time_multiplier;
 
             for (nose_fuselage, cyl_fuselage) in nose_fuselages.iter().zip(cyl_fuselages) {
-                'num_engine_loop: for num_engines in 1..=MAX_ENGINES {
+                'num_engine_loop: for num_engines in 1..=max_num_tanks {
                     // let partial_mass = (num_engines as f64 * engine.mass * 1000.0) + self.mass;
                     let engine_thrust = if self.in_vacuum {
                         engine.thrust_vac
@@ -591,6 +597,7 @@ impl Calculator {
                                     wet_mass,
                                     dry_mass,
                                     twr,
+                                    burn_time,
                                 ));
                                 continue 'nosecone_core_loop;
                             } else {
@@ -615,6 +622,7 @@ impl Calculator {
                                     wet_mass,
                                     dry_mass,
                                     twr,
+                                    burn_time,
                                 ));
                                 continue 'nosecone_core_loop;
                             }
@@ -708,6 +716,7 @@ impl Calculator {
                                 wet_mass,
                                 dry_mass,
                                 twr,
+                                burn_time,
                             ))
                         } else {
                             // fuel volume is less than max. We could squeeze out
@@ -726,6 +735,7 @@ impl Calculator {
                                 wet_mass,
                                 dry_mass,
                                 twr,
+                                burn_time,
                             ))
                         }
                     }
@@ -808,7 +818,6 @@ mod tests {
             false,
             false,
             0.0,
-            0.3,
             "Steel Fuselage".to_string(),
             "start".to_string(),
         );
@@ -817,7 +826,8 @@ mod tests {
             0.0, 
             0.0, 
             true, 
-            1
+            1,
+            9,
         ).unwrap();
         output.sort_by(|x, y| x.mass.partial_cmp(&y.mass).unwrap());
 
@@ -838,7 +848,7 @@ mod tests {
             "start,Post-War Rocketry Testing".to_string(),
             0.0,
         );
-        let results = calculator.max_dv(1.5, false, 0.01, false, 1).unwrap();
+        let results = calculator.max_dv(1.5, false, 0.01, false, 1, 9).unwrap();
         println!(
             "Results: {}",
             serde_json::to_string_pretty(&results[0]).unwrap()
@@ -910,6 +920,7 @@ mod tests {
             wet,
             dry,
             twr,
+            engine.rated_burn_time,
         );
         debug!("{}", serde_json::to_string_pretty(&r).unwrap())
     }
@@ -958,6 +969,7 @@ mod tests {
                     wet,
                     dry,
                     twr,
+                    engine.rated_burn_time,
                 );
                 debug!("{}", serde_json::to_string_pretty(&r).unwrap())
             }
