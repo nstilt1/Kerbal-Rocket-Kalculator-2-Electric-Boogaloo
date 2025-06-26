@@ -54,9 +54,20 @@ impl Serialize for Rocket {
         state.serialize_field("noseLength", &round(self.nose_length.unwrap_or(0.0), 2))?;
         state.serialize_field("cylFuselage", &self.cyl_fuselage.unwrap_or("N/A"))?;
         state.serialize_field("cylLength", &round(self.cyl_length.unwrap_or(0.0), 3))?;
-        state.serialize_field("maxAltitude", &round(self.calculate_altitude(), 0))?;
+        state.serialize_field("maxAltitude", &round(self.calculate_max_altitude(), 0))?;
         state.end()
     }
+}
+
+const SCALE_HEIGHT: f64 = 8500.0; // m, for a rough barometric model
+
+fn ambient_pressure(h: f64) -> f64 {
+    // simple exponential atmosphere
+    101325.0 * (-h / SCALE_HEIGHT).exp()
+}
+
+fn interpolate(x0: f64, x1: f64, frac: f64) -> f64 {
+    x0 + (x1 - x0) * frac
 }
 
 impl Rocket {
@@ -129,13 +140,52 @@ impl Rocket {
 
     /// Calculates the maximum altitude of this rocket, but it assumes constant 
     /// thrust and constant Isp.
-    fn calculate_altitude(&self) -> f64 {
-        let flow_rate = (self.mass - self.dry_mass) / self.burn_time;
-        let burnout_velocity = self.engine.isp_asl * G * ln(self.mass / self.dry_mass) - G * self.burn_time;
-        let burnout_height = self.engine.isp_asl * G * (self.burn_time - self.dry_mass / flow_rate * ln(self.mass / self.dry_mass)) - 0.5 * G * self.burn_time * self.burn_time;
-        let coast_phase_altitude = burnout_velocity * burnout_velocity / 2.0 / G;
-        let max_altitude = burnout_height + coast_phase_altitude;
-        max_altitude
+    fn calculate_max_altitude(&self) -> f64 {
+        let dt = 0.1;        // time step in seconds
+        let mut t  = 0.0;
+        let mut m  = self.mass;     // wet mass
+        let mut v  = 0.0;           // velocity
+        let mut h  = 0.0;           // altitude
+
+        while t < self.burn_time {
+            // --- 1. local ambient pressure & interpolation frac ---
+            let p_amb = ambient_pressure(h);
+            // frac = 1.0 at vacuum (p_amb=0), 0.0 at sea level (p_amb=101325)
+            let frac = (101325.0 - p_amb) / 101325.0;
+
+            // --- 2. thrust & Isp at this point ---
+            let thrust = interpolate(
+                self.engine.thrust_asl,
+                self.engine.thrust_vac,
+                frac,
+            );
+            let isp = interpolate(
+                self.engine.isp_asl,
+                self.engine.isp_vac,
+                frac,
+            );
+
+            // --- 3. mass flow & update mass ---
+            let mdot = thrust / (isp * G);
+            m -= mdot * dt;
+            if m <= self.dry_mass { break; } // avoid negative mass
+
+            // --- 4. acceleration & integrate ---
+            let a = thrust / m - G;
+            v += a * dt;
+            h += v * dt;
+
+            // never go below ground
+            if h < 0.0 {
+                h = 0.0;
+                v = 0.0;
+            }
+
+            t += dt;
+        }
+
+        // coast to apogee
+        h + v * v / (2.0 * G)
     }
 
     #[cfg(not(target_arch = "wasm32"))]

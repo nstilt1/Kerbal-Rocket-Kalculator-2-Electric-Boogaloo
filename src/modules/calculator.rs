@@ -943,7 +943,7 @@ mod tests {
                     fuselages.non_hp_fuselages.get("Steel Fuselage").unwrap()
                 };
                 debug!("{} max_volume = {}", $engine_name, max_volume);
-                let (h, twr, wet, dry) = tank_height_given_max_volume(
+                let (mut h, mut twr, mut wet, mut dry) = tank_height_given_max_volume(
                     max_volume,
                     0.0,
                     &Fuselage::default(),
@@ -956,6 +956,11 @@ mod tests {
                 )
                 .unwrap();
                 debug!("h = {}\ntwr = {}\nwet = {}\ndry = {}", h, twr, wet, dry);
+                debug!("debug: h = {}", h);
+                if h >= 50.0 {
+                    debug!("recomputing tank height");
+                    (h, twr, wet, dry, _) = compute_tank_height(1.0, engine, fuselage, 37.0, 1, true).unwrap();
+                }
                 let r = Rocket::new(
                     None,
                     Some(CylindricalTank {
@@ -1075,4 +1080,26 @@ mod tests {
         "Merlin 1D Vac+",
         "2014-2018 Orbital Rocketry"
     );
+
+    engine_test!(be_4_test, "BE-4", "2019-2028 ORSC Engines");
+
+    engine_test!(raptor_vacuum_test, "Raptor-Vacuum", "2019-2028 ORSC Engines");
+
+    engine_test!(rapter_1_test, "Raptor-1", "2019-2028 ORSC Engines");
+
+    engine_test!(s2_t1, "S.2.253/S3.42/S5.2", "Basic Rocketry");
+
+    engine_test!(lr43, "LR43/LR89", "Basic Rocketry");
+
+    engine_test!(stentor, "Stentor Booster", "Basic Rocketry");
+
+    engine_test!(xlr25_test, "XLR25", "Basic Rocketry");
+
+    engine_test!(rd100_5d60_test, "5D60", "Basic Rocketry");
+
+    engine_test!(rd100_rd102_test, "RD-102", "Basic Rocketry");
+
+    engine_test!(rd100_rd103_test, "RD-103", "Basic Rocketry");
+
+    engine_test!(a6_test, "A-6", "Basic Rocketry");
 }

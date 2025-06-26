@@ -1,25 +1,24 @@
 mod early_engines;
+mod basic_rocketry;
 mod lunar_landing;
 mod or_2009_2013;
 mod or_2014_2018;
 mod or_2019_2028;
 mod orsc_2014_2018;
 mod orsc_2019_2028;
-use std::{collections::HashMap, sync::LazyLock};
+use std::collections::HashMap;
+
+pub use early_engines::ENGINES;
 
 use crate::modules::{
     engines::{
-        lunar_landing::LUNAR_LANDING_ENGINES, or_2009_2013::OR_2009_2013_ENGINES,
-        or_2014_2018::OR_2014_2018_ENGINES, or_2019_2028::OR_2019_2028_ENGINES,
-        orsc_2014_2018::ORSC_2014_2018_ENGINES, orsc_2019_2028::ORSC_2019_2028_ENGINES,
+        basic_rocketry::BASIC_ROCKETRY_ENGINES, lunar_landing::LUNAR_LANDING_ENGINES, or_2009_2013::OR_2009_2013_ENGINES, or_2014_2018::OR_2014_2018_ENGINES, or_2019_2028::OR_2019_2028_ENGINES, orsc_2014_2018::ORSC_2014_2018_ENGINES, orsc_2019_2028::ORSC_2019_2028_ENGINES
     },
     fuel_type::Fuel,
 };
 
-pub static ENGINES: LazyLock<[Engine; NUM_ENGINES]> = LazyLock::new(|| Engine::init_rp1_engines());
 
 //const NUM_ENGINES: usize = 10;
-const NUM_ENGINES: usize = 11;
 pub type Engine = EngineV1;
 
 pub const TECH_TREE: &[&'static str] = &[
@@ -288,6 +287,7 @@ impl Engine {
             &OR_2019_2028_ENGINES.as_slice(),
             &OR_2014_2018_ENGINES.as_slice(),
             &ORSC_2019_2028_ENGINES.as_slice(),
+            &BASIC_ROCKETRY_ENGINES.as_slice(),
         ];
         for engines in engine_groups.iter() {
             for engine in engines.iter() {

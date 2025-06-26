@@ -1,13 +1,16 @@
+use std::sync::LazyLock;
+
 use crate::modules::{
-    engines::{EngineConfiguration, NUM_ENGINES},
+    engines::{basic_rocketry::basic_rocketry_mod_1, EngineConfiguration},
     fuel_type::Fuel,
 };
 
 use super::Engine;
-
+pub static ENGINES: LazyLock<[Engine; NUM_EARLY_ENGINES]> = LazyLock::new(|| Engine::init_rp1_engines());
+pub(super) const NUM_EARLY_ENGINES: usize = 11;
 impl Engine {
     #[rustfmt::skip]
-    pub fn init_rp1_engines() -> [Engine; NUM_ENGINES] {
+    pub fn init_rp1_engines() -> [Engine; NUM_EARLY_ENGINES] {
         let mut engines = [
             Engine::new(
                 "Aerobee", // Engine 0
@@ -628,14 +631,14 @@ impl Engine {
             ],
             "Early Rocketry",
         ));
+
+        basic_rocketry_mod_1(&mut engines);
         engines
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::modules::engines::ENGINES;
-
     use super::*;
 
     #[test]
