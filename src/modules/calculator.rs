@@ -242,7 +242,6 @@ impl Calculator {
                     //     * 1000.0;
 
                     let burn_time_multiplier = extra_fuel_percentage / 100.0 + 1.0;
-                    let burn_time = engine.rated_burn_time * burn_time_multiplier;
                     let max_volume_per_stack =
                         engine.max_volume() * burn_time_multiplier;
                     if self.use_nosecone {
@@ -313,7 +312,6 @@ impl Calculator {
                                 wet_mass,
                                 dry_mass,
                                 twr,
-                                burn_time,
                             ));
                             continue 'nosecone_core_loop;
                         }
@@ -368,7 +366,6 @@ impl Calculator {
                         wet_mass,
                         dry_mass,
                         twr,
-                        burn_time,
                     ));
                     continue 'num_engine_loop;
                 }
@@ -499,7 +496,6 @@ impl Calculator {
             };
 
             let burn_time_multiplier = extra_fuel_percentage / 100.0 + 1.0;
-            let burn_time = engine.rated_burn_time * burn_time_multiplier;
             let max_volume_per_stack = engine.max_volume() * burn_time_multiplier;
 
             for (nose_fuselage, cyl_fuselage) in nose_fuselages.iter().zip(cyl_fuselages) {
@@ -597,7 +593,6 @@ impl Calculator {
                                     wet_mass,
                                     dry_mass,
                                     twr,
-                                    burn_time,
                                 ));
                                 continue 'nosecone_core_loop;
                             } else {
@@ -622,7 +617,6 @@ impl Calculator {
                                     wet_mass,
                                     dry_mass,
                                     twr,
-                                    burn_time,
                                 ));
                                 continue 'nosecone_core_loop;
                             }
@@ -716,7 +710,6 @@ impl Calculator {
                                 wet_mass,
                                 dry_mass,
                                 twr,
-                                burn_time,
                             ))
                         } else {
                             // fuel volume is less than max. We could squeeze out
@@ -735,7 +728,6 @@ impl Calculator {
                                 wet_mass,
                                 dry_mass,
                                 twr,
-                                burn_time,
                             ))
                         }
                     }
@@ -920,7 +912,6 @@ mod tests {
             wet,
             dry,
             twr,
-            engine.rated_burn_time,
         );
         debug!("{}", serde_json::to_string_pretty(&r).unwrap())
     }
@@ -974,7 +965,6 @@ mod tests {
                     wet,
                     dry,
                     twr,
-                    engine.rated_burn_time,
                 );
                 debug!("{}", serde_json::to_string_pretty(&r).unwrap())
             }

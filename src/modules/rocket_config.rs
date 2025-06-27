@@ -80,7 +80,6 @@ impl Rocket {
         mass: f64,
         dry_mass: f64,
         twr: f64,
-        burn_time: f64,
     ) -> Self {
         let natural_logarithm_g = ln(mass / dry_mass) * G;
         debug!("Ln Ratio: {}", mass / dry_mass);
@@ -93,6 +92,11 @@ impl Rocket {
             (Some(v.length), Some(v.fuselage.name))
         } else {
             (None, None)
+        };
+        let burn_time = {
+            let fuel_mass = mass - dry_mass;
+            let flow_rate: f64 = engine.fuel_mix.iter().map(|fuel| fuel.flow_rate_kgps).sum::<f64>() * num_engines as f64;
+            fuel_mass / flow_rate
         };
         Rocket {
             nose,
