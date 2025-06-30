@@ -39,7 +39,8 @@ impl Serialize for Rocket {
     where
         S: serde::Serializer,
     {
-        let len = 14;
+        let (max_altitude, max_velocity) = self.calculate_max_altitude();
+        let len = 25;
         let mut state = serializer.serialize_struct("Rocket", len)?;
         state.serialize_field("engine", &self.engine.get_name())?;
         state.serialize_field("numEngines", &self.num_engines)?;
@@ -54,7 +55,19 @@ impl Serialize for Rocket {
         state.serialize_field("noseLength", &round(self.nose_length.unwrap_or(0.0), 2))?;
         state.serialize_field("cylFuselage", &self.cyl_fuselage.unwrap_or("N/A"))?;
         state.serialize_field("cylLength", &round(self.cyl_length.unwrap_or(0.0), 3))?;
-        state.serialize_field("maxAltitude", &round(self.calculate_max_altitude(), 0))?;
+        state.serialize_field("maxAltitude", &round(max_altitude, 0))?;
+        state.serialize_field("maxVelocity", &round(max_velocity, 0))?;
+        
+        state.serialize_field("burnTime", &format!("{}s / {}s", round(self.burn_time, 1), self.engine.rated_burn_time))?;
+        state.serialize_field("ullage", &self.engine.ullage)?;
+        state.serialize_field("hpFuel", &self.engine.hp_fuel)?;
+        state.serialize_field("tech", &self.engine.tech_tree_node)?;
+        state.serialize_field("ignitions", &self.engine.ignitions)?;
+        state.serialize_field("gimbal", &self.engine.has_gimbal)?;
+        state.serialize_field("minThrust", &self.engine.min_thrust)?;
+        state.serialize_field("residuals", &self.engine.residuals)?;
+        state.serialize_field("engineMass", &self.engine.mass)?;
+        state.serialize_field("fuel", &self.engine.fuel_mix.iter().map(|fuel| format!("{}% {}", round(fuel.volume_ratio * 100.0, 2), fuel.name)).collect::<Vec<String>>().join(", "))?;
         state.end()
     }
 }
@@ -144,12 +157,14 @@ impl Rocket {
 
     /// Calculates the maximum altitude of this rocket, but it assumes constant 
     /// thrust and constant Isp.
-    fn calculate_max_altitude(&self) -> f64 {
+    fn calculate_max_altitude(&self) -> (f64, f64) {
         let dt = 0.1;        // time step in seconds
         let mut t  = 0.0;
         let mut m  = self.mass;     // wet mass
         let mut v  = 0.0;           // velocity
         let mut h  = 0.0;           // altitude
+
+        let mut max_v = v;
 
         while t < self.burn_time {
             // --- 1. local ambient pressure & interpolation frac ---
@@ -185,11 +200,15 @@ impl Rocket {
                 v = 0.0;
             }
 
+            if v > max_v {
+                max_v = v;
+            }
+
             t += dt;
         }
 
         // coast to apogee
-        h + v * v / (2.0 * G)
+        (h + v * v / (2.0 * G), max_v)
     }
 
     #[cfg(not(target_arch = "wasm32"))]
